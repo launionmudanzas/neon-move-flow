@@ -11,6 +11,7 @@ import OrdenServicioModal from '@/components/OrdenServicioModal';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
+const MIN_VOL = 5; // Volumen mínimo cobrable
 
 // ─── Volume table ────────────────────────────────────────────────
 const VOLUMES: Record<string, number> = {
@@ -28,18 +29,18 @@ const VOLUMES: Record<string, number> = {
   caja_estandar: 0.15,
 };
 
-// ─── Unit suggestion ──────────────────────────────────────────────
+// ─── Unit suggestion (based on BILLABLE volume) ───────────────────
 function getUnit(vol: number) {
-  if (vol <= 10) return { label: 'Camioneta Chica', range: '0–10 m³', icon: '🚐', emoji: '🚐', fill: Math.min(100, (vol / 10) * 100), color: 'neon-green' };
-  if (vol <= 20) return { label: 'Camioneta 3.5 ton', range: '10–20 m³', icon: '🚚', emoji: '🚚', fill: Math.min(100, ((vol - 10) / 10) * 100), color: 'neon-cyan' };
-  if (vol <= 35) return { label: 'Rabón', range: '20–35 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 20) / 15) * 100), color: 'neon-blue' };
-  if (vol <= 60) return { label: 'Tórtón', range: '35–60 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 35) / 25) * 100), color: 'neon-orange' };
-  if (vol <= 90) return { label: 'Camión Grande', range: '60–90 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 60) / 30) * 100), color: 'destructive' };
-  return { label: 'Múltiples Unidades', range: '+90 m³', icon: '🚛🚛', emoji: '🚛🚛', fill: 100, color: 'destructive' };
+  if (vol <= 10) return { label: 'Nissan / Camioneta', range: '0–10 m³', icon: '🚐', emoji: '🚐', fill: Math.min(100, (vol / 10) * 100), prev: null };
+  if (vol <= 20) return { label: 'Camioneta 3.5 ton', range: '10–20 m³', icon: '🚚', emoji: '🚚', fill: Math.min(100, ((vol - 10) / 10) * 100), prev: 'Nissan / Camioneta' };
+  if (vol <= 35) return { label: 'Rabón', range: '20–35 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 20) / 15) * 100), prev: 'Camioneta 3.5 ton' };
+  if (vol <= 60) return { label: 'Tórtón', range: '35–60 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 35) / 25) * 100), prev: 'Rabón' };
+  if (vol <= 90) return { label: 'Camión Grande', range: '60–90 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 60) / 30) * 100), prev: 'Tórtón' };
+  return { label: 'Tráiler', range: '+90 m³', icon: '🚛🚛', emoji: '🚛🚛', fill: 100, prev: 'Camión Grande' };
 }
 
 function getEstimatedTime(vol: number) {
-  if (vol <= 5) return '2–3 horas';
+  if (vol <= 5)  return '2–3 horas';
   if (vol <= 15) return '3–5 horas';
   if (vol <= 30) return '5–8 horas';
   return '1–2 días';
@@ -130,26 +131,45 @@ function CounterRow({ label, value, onChange }: { label: string; value: number; 
   );
 }
 
-function TruckVisualizer({ vol, unit }: { vol: number; unit: ReturnType<typeof getUnit> }) {
+function TruckVisualizer({ vol, billableVol, unit, prevUnit }: {
+  vol: number; billableVol: number; unit: ReturnType<typeof getUnit>; prevUnit: string | null;
+}) {
   const fill = unit.fill;
+  const upgraded = prevUnit !== null;
   const stages = [
-    { min: 0, max: 30, label: 'Vacío', emoji: '📦' },
-    { min: 30, max: 60, label: 'Medio', emoji: '📦📦' },
-    { min: 60, max: 90, label: 'Casi lleno', emoji: '📦📦📦' },
-    { min: 90, max: 101, label: '¡Completo!', emoji: '🔴' },
+    { min: 0,  max: 30,  label: 'Vacío',      bg: 'from-neon-green to-neon-cyan' },
+    { min: 30, max: 60,  label: 'Medio',       bg: 'from-neon-cyan to-neon-blue' },
+    { min: 60, max: 90,  label: 'Casi lleno',  bg: 'from-neon-blue to-neon-orange' },
+    { min: 90, max: 101, label: '¡Completo!',  bg: 'from-neon-orange to-destructive' },
   ];
-  const currentStage = stages.find(s => fill >= s.min && fill < s.max) || stages[3];
+  const stage = stages.find(s => fill >= s.min && fill < s.max) || stages[3];
 
   return (
-    <div className="relative rounded-2xl border border-neon-cyan/20 bg-gradient-to-b from-surface to-background overflow-hidden p-6">
-      {/* Truck illustration */}
-      <div className="flex items-center justify-center mb-4">
+    <div className="relative rounded-2xl border border-neon-cyan/20 bg-gradient-to-b from-surface to-background overflow-hidden p-5">
+      {/* Unit upgrade banner */}
+      <AnimatePresence>
+        {upgraded && (
+          <motion.div
+            key={unit.label}
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-neon-orange/15 border border-neon-orange/40 text-xs font-bold text-neon-orange"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+            ¡Tu carga ahora requiere una unidad más grande! ({prevUnit} → {unit.label})
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Truck emoji */}
+      <div className="flex items-center justify-center mb-3">
         <motion.div
           key={unit.label}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-          className="text-7xl filter drop-shadow-lg"
+          initial={{ opacity: 0, scale: 0.7, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          className="text-6xl filter drop-shadow-lg select-none"
         >
           {unit.emoji}
         </motion.div>
@@ -157,63 +177,59 @@ function TruckVisualizer({ vol, unit }: { vol: number; unit: ReturnType<typeof g
 
       {/* Load bar */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1.5">
-          <span className="text-muted-foreground font-semibold">Ocupación del camión</span>
-          <span className="font-black text-foreground">{Math.round(fill)}%</span>
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-muted-foreground font-semibold">Ocupación</span>
+          <span className="font-black text-foreground">{Math.round(fill)}%  ·  {stage.label}</span>
         </div>
-        <div className="w-full h-4 bg-border/50 rounded-full overflow-hidden relative">
+        <div className="w-full h-5 bg-border/40 rounded-full overflow-hidden relative">
           <motion.div
-            className={`h-full rounded-full transition-all ${
-              fill < 60 ? 'bg-gradient-to-r from-neon-green to-neon-cyan'
-              : fill < 90 ? 'bg-gradient-to-r from-neon-cyan to-neon-orange'
-              : 'bg-gradient-to-r from-neon-orange to-destructive'
-            }`}
-            initial={{ width: 0 }}
+            className={`h-full rounded-full bg-gradient-to-r ${stage.bg}`}
             animate={{ width: `${fill}%` }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           />
-          {/* Box emojis inside bar */}
           <div className="absolute inset-0 flex items-center px-2 gap-1 overflow-hidden pointer-events-none">
-            {Array.from({ length: Math.floor(fill / 12) }).map((_, i) => (
-              <span key={i} className="text-[10px] animate-fade-in">📦</span>
+            {Array.from({ length: Math.floor(fill / 10) }).map((_, i) => (
+              <span key={i} className="text-[9px]">📦</span>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Stage label */}
-      <div className="text-center">
-        <span className="text-xs font-bold text-muted-foreground">{currentStage.emoji} Estado de carga: </span>
-        <span className="text-xs font-black text-foreground">{currentStage.label}</span>
-      </div>
-
       {/* Unit chip */}
       <motion.div
         key={unit.label}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30"
+        className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 mb-3"
       >
-        <span className="text-lg">{unit.icon}</span>
-        <div>
-          <p className="font-display font-black text-sm text-neon-cyan">{unit.label}</p>
-          <p className="text-[10px] text-muted-foreground">{unit.range} · Unidad sugerida</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{unit.icon}</span>
+          <div>
+            <p className="font-display font-black text-sm text-neon-cyan">{unit.label}</p>
+            <p className="text-[10px] text-muted-foreground">{unit.range}</p>
+          </div>
         </div>
+        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Unidad sugerida</span>
       </motion.div>
 
-      {/* Big volume display */}
-      <div className="mt-4 text-center">
-        <motion.p
-          key={vol.toFixed(1)}
-          initial={{ scale: 1.2, opacity: 0.5 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="font-display font-black text-4xl text-neon-cyan"
-          style={{ textShadow: '0 0 20px hsl(180 100% 50% / 0.4)' }}
-        >
-          {vol > 0 ? `${vol.toFixed(1)} m³` : '0 m³'}
-        </motion.p>
-        <p className="text-xs text-muted-foreground mt-0.5">Volumen estimado de tu mudanza</p>
+      {/* Volume: real vs billable */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="text-center p-2 rounded-xl bg-surface border border-border">
+          <p className="text-[10px] text-muted-foreground">Volumen real</p>
+          <motion.p key={vol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+            className="font-black text-xl text-foreground">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</motion.p>
+        </div>
+        <div className={`text-center p-2 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
+          <p className="text-[10px] text-muted-foreground">Volumen cobrable</p>
+          <motion.p key={billableVol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+            className={`font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{`${billableVol.toFixed(1)} m³`}</motion.p>
+        </div>
       </div>
+      {billableVol > vol && (
+        <p className="text-[10px] text-neon-orange mt-1.5 text-center font-semibold">
+          ⚠️ Volumen mínimo de cotización: {MIN_VOL} m³
+        </p>
+      )}
     </div>
   );
 }
@@ -258,12 +274,14 @@ export default function CotizadorSection() {
   const [seguro, setSeguro] = useState(false);
   const [montoSeguro, setMontoSeguro] = useState(50000);
 
-  // Volume
+  // Volume — real + billable (minimum 5 m³)
   const vol = Object.entries(inventory).reduce((acc, [k, v]) => acc + (VOLUMES[k] || 0) * v, 0);
-  const unit = getUnit(vol);
+  const billableVol = Math.max(MIN_VOL, vol);
+  const unit = getUnit(billableVol);
+  const prevUnit = unit.prev;
   const insuranceRate = getInsuranceRate(montoSeguro);
   const insuranceCost = montoSeguro * insuranceRate;
-  const estimatedTime = getEstimatedTime(vol);
+  const estimatedTime = getEstimatedTime(billableVol);
 
   const inventoryRooms = [
     { section: '🛏️ Recámara', keys: ['cama_king', 'cama_matrimonial', 'cama_individual', 'ropero_3p', 'ropero_2p', 'cajones_3', 'buros', 'tocador'] },
@@ -300,7 +318,7 @@ export default function CotizadorSection() {
       `👤 *Cliente:* ${nombre}\n📱 *WhatsApp:* ${whatsapp}\n` +
       `📍 *Origen:* ${origen}\n🎯 *Destino:* ${destino}\n📅 *Fecha:* ${fecha || 'Por confirmar'}\n\n` +
       `🏠 *Tipo:* ${serviceLabel}\n🚛 *Modalidad:* ${modalidad}\n` +
-      `📐 *Volumen:* ${vol.toFixed(1)} m³\n🚚 *Unidad:* ${unit.icon} ${unit.label}${insuranceText}\n\n` +
+      `📐 *Volumen real:* ${vol.toFixed(1)} m³\n📐 *Volumen cobrable:* ${billableVol.toFixed(1)} m³\n🚚 *Unidad:* ${unit.icon} ${unit.label}${insuranceText}\n\n` +
       `📋 *Inventario:*\n${items || '(por definir)'}\n\n` +
       `#LaUnionMudanzas ❤️`
     );
@@ -323,9 +341,10 @@ export default function CotizadorSection() {
   );
 
   // Smart alert conditions
-  const hasHighVolume = vol > 60;
+  const hasHighVolume = billableVol > 60;
   const hasMultipleFloors = pisos === '2+';
   const noElevator = elevador === 'no' && pisos !== 'pb';
+  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim();
 
   return (
     <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
@@ -424,9 +443,15 @@ export default function CotizadorSection() {
                     Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
                   </div>
 
+                  {!canProceedStep1 && (nombre || whatsapp || origen || destino || fecha) && (
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
+                      <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span>Completa todos los campos: <strong>nombre, WhatsApp, origen, destino y fecha</strong> para continuar.</span>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    disabled={!nombre.trim() || !whatsapp.trim() || !origen.trim() || !destino.trim()}
+                    disabled={!canProceedStep1}
                     onClick={() => setStep(2)}
                     className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                   >
@@ -573,10 +598,26 @@ export default function CotizadorSection() {
                   </div>
 
                   <div className="mt-4 p-3 rounded-xl bg-surface border border-neon-cyan/20 text-xs text-muted-foreground">
-                    💡 <strong className="text-foreground">7 cajas estándar = 1 m³</strong> · El volumen se calcula automáticamente
+                    💡 <strong className="text-foreground">7 cajas estándar = 1 m³</strong> · Volumen mínimo cobrable: <strong className="text-neon-orange">{MIN_VOL} m³</strong>
                   </div>
 
-                  <div className="flex gap-3 mt-4">{navBtn('Atrás', () => setStep(2))}{navBtn('Ver carga', () => setStep(4), 'primary')}</div>
+                  {vol === 0 && (
+                    <div className="flex items-start gap-2 mt-3 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 text-xs text-foreground">
+                      <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
+                      Agrega al menos un artículo para calcular tu volumen antes de continuar.
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-4">
+                    {navBtn('Atrás', () => setStep(2))}
+                    <button
+                      type="button"
+                      onClick={() => setStep(4)}
+                      className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-neon-cyan to-neon-blue text-background hover:shadow-[0_0_20px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                    >
+                      Ver mi carga <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </motion.div>
               )}
 
@@ -593,7 +634,7 @@ export default function CotizadorSection() {
                     </div>
                   </div>
 
-                  <TruckVisualizer vol={vol} unit={unit} />
+                  <TruckVisualizer vol={vol} billableVol={billableVol} unit={unit} prevUnit={prevUnit} />
 
                   {/* Smart alerts */}
                   {hasHighVolume && (
@@ -643,42 +684,49 @@ export default function CotizadorSection() {
                     </div>
                   </div>
 
-                  {/* Result cards */}
-                  <div className="grid grid-cols-2 gap-3 mb-5">
+                  {/* Result cards — 4 grid with billable vol prominently */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📦 Volumen</p>
-                      <p className="font-display font-black text-2xl text-neon-cyan">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📦 Volumen real</p>
+                      <p className="font-display font-black text-xl text-neon-cyan">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</p>
+                    </div>
+                    <div className={`p-4 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📐 Volumen cobrable</p>
+                      <p className={`font-display font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{billableVol.toFixed(1)} m³</p>
+                      {billableVol > vol && <p className="text-[10px] text-neon-orange">Mínimo: {MIN_VOL} m³</p>}
                     </div>
                     <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20">
                       <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">🚛 Unidad</p>
-                      <p className="font-display font-black text-lg text-neon-green leading-tight">{unit.label}</p>
+                      <p className="font-display font-black text-base text-neon-green leading-tight">{unit.label}</p>
                       <p className="text-[10px] text-muted-foreground">{unit.range}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-neon-blue/5 border border-neon-blue/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📊 Ocupación</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                          <div className="h-full bg-neon-blue rounded-full transition-all" style={{ width: `${unit.fill}%` }} />
-                        </div>
-                        <span className="font-black text-neon-blue text-sm">{Math.round(unit.fill)}%</span>
-                      </div>
                     </div>
                     <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20">
                       <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">⚙️ Modalidad</p>
-                      <p className="font-display font-black text-lg text-neon-orange capitalize leading-tight">{modalidad}</p>
+                      <p className="font-display font-black text-base text-neon-orange capitalize leading-tight">{modalidad}</p>
                       {modalidad === 'compartido' && <p className="text-[10px] text-neon-green">✔ Recomendado</p>}
                     </div>
                   </div>
 
+                  {/* Time */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 mb-4">
+                    <Clock className="w-4 h-4 text-neon-cyan flex-shrink-0" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">⏱️ Tiempo estimado: </span>
+                      <span className="font-bold text-foreground text-xs">{estimatedTime}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground ml-auto">puede variar</span>
+                  </div>
+
                   {/* Precio base */}
-                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4">
-                    <p className="text-xs font-bold text-neon-green mb-1">🟢 Precio base estimado</p>
-                    <p className="font-display font-black text-2xl text-foreground">A cotizar</p>
-                    <p className="text-xs text-muted-foreground mt-1">Tu cotización exacta se calcula con nuestro equipo en WhatsApp · <strong className="text-foreground">Sin compromiso</strong></p>
+                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-3">
+                    <p className="text-xs font-bold text-neon-green mb-2">🟢 Precio base</p>
+                    <p className="font-display font-black text-2xl text-foreground mb-1">A cotizar</p>
+                    <p className="text-xs text-muted-foreground">Confirmamos precio exacto por WhatsApp · <strong className="text-foreground">Sin compromiso</strong></p>
+                    <p className="text-[11px] text-neon-orange mt-1.5 font-semibold">⚠️ El precio puede ajustarse si el volumen real es mayor</p>
                   </div>
 
                   {/* Posibles adicionales */}
-                  <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-4">
+                  <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-3">
                     <p className="text-xs font-bold text-neon-orange mb-2">🟡 Posibles cargos adicionales</p>
                     <ul className="space-y-1">
                       {[
@@ -693,6 +741,23 @@ export default function CotizadorSection() {
                         </li>
                       ))}
                       <li className="flex items-center gap-2 text-xs text-muted-foreground"><span className="w-1 h-1 rounded-full bg-neon-orange flex-shrink-0" />Embalaje especializado no cotizado</li>
+                    </ul>
+                  </div>
+
+                  {/* Advertencias rojas */}
+                  <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 mb-4">
+                    <p className="text-xs font-bold text-destructive mb-1.5">🔴 Advertencias importantes</p>
+                    <ul className="space-y-1">
+                      {[
+                        'No se descarga sin liquidación del servicio',
+                        'Accesos complicados generan cargos adicionales',
+                        hasHighVolume && 'La unidad puede no ingresar al domicilio — confirma acceso',
+                      ].filter(Boolean).map(item => (
+                        <li key={String(item)} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="w-1 h-1 rounded-full bg-destructive flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -735,29 +800,26 @@ export default function CotizadorSection() {
                     )}
                   </div>
 
-                  {/* Time */}
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 mb-5">
-                    <Clock className="w-4 h-4 text-neon-cyan" />
-                    <span className="text-xs text-muted-foreground">Tiempo estimado:</span>
-                    <span className="font-bold text-foreground text-xs">{estimatedTime}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto">puede variar</span>
+                  {/* Urgency strip */}
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-5 text-xs">
+                    <span className="text-lg">🚛</span>
+                    <span className="text-muted-foreground">#LaUnionMudanzas ❤️ · Salimos todas las semanas · <strong className="text-neon-green">Espacios limitados en rutas compartidas</strong></span>
                   </div>
 
                   {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => setOrdenOpen(true)}
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      onClick={() => setStep(6)}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-lg hover:shadow-[0_0_28px_hsl(142_100%_42%/0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                     >
-                      <FileText className="w-5 h-5" />
-                      GENERAR ORDEN DE SERVICIO
+                      🎯 APARTAR MI SERVICIO
                     </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-base hover:shadow-[0_0_24px_hsl(142_100%_42%/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
                       QUIERO MI COTIZACIÓN
@@ -767,7 +829,7 @@ export default function CotizadorSection() {
                       className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl border border-border text-foreground font-bold text-sm hover:border-neon-cyan/50 transition-all"
                     >
                       <Phone className="w-4 h-4" />
-                      HABLAR POR TELÉFONO
+                      HABLAR POR WHATSAPP
                     </a>
                   </div>
 
