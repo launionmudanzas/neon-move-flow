@@ -108,10 +108,13 @@ export default function SeguroSection() {
             </div>
             <ul className="space-y-3">
               {cubre.map((item) => (
-                <li key={item.label} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
-                  <span className="text-lg">{item.icon}</span>
-                  <span className="text-sm text-foreground">{item.label}</span>
-                  <CheckCircle2 className="w-4 h-4 text-neon-green ml-auto flex-shrink-0" />
+                <li key={item.label} className="py-2.5 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3 mb-0.5">
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-sm font-semibold text-foreground">{item.label}</span>
+                    <CheckCircle2 className="w-4 h-4 text-neon-green ml-auto flex-shrink-0" />
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-8 leading-relaxed">{item.desc}</p>
                 </li>
               ))}
             </ul>
