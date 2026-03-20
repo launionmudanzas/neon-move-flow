@@ -183,20 +183,40 @@ export default function SeguroSection() {
               </div>
               <div>
                 <h3 className="font-display font-bold text-foreground text-lg">Calculadora de Seguro</h3>
-                <p className="text-muted-foreground text-xs">Calcula el costo de tu póliza en tiempo real</p>
+                <p className="text-muted-foreground text-xs">Tasa escalonada según valor declarado · Calcula en tiempo real</p>
               </div>
+            </div>
+
+            {/* Tier info chips */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {[
+                { label: '$50k – $99k', rate: '2.0%', active: montoAsegurado < 100000 },
+                { label: '$100k – $499k', rate: '1.5%', active: montoAsegurado >= 100000 && montoAsegurado < 500000 },
+                { label: '$500k+', rate: '1.0%', active: montoAsegurado >= 500000 },
+              ].map((tier) => (
+                <span
+                  key={tier.label}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-300 ${
+                    tier.active
+                      ? 'bg-neon-cyan/20 border-neon-cyan text-neon-cyan'
+                      : 'border-border text-muted-foreground'
+                  }`}
+                >
+                  {tier.label} → {tier.rate}
+                </span>
+              ))}
             </div>
 
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mb-5">
-              {presets.map((preset) => (
+              {[50000, 100000, 200000, 300000, 500000, 700000].map((preset) => (
                 <button
                   key={preset}
                   onClick={() => { setMontoAsegurado(preset); setInputValue(String(preset)); }}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${
                     montoAsegurado === preset
-                      ? 'bg-neon-cyan/20 border-neon-cyan text-neon-cyan shadow-glow-cyan'
-                      : 'border-border text-muted-foreground hover:border-neon-cyan/40 hover:text-foreground'
+                      ? 'bg-neon-blue/20 border-neon-blue text-neon-blue'
+                      : 'border-border text-muted-foreground hover:border-neon-blue/40 hover:text-foreground'
                   }`}
                 >
                   {formatMXN(preset)}
@@ -228,6 +248,7 @@ export default function SeguroSection() {
                 <div className="p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
                   <p className="text-xs text-muted-foreground mb-1">Tasa aplicada</p>
                   <p className="font-display font-black text-2xl text-neon-cyan">{porcentaje}%</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">del valor declarado</p>
                 </div>
                 <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20">
                   <p className="text-xs text-muted-foreground mb-1">Costo del seguro</p>
@@ -239,7 +260,7 @@ export default function SeguroSection() {
 
             <div className="mt-6">
               <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20quiero%20contratar%20un%20seguro%20para%20mi%20mudanza%20por%20un%20valor%20de%20${formatMXN(montoAsegurado)}.%20El%20costo%20calculado%20es%20de%20${formatMXN(costoSeguro)}.`}
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20quiero%20contratar%20un%20seguro%20para%20mi%20mudanza%20por%20un%20valor%20declarado%20de%20${formatMXN(montoAsegurado)}.%20El%20costo%20calculado%20es%20de%20${formatMXN(costoSeguro)}%20(tasa%20${porcentaje}%25).`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2.5 w-full px-6 py-4 rounded-xl bg-neon-green text-background font-bold text-base hover:shadow-glow-green transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
