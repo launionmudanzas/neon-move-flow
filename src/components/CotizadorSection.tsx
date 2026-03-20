@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator } from 'lucide-react';
+import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator, FileText } from 'lucide-react';
 import trucksSmall from '@/assets/trucks-small.png';
 import trucksLarge from '@/assets/trucks-large.png';
 import trucksTrailer from '@/assets/trucks-trailer.png';
+import OrdenServicioModal from '@/components/OrdenServicioModal';
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 // Volume estimates in m³
 const VOLUMES: Record<string, number> = {
@@ -100,6 +101,7 @@ export default function CotizadorSection() {
 
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [step, setStep] = useState<'info' | 'type' | 'details' | 'result'>('info');
+  const [ordenOpen, setOrdenOpen] = useState(false);
 
   // Base fields
   const [nombre, setNombre] = useState('');
@@ -689,6 +691,13 @@ export default function CotizadorSection() {
 
                   {/* CTA buttons */}
                   <div className="space-y-3">
+                    <button
+                      onClick={() => setOrdenOpen(true)}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-bold text-base hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <FileText className="w-5 h-5" />
+                      Generar Orden de Servicio
+                    </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`}
                       target="_blank"
@@ -714,6 +723,23 @@ export default function CotizadorSection() {
           </div>
         </motion.div>
       </div>
+
+      {/* Orden de Servicio Modal */}
+      <OrdenServicioModal
+        isOpen={ordenOpen}
+        onClose={() => setOrdenOpen(false)}
+        data={{
+          nombre,
+          whatsapp,
+          origen,
+          destino,
+          fecha,
+          serviceLabel: serviceTypes.find(s => s.id === serviceType)?.label || String(serviceType),
+          vol: vol.toFixed(1),
+          unitLabel: unit.label,
+          unitIcon: unit.icon,
+        }}
+      />
     </section>
   );
 }

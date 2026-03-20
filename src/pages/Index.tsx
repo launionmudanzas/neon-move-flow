@@ -5,7 +5,9 @@ import CotizadorSection from '@/components/CotizadorSection';
 import ServiciosSection from '@/components/ServiciosSection';
 import ComoFuncionaSection from '@/components/ComoFuncionaSection';
 import CoberturaSection from '@/components/CoberturaSection';
+import SeguroSection from '@/components/SeguroSection';
 import DiferenciadoresSection from '@/components/DiferenciadoresSection';
+import OrganigramaSection from '@/components/OrganigramaSection';
 import TestimoniosSection from '@/components/TestimoniosSection';
 import GaleriaSection from '@/components/GaleriaSection';
 import FAQSection from '@/components/FAQSection';
@@ -25,7 +27,9 @@ export default function Index() {
       <ServiciosSection />
       <ComoFuncionaSection />
       <CoberturaSection />
+      <SeguroSection />
       <DiferenciadoresSection />
+      <OrganigramaSection />
       <TestimoniosSection />
       <GaleriaSection />
       <FAQSection />

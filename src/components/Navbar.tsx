@@ -9,7 +9,7 @@ const navLinks = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
