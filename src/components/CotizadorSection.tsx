@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator } from 'lucide-react';
+import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator, FileText } from 'lucide-react';
 import trucksSmall from '@/assets/trucks-small.png';
 import trucksLarge from '@/assets/trucks-large.png';
 import trucksTrailer from '@/assets/trucks-trailer.png';
+import OrdenServicioModal from '@/components/OrdenServicioModal';
 
 const WHATSAPP_NUMBER = '4421270514';
 
