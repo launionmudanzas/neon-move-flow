@@ -611,7 +611,7 @@ export default function CotizadorSection() {
                     </div>
                   </div>
 
-                  <TruckVisualizer vol={vol} unit={unit} />
+                  <TruckVisualizer vol={vol} billableVol={billableVol} unit={unit} prevUnit={prevUnit} />
 
                   {/* Smart alerts */}
                   {hasHighVolume && (
