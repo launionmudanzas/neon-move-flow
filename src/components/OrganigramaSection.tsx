@@ -5,12 +5,11 @@ import { useRef } from 'react';
 import {
   Users,
   Truck,
-  Calculator,
   HeadphonesIcon,
   PackageOpen,
-  Share2,
-  Warehouse,
+  ShoppingBag,
   ChevronDown,
+  Star,
 } from 'lucide-react';
 
 const departments = [
