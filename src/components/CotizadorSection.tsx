@@ -598,10 +598,26 @@ export default function CotizadorSection() {
                   </div>
 
                   <div className="mt-4 p-3 rounded-xl bg-surface border border-neon-cyan/20 text-xs text-muted-foreground">
-                    💡 <strong className="text-foreground">7 cajas estándar = 1 m³</strong> · El volumen se calcula automáticamente
+                    💡 <strong className="text-foreground">7 cajas estándar = 1 m³</strong> · Volumen mínimo cobrable: <strong className="text-neon-orange">{MIN_VOL} m³</strong>
                   </div>
 
-                  <div className="flex gap-3 mt-4">{navBtn('Atrás', () => setStep(2))}{navBtn('Ver carga', () => setStep(4), 'primary')}</div>
+                  {vol === 0 && (
+                    <div className="flex items-start gap-2 mt-3 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 text-xs text-foreground">
+                      <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
+                      Agrega al menos un artículo para calcular tu volumen antes de continuar.
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-4">
+                    {navBtn('Atrás', () => setStep(2))}
+                    <button
+                      type="button"
+                      onClick={() => setStep(4)}
+                      className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-neon-cyan to-neon-blue text-background hover:shadow-[0_0_20px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                    >
+                      Ver mi carga <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </motion.div>
               )}
 
