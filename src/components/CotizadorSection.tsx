@@ -443,9 +443,15 @@ export default function CotizadorSection() {
                     Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
                   </div>
 
+                  {!canProceedStep1 && (nombre || whatsapp || origen || destino || fecha) && (
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
+                      <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span>Completa todos los campos: <strong>nombre, WhatsApp, origen, destino y fecha</strong> para continuar.</span>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    disabled={!nombre.trim() || !whatsapp.trim() || !origen.trim() || !destino.trim()}
+                    disabled={!canProceedStep1}
                     onClick={() => setStep(2)}
                     className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                   >
