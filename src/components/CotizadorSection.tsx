@@ -11,6 +11,7 @@ import OrdenServicioModal from '@/components/OrdenServicioModal';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
+const MIN_VOL = 5; // Volumen mínimo cobrable
 
 // ─── Volume table ────────────────────────────────────────────────
 const VOLUMES: Record<string, number> = {
@@ -28,18 +29,18 @@ const VOLUMES: Record<string, number> = {
   caja_estandar: 0.15,
 };
 
-// ─── Unit suggestion ──────────────────────────────────────────────
+// ─── Unit suggestion (based on BILLABLE volume) ───────────────────
 function getUnit(vol: number) {
-  if (vol <= 10) return { label: 'Camioneta Chica', range: '0–10 m³', icon: '🚐', emoji: '🚐', fill: Math.min(100, (vol / 10) * 100), color: 'neon-green' };
-  if (vol <= 20) return { label: 'Camioneta 3.5 ton', range: '10–20 m³', icon: '🚚', emoji: '🚚', fill: Math.min(100, ((vol - 10) / 10) * 100), color: 'neon-cyan' };
-  if (vol <= 35) return { label: 'Rabón', range: '20–35 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 20) / 15) * 100), color: 'neon-blue' };
-  if (vol <= 60) return { label: 'Tórtón', range: '35–60 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 35) / 25) * 100), color: 'neon-orange' };
-  if (vol <= 90) return { label: 'Camión Grande', range: '60–90 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 60) / 30) * 100), color: 'destructive' };
-  return { label: 'Múltiples Unidades', range: '+90 m³', icon: '🚛🚛', emoji: '🚛🚛', fill: 100, color: 'destructive' };
+  if (vol <= 10) return { label: 'Nissan / Camioneta', range: '0–10 m³', icon: '🚐', emoji: '🚐', fill: Math.min(100, (vol / 10) * 100), prev: null };
+  if (vol <= 20) return { label: 'Camioneta 3.5 ton', range: '10–20 m³', icon: '🚚', emoji: '🚚', fill: Math.min(100, ((vol - 10) / 10) * 100), prev: 'Nissan / Camioneta' };
+  if (vol <= 35) return { label: 'Rabón', range: '20–35 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 20) / 15) * 100), prev: 'Camioneta 3.5 ton' };
+  if (vol <= 60) return { label: 'Tórtón', range: '35–60 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 35) / 25) * 100), prev: 'Rabón' };
+  if (vol <= 90) return { label: 'Camión Grande', range: '60–90 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 60) / 30) * 100), prev: 'Tórtón' };
+  return { label: 'Tráiler', range: '+90 m³', icon: '🚛🚛', emoji: '🚛🚛', fill: 100, prev: 'Camión Grande' };
 }
 
 function getEstimatedTime(vol: number) {
-  if (vol <= 5) return '2–3 horas';
+  if (vol <= 5)  return '2–3 horas';
   if (vol <= 15) return '3–5 horas';
   if (vol <= 30) return '5–8 horas';
   return '1–2 días';
