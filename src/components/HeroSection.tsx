@@ -3,7 +3,7 @@ import { ArrowRight, MapPin, Shield, Clock, Building2 } from 'lucide-react';
 import truckHero from '@/assets/truck-hero.jpg';
 import mexicoMap from '@/assets/mexico-neon-map.jpg';
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 const badges = [
   { icon: MapPin, label: 'Cobertura nacional' },

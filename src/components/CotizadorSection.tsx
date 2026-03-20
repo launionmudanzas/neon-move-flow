@@ -7,7 +7,7 @@ import trucksSmall from '@/assets/trucks-small.png';
 import trucksLarge from '@/assets/trucks-large.png';
 import trucksTrailer from '@/assets/trucks-trailer.png';
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 // Volume estimates in m³
 const VOLUMES: Record<string, number> = {

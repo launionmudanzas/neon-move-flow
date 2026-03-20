@@ -3,7 +3,7 @@ import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 export default function CierreSection() {
   const ref = useRef(null);
