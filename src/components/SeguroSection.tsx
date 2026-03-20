@@ -6,21 +6,27 @@ import { Shield, CheckCircle2, XCircle, AlertTriangle, Clock, Calculator } from 
 const WHATSAPP_NUMBER = '4421270514';
 
 const cubre = [
-  { icon: '🔒', label: 'Robo de unidad' },
-  { icon: '🚗', label: 'Riesgos ordinarios de tránsito (accidentes)' },
-  { icon: '🔥', label: 'Incendio' },
-  { icon: '🔄', label: 'Volcadura' },
-  { icon: '🛣️', label: 'Daños mayores en carretera' },
+  { icon: '🔒', label: 'Robo de unidad', desc: 'Cubre los bienes asegurados contra la falta de entrega del contenido por extravío o robo' },
+  { icon: '🚗', label: 'Riesgos ordinarios de tránsito', desc: 'Daños causados a consecuencia de un accidente, colisión o volcadura' },
+  { icon: '🔥', label: 'Incendio, rayos y explosión', desc: 'Daños materiales causados por incendio, rayos y explosión' },
+  { icon: '✈️', label: 'Caída de aviones y auto ignición', desc: 'Daños por caída de aviones, auto ignición del vehículo' },
+  { icon: '🌊', label: 'Hundimiento o rotura de puentes', desc: 'Daños por hundimiento o descarrilamiento del medio de transporte' },
 ];
 
 const noCubre = [
-  { icon: '⚙️', label: 'Retrasos por compostura' },
-  { icon: '🔧', label: 'Ponchaduras' },
-  { icon: '📦', label: 'Maniobras de carga y descarga' },
+  { icon: '⚙️', label: 'Retraso por compostura' },
+  { icon: '🔧', label: 'Pinchadura de llanta' },
+  { icon: '📦', label: 'Maniobra de carga y descarga' },
   { icon: '🏚️', label: 'Daños por mal empaque del cliente' },
 ];
 
-const INSURANCE_RATE = 0.004; // 0.4% del valor declarado
+// Tabla de tasas escalonadas (sin 2.5%)
+function getInsuranceRate(monto: number): number {
+  if (monto < 100000) return 0.02;   // 2.0%
+  if (monto < 500000) return 0.015;  // 1.5%
+  return 0.01;                        // 1.0%
+}
+
 const MIN_AMOUNT = 50000;
 
 function formatMXN(amount: number) {
@@ -33,8 +39,9 @@ export default function SeguroSection() {
   const [montoAsegurado, setMontoAsegurado] = useState(50000);
   const [inputValue, setInputValue] = useState('50000');
 
-  const costoSeguro = montoAsegurado * INSURANCE_RATE;
-  const porcentaje = (INSURANCE_RATE * 100).toFixed(2);
+  const rate = getInsuranceRate(montoAsegurado);
+  const costoSeguro = montoAsegurado * rate;
+  const porcentaje = (rate * 100).toFixed(1);
 
   const handleInput = (val: string) => {
     const raw = val.replace(/[^0-9]/g, '');
