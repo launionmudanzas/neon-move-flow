@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator } from 'lucide-react';
+import trucksSmall from '@/assets/trucks-small.png';
+import trucksLarge from '@/assets/trucks-large.png';
+import trucksTrailer from '@/assets/trucks-trailer.png';
 
 const WHATSAPP_NUMBER = '5215512345678';
 
@@ -287,6 +290,40 @@ export default function CotizadorSection() {
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
             Formulario inteligente que calcula el volumen de tu mudanza y genera un mensaje listo para WhatsApp.
           </p>
+        </motion.div>
+
+        {/* Fleet images gallery */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="mb-10"
+        >
+          <p className="text-center text-xs font-bold tracking-widest uppercase text-muted-foreground mb-4">
+            Nuestra flota · La unidad correcta para cada historia
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { src: trucksSmall, alt: 'Camionetas pequeña, mediana y grande – hasta 40 m³', label: 'Camionetas · hasta 40 m³' },
+              { src: trucksLarge, alt: 'Camión grande 60 m³ y Camión XL 90 m³', label: 'Camiones · 60–90 m³' },
+              { src: trucksTrailer, alt: 'Tráilers 40 y 53 pies – hasta 25 tons', label: 'Tráilers · +90 m³' },
+            ].map((img, i) => (
+              <div
+                key={i}
+                className="relative rounded-2xl overflow-hidden border border-neon-cyan/15 hover:border-neon-cyan/40 transition-all duration-300 group shadow-card-dark"
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  className="w-full h-44 object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5">
+                  <span className="text-xs font-bold text-neon-cyan tracking-wide">{img.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Step indicators */}
