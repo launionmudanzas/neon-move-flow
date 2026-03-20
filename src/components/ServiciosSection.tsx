@@ -3,7 +3,7 @@ import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Home, Building2, Share2, ArrowRight, Package, Car, Warehouse, Boxes } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '5215512345678';
+const WHATSAPP_NUMBER = '4421270514';
 
 const servicios = [
   {
