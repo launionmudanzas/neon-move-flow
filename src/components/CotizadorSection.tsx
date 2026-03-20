@@ -274,12 +274,14 @@ export default function CotizadorSection() {
   const [seguro, setSeguro] = useState(false);
   const [montoSeguro, setMontoSeguro] = useState(50000);
 
-  // Volume
+  // Volume — real + billable (minimum 5 m³)
   const vol = Object.entries(inventory).reduce((acc, [k, v]) => acc + (VOLUMES[k] || 0) * v, 0);
-  const unit = getUnit(vol);
+  const billableVol = Math.max(MIN_VOL, vol);
+  const unit = getUnit(billableVol);
+  const prevUnit = unit.prev;
   const insuranceRate = getInsuranceRate(montoSeguro);
   const insuranceCost = montoSeguro * insuranceRate;
-  const estimatedTime = getEstimatedTime(vol);
+  const estimatedTime = getEstimatedTime(billableVol);
 
   const inventoryRooms = [
     { section: '🛏️ Recámara', keys: ['cama_king', 'cama_matrimonial', 'cama_individual', 'ropero_3p', 'ropero_2p', 'cajones_3', 'buros', 'tocador'] },
