@@ -341,9 +341,10 @@ export default function CotizadorSection() {
   );
 
   // Smart alert conditions
-  const hasHighVolume = vol > 60;
+  const hasHighVolume = billableVol > 60;
   const hasMultipleFloors = pisos === '2+';
   const noElevator = elevador === 'no' && pisos !== 'pb';
+  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim();
 
   return (
     <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
