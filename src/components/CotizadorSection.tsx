@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Truck, Home, Building2, Scissors, Car, Bike, Package, LayoutGrid, HelpCircle, ChevronRight, Plus, Minus, ArrowRight, Calculator } from 'lucide-react';
+import trucksSmall from '@/assets/trucks-small.png';
+import trucksLarge from '@/assets/trucks-large.png';
+import trucksTrailer from '@/assets/trucks-trailer.png';
 
 const WHATSAPP_NUMBER = '5215512345678';
 
