@@ -131,26 +131,45 @@ function CounterRow({ label, value, onChange }: { label: string; value: number; 
   );
 }
 
-function TruckVisualizer({ vol, unit }: { vol: number; unit: ReturnType<typeof getUnit> }) {
+function TruckVisualizer({ vol, billableVol, unit, prevUnit }: {
+  vol: number; billableVol: number; unit: ReturnType<typeof getUnit>; prevUnit: string | null;
+}) {
   const fill = unit.fill;
+  const upgraded = prevUnit !== null;
   const stages = [
-    { min: 0, max: 30, label: 'Vacío', emoji: '📦' },
-    { min: 30, max: 60, label: 'Medio', emoji: '📦📦' },
-    { min: 60, max: 90, label: 'Casi lleno', emoji: '📦📦📦' },
-    { min: 90, max: 101, label: '¡Completo!', emoji: '🔴' },
+    { min: 0,  max: 30,  label: 'Vacío',      bg: 'from-neon-green to-neon-cyan' },
+    { min: 30, max: 60,  label: 'Medio',       bg: 'from-neon-cyan to-neon-blue' },
+    { min: 60, max: 90,  label: 'Casi lleno',  bg: 'from-neon-blue to-neon-orange' },
+    { min: 90, max: 101, label: '¡Completo!',  bg: 'from-neon-orange to-destructive' },
   ];
-  const currentStage = stages.find(s => fill >= s.min && fill < s.max) || stages[3];
+  const stage = stages.find(s => fill >= s.min && fill < s.max) || stages[3];
 
   return (
-    <div className="relative rounded-2xl border border-neon-cyan/20 bg-gradient-to-b from-surface to-background overflow-hidden p-6">
-      {/* Truck illustration */}
-      <div className="flex items-center justify-center mb-4">
+    <div className="relative rounded-2xl border border-neon-cyan/20 bg-gradient-to-b from-surface to-background overflow-hidden p-5">
+      {/* Unit upgrade banner */}
+      <AnimatePresence>
+        {upgraded && (
+          <motion.div
+            key={unit.label}
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-neon-orange/15 border border-neon-orange/40 text-xs font-bold text-neon-orange"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+            ¡Tu carga ahora requiere una unidad más grande! ({prevUnit} → {unit.label})
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Truck emoji */}
+      <div className="flex items-center justify-center mb-3">
         <motion.div
           key={unit.label}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-          className="text-7xl filter drop-shadow-lg"
+          initial={{ opacity: 0, scale: 0.7, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          className="text-6xl filter drop-shadow-lg select-none"
         >
           {unit.emoji}
         </motion.div>
@@ -158,63 +177,59 @@ function TruckVisualizer({ vol, unit }: { vol: number; unit: ReturnType<typeof g
 
       {/* Load bar */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1.5">
-          <span className="text-muted-foreground font-semibold">Ocupación del camión</span>
-          <span className="font-black text-foreground">{Math.round(fill)}%</span>
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-muted-foreground font-semibold">Ocupación</span>
+          <span className="font-black text-foreground">{Math.round(fill)}%  ·  {stage.label}</span>
         </div>
-        <div className="w-full h-4 bg-border/50 rounded-full overflow-hidden relative">
+        <div className="w-full h-5 bg-border/40 rounded-full overflow-hidden relative">
           <motion.div
-            className={`h-full rounded-full transition-all ${
-              fill < 60 ? 'bg-gradient-to-r from-neon-green to-neon-cyan'
-              : fill < 90 ? 'bg-gradient-to-r from-neon-cyan to-neon-orange'
-              : 'bg-gradient-to-r from-neon-orange to-destructive'
-            }`}
-            initial={{ width: 0 }}
+            className={`h-full rounded-full bg-gradient-to-r ${stage.bg}`}
             animate={{ width: `${fill}%` }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           />
-          {/* Box emojis inside bar */}
           <div className="absolute inset-0 flex items-center px-2 gap-1 overflow-hidden pointer-events-none">
-            {Array.from({ length: Math.floor(fill / 12) }).map((_, i) => (
-              <span key={i} className="text-[10px] animate-fade-in">📦</span>
+            {Array.from({ length: Math.floor(fill / 10) }).map((_, i) => (
+              <span key={i} className="text-[9px]">📦</span>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Stage label */}
-      <div className="text-center">
-        <span className="text-xs font-bold text-muted-foreground">{currentStage.emoji} Estado de carga: </span>
-        <span className="text-xs font-black text-foreground">{currentStage.label}</span>
-      </div>
-
       {/* Unit chip */}
       <motion.div
         key={unit.label}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30"
+        className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 mb-3"
       >
-        <span className="text-lg">{unit.icon}</span>
-        <div>
-          <p className="font-display font-black text-sm text-neon-cyan">{unit.label}</p>
-          <p className="text-[10px] text-muted-foreground">{unit.range} · Unidad sugerida</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{unit.icon}</span>
+          <div>
+            <p className="font-display font-black text-sm text-neon-cyan">{unit.label}</p>
+            <p className="text-[10px] text-muted-foreground">{unit.range}</p>
+          </div>
         </div>
+        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Unidad sugerida</span>
       </motion.div>
 
-      {/* Big volume display */}
-      <div className="mt-4 text-center">
-        <motion.p
-          key={vol.toFixed(1)}
-          initial={{ scale: 1.2, opacity: 0.5 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="font-display font-black text-4xl text-neon-cyan"
-          style={{ textShadow: '0 0 20px hsl(180 100% 50% / 0.4)' }}
-        >
-          {vol > 0 ? `${vol.toFixed(1)} m³` : '0 m³'}
-        </motion.p>
-        <p className="text-xs text-muted-foreground mt-0.5">Volumen estimado de tu mudanza</p>
+      {/* Volume: real vs billable */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="text-center p-2 rounded-xl bg-surface border border-border">
+          <p className="text-[10px] text-muted-foreground">Volumen real</p>
+          <motion.p key={vol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+            className="font-black text-xl text-foreground">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</motion.p>
+        </div>
+        <div className={`text-center p-2 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
+          <p className="text-[10px] text-muted-foreground">Volumen cobrable</p>
+          <motion.p key={billableVol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+            className={`font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{`${billableVol.toFixed(1)} m³`}</motion.p>
+        </div>
       </div>
+      {billableVol > vol && (
+        <p className="text-[10px] text-neon-orange mt-1.5 text-center font-semibold">
+          ⚠️ Volumen mínimo de cotización: {MIN_VOL} m³
+        </p>
+      )}
     </div>
   );
 }
