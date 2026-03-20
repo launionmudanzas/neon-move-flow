@@ -101,6 +101,7 @@ export default function CotizadorSection() {
 
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [step, setStep] = useState<'info' | 'type' | 'details' | 'result'>('info');
+  const [ordenOpen, setOrdenOpen] = useState(false);
 
   // Base fields
   const [nombre, setNombre] = useState('');
