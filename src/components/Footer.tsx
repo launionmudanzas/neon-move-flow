@@ -27,11 +27,8 @@ export default function Footer() {
                 #LaUnionMudanzas 🚛❤️
               </p>
               <p className="text-muted-foreground text-xs mt-0.5">
-                Salimos todas las semanas · Servicio compartido disponible
+                Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
               </p>
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="text-neon-green text-xs font-semibold hover:underline">
-                WhatsApp {WHATSAPP_NUMBER.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')} a sus órdenes
-              </a>
             </div>
             <div className="flex gap-3">
               <a

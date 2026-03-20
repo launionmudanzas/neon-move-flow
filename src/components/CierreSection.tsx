@@ -36,8 +36,7 @@ export default function CierreSection() {
           {/* Leyenda de marca prominente */}
           <div className="inline-flex flex-col items-center gap-1 mb-10 px-6 py-3 rounded-2xl bg-neon-cyan/5 border border-neon-cyan/20">
             <p className="text-neon-cyan font-bold text-lg">#LaUnionMudanzas 🚛❤️</p>
-            <p className="text-muted-foreground text-sm">Salimos todas las semanas · Tenemos servicio compartido</p>
-            <p className="text-neon-green text-sm font-semibold">WhatsApp 442 127 0514 a sus órdenes</p>
+            <p className="text-muted-foreground text-sm">Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
