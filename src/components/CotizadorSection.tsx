@@ -684,42 +684,49 @@ export default function CotizadorSection() {
                     </div>
                   </div>
 
-                  {/* Result cards */}
-                  <div className="grid grid-cols-2 gap-3 mb-5">
+                  {/* Result cards — 4 grid with billable vol prominently */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📦 Volumen</p>
-                      <p className="font-display font-black text-2xl text-neon-cyan">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📦 Volumen real</p>
+                      <p className="font-display font-black text-xl text-neon-cyan">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</p>
+                    </div>
+                    <div className={`p-4 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📐 Volumen cobrable</p>
+                      <p className={`font-display font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{billableVol.toFixed(1)} m³</p>
+                      {billableVol > vol && <p className="text-[10px] text-neon-orange">Mínimo: {MIN_VOL} m³</p>}
                     </div>
                     <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20">
                       <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">🚛 Unidad</p>
-                      <p className="font-display font-black text-lg text-neon-green leading-tight">{unit.label}</p>
+                      <p className="font-display font-black text-base text-neon-green leading-tight">{unit.label}</p>
                       <p className="text-[10px] text-muted-foreground">{unit.range}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-neon-blue/5 border border-neon-blue/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📊 Ocupación</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                          <div className="h-full bg-neon-blue rounded-full transition-all" style={{ width: `${unit.fill}%` }} />
-                        </div>
-                        <span className="font-black text-neon-blue text-sm">{Math.round(unit.fill)}%</span>
-                      </div>
                     </div>
                     <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20">
                       <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">⚙️ Modalidad</p>
-                      <p className="font-display font-black text-lg text-neon-orange capitalize leading-tight">{modalidad}</p>
+                      <p className="font-display font-black text-base text-neon-orange capitalize leading-tight">{modalidad}</p>
                       {modalidad === 'compartido' && <p className="text-[10px] text-neon-green">✔ Recomendado</p>}
                     </div>
                   </div>
 
+                  {/* Time */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 mb-4">
+                    <Clock className="w-4 h-4 text-neon-cyan flex-shrink-0" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">⏱️ Tiempo estimado: </span>
+                      <span className="font-bold text-foreground text-xs">{estimatedTime}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground ml-auto">puede variar</span>
+                  </div>
+
                   {/* Precio base */}
-                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4">
-                    <p className="text-xs font-bold text-neon-green mb-1">🟢 Precio base estimado</p>
-                    <p className="font-display font-black text-2xl text-foreground">A cotizar</p>
-                    <p className="text-xs text-muted-foreground mt-1">Tu cotización exacta se calcula con nuestro equipo en WhatsApp · <strong className="text-foreground">Sin compromiso</strong></p>
+                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-3">
+                    <p className="text-xs font-bold text-neon-green mb-2">🟢 Precio base</p>
+                    <p className="font-display font-black text-2xl text-foreground mb-1">A cotizar</p>
+                    <p className="text-xs text-muted-foreground">Confirmamos precio exacto por WhatsApp · <strong className="text-foreground">Sin compromiso</strong></p>
+                    <p className="text-[11px] text-neon-orange mt-1.5 font-semibold">⚠️ El precio puede ajustarse si el volumen real es mayor</p>
                   </div>
 
                   {/* Posibles adicionales */}
-                  <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-4">
+                  <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-3">
                     <p className="text-xs font-bold text-neon-orange mb-2">🟡 Posibles cargos adicionales</p>
                     <ul className="space-y-1">
                       {[
@@ -734,6 +741,23 @@ export default function CotizadorSection() {
                         </li>
                       ))}
                       <li className="flex items-center gap-2 text-xs text-muted-foreground"><span className="w-1 h-1 rounded-full bg-neon-orange flex-shrink-0" />Embalaje especializado no cotizado</li>
+                    </ul>
+                  </div>
+
+                  {/* Advertencias rojas */}
+                  <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 mb-4">
+                    <p className="text-xs font-bold text-destructive mb-1.5">🔴 Advertencias importantes</p>
+                    <ul className="space-y-1">
+                      {[
+                        'No se descarga sin liquidación del servicio',
+                        'Accesos complicados generan cargos adicionales',
+                        hasHighVolume && 'La unidad puede no ingresar al domicilio — confirma acceso',
+                      ].filter(Boolean).map(item => (
+                        <li key={String(item)} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="w-1 h-1 rounded-full bg-destructive flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -776,29 +800,26 @@ export default function CotizadorSection() {
                     )}
                   </div>
 
-                  {/* Time */}
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 mb-5">
-                    <Clock className="w-4 h-4 text-neon-cyan" />
-                    <span className="text-xs text-muted-foreground">Tiempo estimado:</span>
-                    <span className="font-bold text-foreground text-xs">{estimatedTime}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto">puede variar</span>
+                  {/* Urgency strip */}
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-5 text-xs">
+                    <span className="text-lg">🚛</span>
+                    <span className="text-muted-foreground">#LaUnionMudanzas ❤️ · Salimos todas las semanas · <strong className="text-neon-green">Espacios limitados en rutas compartidas</strong></span>
                   </div>
 
                   {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => setOrdenOpen(true)}
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      onClick={() => setStep(6)}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-lg hover:shadow-[0_0_28px_hsl(142_100%_42%/0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                     >
-                      <FileText className="w-5 h-5" />
-                      GENERAR ORDEN DE SERVICIO
+                      🎯 APARTAR MI SERVICIO
                     </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-base hover:shadow-[0_0_24px_hsl(142_100%_42%/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
                       QUIERO MI COTIZACIÓN
@@ -808,7 +829,7 @@ export default function CotizadorSection() {
                       className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl border border-border text-foreground font-bold text-sm hover:border-neon-cyan/50 transition-all"
                     >
                       <Phone className="w-4 h-4" />
-                      HABLAR POR TELÉFONO
+                      HABLAR POR WHATSAPP
                     </a>
                   </div>
 
