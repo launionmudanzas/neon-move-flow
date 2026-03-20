@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Truck, Phone } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '4421270514';
 
@@ -29,9 +29,16 @@ export default function CierreSection() {
             Tu mudanza en{' '}
             <span className="text-neon-cyan text-glow-cyan">manos profesionales</span>
           </h2>
-          <p className="text-muted-foreground text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-xl leading-relaxed mb-4 max-w-2xl mx-auto">
             Cotiza hoy y recibe atención rápida, clara y personalizada. Tu nueva historia merece el mejor inicio.
           </p>
+
+          {/* Leyenda de marca prominente */}
+          <div className="inline-flex flex-col items-center gap-1 mb-10 px-6 py-3 rounded-2xl bg-neon-cyan/5 border border-neon-cyan/20">
+            <p className="text-neon-cyan font-bold text-lg">#LaUnionMudanzas 🚛❤️</p>
+            <p className="text-muted-foreground text-sm">Salimos todas las semanas · Tenemos servicio compartido</p>
+            <p className="text-neon-green text-sm font-semibold">WhatsApp 442 127 0514 a sus órdenes</p>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -46,10 +53,17 @@ export default function CierreSection() {
               Cotizar por WhatsApp
             </a>
             <a
+              href={`tel:${WHATSAPP_NUMBER}`}
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-neon-cyan/40 text-neon-cyan font-bold text-lg hover:bg-neon-cyan/10 hover:border-neon-cyan hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Phone className="w-5 h-5" />
+              Llamar ahora
+            </a>
+            <a
               href="#cotizador"
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-cta text-background font-bold text-lg hover:shadow-glow-orange transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Cotizar ahora
+              Cotizar en línea
               <ArrowRight className="w-5 h-5" />
             </a>
           </div>

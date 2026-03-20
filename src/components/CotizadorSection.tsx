@@ -691,6 +691,13 @@ export default function CotizadorSection() {
 
                   {/* CTA buttons */}
                   <div className="space-y-3">
+                    <button
+                      onClick={() => setOrdenOpen(true)}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-bold text-base hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      <FileText className="w-5 h-5" />
+                      Generar Orden de Servicio
+                    </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`}
                       target="_blank"
@@ -716,6 +723,23 @@ export default function CotizadorSection() {
           </div>
         </motion.div>
       </div>
+
+      {/* Orden de Servicio Modal */}
+      <OrdenServicioModal
+        isOpen={ordenOpen}
+        onClose={() => setOrdenOpen(false)}
+        data={{
+          nombre,
+          whatsapp,
+          origen,
+          destino,
+          fecha,
+          serviceLabel: serviceTypes.find(s => s.id === serviceType)?.label || String(serviceType),
+          vol: vol.toFixed(1),
+          unitLabel: unit.label,
+          unitIcon: unit.icon,
+        }}
+      />
     </section>
   );
 }
