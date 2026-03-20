@@ -318,7 +318,7 @@ export default function CotizadorSection() {
       `👤 *Cliente:* ${nombre}\n📱 *WhatsApp:* ${whatsapp}\n` +
       `📍 *Origen:* ${origen}\n🎯 *Destino:* ${destino}\n📅 *Fecha:* ${fecha || 'Por confirmar'}\n\n` +
       `🏠 *Tipo:* ${serviceLabel}\n🚛 *Modalidad:* ${modalidad}\n` +
-      `📐 *Volumen:* ${vol.toFixed(1)} m³\n🚚 *Unidad:* ${unit.icon} ${unit.label}${insuranceText}\n\n` +
+      `📐 *Volumen real:* ${vol.toFixed(1)} m³\n📐 *Volumen cobrable:* ${billableVol.toFixed(1)} m³\n🚚 *Unidad:* ${unit.icon} ${unit.label}${insuranceText}\n\n` +
       `📋 *Inventario:*\n${items || '(por definir)'}\n\n` +
       `#LaUnionMudanzas ❤️`
     );
