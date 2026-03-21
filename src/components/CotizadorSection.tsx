@@ -5,7 +5,7 @@ import {
   Truck, Home, Building2, Package, LayoutGrid, HelpCircle,
   ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
   Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, ArrowRight
+  Star, Zap, ArrowRight, Upload, CreditCard
 } from 'lucide-react';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 
@@ -242,6 +242,10 @@ export default function CotizadorSection() {
   const [step, setStep] = useState(1);
   const [ordenOpen, setOrdenOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+
+  // INE upload state
+  const [ineFrente, setIneFrente] = useState<File | null>(null);
+  const [ineReverso, setIneReverso] = useState<File | null>(null);
 
   // Step 1 – Ruta
   const [origen, setOrigen] = useState('');
@@ -839,7 +843,7 @@ export default function CotizadorSection() {
                 </motion.div>
               )}
 
-              {/* ── STEP 6: CONFIRMACIÓN POST-PAGO ───────────────────── */}
+              {/* ── STEP 6: CONFIRMACIÓN + INE + ORDEN ────────────────── */}
               {step === 6 && !confirmed && (
                 <motion.div key="s6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
                   <div className="text-center mb-6">
@@ -852,7 +856,7 @@ export default function CotizadorSection() {
                       <span className="text-4xl">🎉</span>
                     </motion.div>
                     <h3 className="font-display font-black text-2xl text-foreground mb-1">¡Gracias por elegirnos!</h3>
-                    <p className="text-muted-foreground text-sm">Tu servicio está confirmado con <strong className="text-neon-cyan">#LaUnionMudanzas</strong></p>
+                    <p className="text-muted-foreground text-sm">Un paso más · Completa tu expediente con <strong className="text-neon-cyan">#LaUnionMudanzas</strong></p>
                   </div>
 
                   {/* Summary */}
@@ -870,8 +874,66 @@ export default function CotizadorSection() {
                     ))}
                   </div>
 
+                  {/* INE Upload */}
+                  <div className="p-4 rounded-xl bg-neon-blue/5 border border-neon-blue/20 mb-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCard className="w-4 h-4 text-neon-blue flex-shrink-0" />
+                      <p className="font-bold text-neon-blue text-sm">Identificación oficial (INE)</p>
+                      <span className="ml-auto text-[10px] text-muted-foreground font-semibold bg-neon-blue/10 px-2 py-0.5 rounded-full border border-neon-blue/20">Requerida</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                      🔒 Su identificación se usará únicamente para validar y documentar su servicio.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* INE Frente */}
+                      <label className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${ineFrente ? 'border-neon-green/50 bg-neon-green/5' : 'border-border hover:border-neon-blue/50 hover:bg-surface'}`}>
+                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => setIneFrente(e.target.files?.[0] || null)} />
+                        {ineFrente ? (
+                          <>
+                            <CheckCircle2 className="w-6 h-6 text-neon-green" />
+                            <span className="text-[10px] text-neon-green font-bold text-center leading-tight">✓ Cargado</span>
+                            <span className="text-[9px] text-muted-foreground text-center line-clamp-1">{ineFrente.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground font-semibold text-center">INE Frente</span>
+                            <span className="text-[10px] text-muted-foreground">Imagen o PDF</span>
+                          </>
+                        )}
+                      </label>
+                      {/* INE Reverso */}
+                      <label className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${ineReverso ? 'border-neon-green/50 bg-neon-green/5' : 'border-border hover:border-neon-blue/50 hover:bg-surface'}`}>
+                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => setIneReverso(e.target.files?.[0] || null)} />
+                        {ineReverso ? (
+                          <>
+                            <CheckCircle2 className="w-6 h-6 text-neon-green" />
+                            <span className="text-[10px] text-neon-green font-bold text-center leading-tight">✓ Cargado</span>
+                            <span className="text-[9px] text-muted-foreground text-center line-clamp-1">{ineReverso.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground font-semibold text-center">INE Reverso</span>
+                            <span className="text-[10px] text-muted-foreground">Imagen o PDF</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Service order CTA */}
+                  <button
+                    type="button"
+                    onClick={() => setOrdenOpen(true)}
+                    className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mb-3"
+                  >
+                    <FileText className="w-5 h-5" />
+                    VER MI ORDEN DE SERVICIO
+                  </button>
+
                   {/* Checklist */}
-                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-5">
+                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4">
                     <p className="font-bold text-neon-green text-sm mb-3">✔ Prepárate para tu mudanza</p>
                     {[
                       'El personal llevará tu orden de servicio impresa',
@@ -903,7 +965,7 @@ export default function CotizadorSection() {
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
                     IR A MI SEGUIMIENTO POR WHATSAPP
                   </a>
-                  <button type="button" onClick={() => { setStep(1); setConfirmed(false); }} className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <button type="button" onClick={() => { setStep(1); setConfirmed(false); setIneFrente(null); setIneReverso(null); }} className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
                     Nueva cotización
                   </button>
                 </motion.div>
