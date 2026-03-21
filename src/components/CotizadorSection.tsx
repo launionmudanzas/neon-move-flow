@@ -243,6 +243,10 @@ export default function CotizadorSection() {
   const [ordenOpen, setOrdenOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
+  // INE upload state
+  const [ineFrente, setIneFrente] = useState<File | null>(null);
+  const [ineReverso, setIneReverso] = useState<File | null>(null);
+
   // Step 1 – Ruta
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
