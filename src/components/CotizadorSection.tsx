@@ -5,7 +5,7 @@ import {
   Truck, Home, Building2, Package, LayoutGrid, HelpCircle,
   ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
   Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, ArrowRight
+  Star, Zap, ArrowRight, Upload, CreditCard
 } from 'lucide-react';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 
