@@ -93,6 +93,15 @@ export default function Cuenta() {
         >
           <p className="text-sm font-semibold text-foreground mb-4">Accesos rápidos</p>
 
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-primary/10 border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/20 transition-all"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Panel de Administración
+            </Link>
+          )}
           <Link
             to="/#cotizador"
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-primary/10 border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/20 transition-all"
