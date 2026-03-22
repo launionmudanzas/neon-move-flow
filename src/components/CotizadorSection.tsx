@@ -1034,12 +1034,16 @@ export default function CotizadorSection() {
       <OrdenServicioModal
         isOpen={ordenOpen}
         onClose={() => setOrdenOpen(false)}
+        onPagar={() => { setOrdenOpen(false); setPagoOpen(true); }}
         data={{
           nombre, whatsapp, origen, destino, fecha,
           serviceLabel: tipoServicio ? `Mudanza ${tipoServicio.charAt(0).toUpperCase() + tipoServicio.slice(1)}` : 'Mudanza',
           vol: vol.toFixed(1),
           unitLabel: unit.label,
           unitIcon: unit.icon,
+          folio: savedCotizacion?.folio,
+          precioTotal: savedCotizacion?.precioTotal,
+          cotizacionId: savedCotizacion?.cotizacionId,
         }}
       />
     </section>
