@@ -645,22 +645,51 @@ export default function CotizadorSection() {
                       </div>
                     </div>
 
-                    {/* Route visual */}
+                    {/* Route visual with classification */}
                     <div className="relative">
-                      <div className="absolute left-5 top-[44px] bottom-[44px] w-0.5 bg-gradient-to-b from-neon-cyan via-neon-blue/50 to-neon-green z-10" />
-                      <div className="space-y-2">
+                      <div className="absolute left-5 top-[54px] bottom-[54px] w-0.5 bg-gradient-to-b from-neon-cyan via-neon-blue/50 to-neon-green z-10 pointer-events-none" />
+                      <div className="space-y-3">
                         <div className="relative pl-10">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-neon-cyan border-2 border-background z-20" />
-                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Origen 📍</label>
-                          <input value={origen} onChange={e => setOrigen(e.target.value)} placeholder="Ciudad de origen (ej: Querétaro, CDMX...)" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                          <div className="absolute left-3.5 top-[34px] w-3 h-3 rounded-full bg-neon-cyan border-2 border-background z-20" />
+                          <CityField
+                            label="Origen 📍"
+                            value={origen}
+                            onChange={setOrigen}
+                            placeholder="Ciudad de origen (ej: Querétaro, CDMX...)"
+                            dotColor="neon-cyan"
+                            billableVol={billableVol}
+                          />
                         </div>
                         <div className="relative pl-10">
-                          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-neon-green border-2 border-background z-20" />
-                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Destino 🎯</label>
-                          <input value={destino} onChange={e => setDestino(e.target.value)} placeholder="Ciudad destino (ej: Monterrey, Guadalajara...)" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                          <div className="absolute left-3.5 top-[34px] w-3 h-3 rounded-full bg-neon-green border-2 border-background z-20" />
+                          <CityField
+                            label="Destino 🎯"
+                            value={destino}
+                            onChange={setDestino}
+                            placeholder="Ciudad destino (ej: Monterrey, Guadalajara...)"
+                            dotColor="neon-green"
+                            billableVol={billableVol}
+                          />
                         </div>
                       </div>
                     </div>
+
+                    {/* Route summary — shown when both cities are filled and valid */}
+                    <AnimatePresence>
+                      {origenCls && destinoCls && origen.trim().length >= 2 && destino.trim().length >= 2 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                        >
+                          <RouteSummaryBadge
+                            origenCls={origenCls}
+                            destinoCls={destinoCls}
+                            billableVol={billableVol}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <div>
                       <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Fecha estimada del servicio</label>
@@ -669,17 +698,19 @@ export default function CotizadorSection() {
                   </div>
 
                   {/* Trust pill */}
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4 text-xs text-muted-foreground">
                     <Star className="w-3.5 h-3.5 text-neon-green flex-shrink-0" />
                     Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
                   </div>
 
-                  {!canProceedStep1 && (nombre || whatsapp || origen || destino || fecha) && (
+                  {/* Incomplete fields warning */}
+                  {!canProceedStep1 && !hasExclusiveZone && (nombre || whatsapp || origen || destino || fecha) && (
                     <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
                       <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
                       <span>Completa todos los campos: <strong>nombre, WhatsApp, origen, destino y fecha</strong> para continuar.</span>
                     </div>
                   )}
+
                   <button
                     type="button"
                     disabled={!canProceedStep1}
