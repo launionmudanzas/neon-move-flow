@@ -842,14 +842,19 @@ export default function CotizadorSection() {
                     <span className="text-muted-foreground">#LaUnionMudanzas ❤️ · Salimos todas las semanas · <strong className="text-neon-green">Espacios limitados en rutas compartidas</strong></span>
                   </div>
 
-                  {/* CTAs */}
+                   {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => setStep(6)}
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-lg hover:shadow-[0_0_28px_hsl(142_100%_42%/0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      onClick={handleApartarServicio}
+                      disabled={guardandoCot}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-orange to-yellow-500 text-background font-black text-lg hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60"
                     >
-                      🎯 APARTAR MI SERVICIO
+                      {guardandoCot ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" />Generando orden…</>
+                      ) : (
+                        <>🎯 APARTAR MI SERVICIO + PAGAR</>
+                      )}
                     </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
