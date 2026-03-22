@@ -7,6 +7,7 @@ interface UserIdentity {
   is_admin: boolean;
   cliente_id: string | null;
   proveedor_id: string | null;
+  created_at?: string;
 }
 
 interface AuthContextType {
