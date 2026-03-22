@@ -10,365 +10,1146 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
-      contact_messages: {
+      chats_publicaciones: {
         Row: {
-          created_at: string | null
-          email: string
+          contacto_desbloqueado: boolean
+          created_at: string
+          estatus: string | null
           id: string
-          message: string
-          name: string
-          phone: string | null
+          proveedor_interesado_id: string
+          proveedor_origen_id: string
+          publicacion_id: string
         }
         Insert: {
-          created_at?: string | null
-          email: string
+          contacto_desbloqueado?: boolean
+          created_at?: string
+          estatus?: string | null
           id?: string
-          message: string
-          name: string
-          phone?: string | null
+          proveedor_interesado_id: string
+          proveedor_origen_id: string
+          publicacion_id: string
         }
         Update: {
-          created_at?: string | null
-          email?: string
+          contacto_desbloqueado?: boolean
+          created_at?: string
+          estatus?: string | null
           id?: string
-          message?: string
-          name?: string
-          phone?: string | null
-        }
-        Relationships: []
-      }
-      documents: {
-        Row: {
-          created_at: string | null
-          document_type: string
-          file_url: string | null
-          id: string
-          service_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          document_type: string
-          file_url?: string | null
-          id?: string
-          service_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          document_type?: string
-          file_url?: string | null
-          id?: string
-          service_id?: string | null
+          proveedor_interesado_id?: string
+          proveedor_origen_id?: string
+          publicacion_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "documents_service_id_fkey"
-            columns: ["service_id"]
+            foreignKeyName: "chats_publicaciones_proveedor_interesado_id_fkey"
+            columns: ["proveedor_interesado_id"]
             isOneToOne: false
-            referencedRelation: "services"
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_publicaciones_proveedor_origen_id_fkey"
+            columns: ["proveedor_origen_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_publicaciones_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones_carga"
             referencedColumns: ["id"]
           },
         ]
       }
-      gallery: {
+      clientes: {
         Row: {
+          correo: string | null
           created_at: string
+          direccion_principal: string | null
           id: string
-          image_url: string
-          title: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          image_url: string
-          title?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          image_url?: string
-          title?: string | null
-        }
-        Relationships: []
-      }
-      moving_items: {
-        Row: {
-          category: string
-          created_at: string | null
-          id: string
-          name: string
-          volume_m3: number
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          id?: string
-          name: string
-          volume_m3: number
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          id?: string
-          name?: string
-          volume_m3?: number
-        }
-        Relationships: []
-      }
-      payments: {
-        Row: {
-          amount: number
-          created_at: string | null
-          id: string
-          payment_method: string
-          payment_type: string
-          service_id: string | null
-          status: string
-          transaction_id: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          id?: string
-          payment_method: string
-          payment_type: string
-          service_id?: string | null
-          status?: string
-          transaction_id?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          id?: string
-          payment_method?: string
-          payment_type?: string
-          service_id?: string | null
-          status?: string
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      routes: {
-        Row: {
-          created_at: string
-          delivery_time: string | null
-          destination: string
-          frequency: string | null
-          id: string
-          origin: string
-          price: number
-          price_per_m3: number | null
-        }
-        Insert: {
-          created_at?: string
-          delivery_time?: string | null
-          destination: string
-          frequency?: string | null
-          id?: string
-          origin: string
-          price: number
-          price_per_m3?: number | null
-        }
-        Update: {
-          created_at?: string
-          delivery_time?: string | null
-          destination?: string
-          frequency?: string | null
-          id?: string
-          origin?: string
-          price?: number
-          price_per_m3?: number | null
-        }
-        Relationships: []
-      }
-      services: {
-        Row: {
-          advance_amount: number | null
-          comments: string | null
-          contact_preference: string | null
-          created_at: string | null
-          destination_city: string
-          email: string | null
-          estimated_price: number | null
-          folio: string
-          full_name: string
-          id: string
-          inventory_details: Json | null
-          load_type: string | null
-          origin_city: string
-          payment_status: string | null
-          phone: string
-          quote_amount: number | null
-          service_date: string | null
-          service_type: string
-          status: string
-          total_amount: number | null
-          total_volume: number | null
-          updated_at: string | null
-          whatsapp: string
-        }
-        Insert: {
-          advance_amount?: number | null
-          comments?: string | null
-          contact_preference?: string | null
-          created_at?: string | null
-          destination_city: string
-          email?: string | null
-          estimated_price?: number | null
-          folio: string
-          full_name: string
-          id?: string
-          inventory_details?: Json | null
-          load_type?: string | null
-          origin_city: string
-          payment_status?: string | null
-          phone: string
-          quote_amount?: number | null
-          service_date?: string | null
-          service_type: string
-          status?: string
-          total_amount?: number | null
-          total_volume?: number | null
-          updated_at?: string | null
-          whatsapp: string
-        }
-        Update: {
-          advance_amount?: number | null
-          comments?: string | null
-          contact_preference?: string | null
-          created_at?: string | null
-          destination_city?: string
-          email?: string | null
-          estimated_price?: number | null
-          folio?: string
-          full_name?: string
-          id?: string
-          inventory_details?: Json | null
-          load_type?: string | null
-          origin_city?: string
-          payment_status?: string | null
-          phone?: string
-          quote_amount?: number | null
-          service_date?: string | null
-          service_type?: string
-          status?: string
-          total_amount?: number | null
-          total_volume?: number | null
-          updated_at?: string | null
-          whatsapp?: string
-        }
-        Relationships: []
-      }
-      site_config: {
-        Row: {
-          address: string | null
-          company_name: string | null
-          created_at: string
-          email: string | null
-          id: number
-          logo_url: string | null
-          phone: string | null
-          phone_secondary: string | null
-          schedule_weekdays: string | null
-          schedule_weekend: string | null
+          ine_frente_url: string | null
+          ine_reverso_url: string | null
+          nombre_completo: string
+          notas: string | null
           updated_at: string
           whatsapp: string | null
-          whatsapp_secondary: string | null
         }
         Insert: {
-          address?: string | null
-          company_name?: string | null
+          correo?: string | null
           created_at?: string
-          email?: string | null
-          id?: number
-          logo_url?: string | null
-          phone?: string | null
-          phone_secondary?: string | null
-          schedule_weekdays?: string | null
-          schedule_weekend?: string | null
+          direccion_principal?: string | null
+          id?: string
+          ine_frente_url?: string | null
+          ine_reverso_url?: string | null
+          nombre_completo: string
+          notas?: string | null
           updated_at?: string
           whatsapp?: string | null
-          whatsapp_secondary?: string | null
         }
         Update: {
-          address?: string | null
-          company_name?: string | null
+          correo?: string | null
           created_at?: string
-          email?: string | null
-          id?: number
-          logo_url?: string | null
-          phone?: string | null
-          phone_secondary?: string | null
-          schedule_weekdays?: string | null
-          schedule_weekend?: string | null
+          direccion_principal?: string | null
+          id?: string
+          ine_frente_url?: string | null
+          ine_reverso_url?: string | null
+          nombre_completo?: string
+          notas?: string | null
           updated_at?: string
           whatsapp?: string | null
-          whatsapp_secondary?: string | null
         }
         Relationships: []
       }
-      testimonials: {
+      costos_adicionales: {
         Row: {
-          avatar_url: string | null
-          client_name: string
-          comment: string
-          created_at: string | null
+          activo: boolean
+          costo: number | null
+          created_at: string
           id: string
-          rating: number
-          source: string | null
+          regla: string | null
+          subtipo: string | null
+          tipo: string | null
+          unidad_cobro: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          client_name: string
-          comment: string
-          created_at?: string | null
+          activo?: boolean
+          costo?: number | null
+          created_at?: string
           id?: string
-          rating: number
-          source?: string | null
+          regla?: string | null
+          subtipo?: string | null
+          tipo?: string | null
+          unidad_cobro?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          client_name?: string
-          comment?: string
-          created_at?: string | null
+          activo?: boolean
+          costo?: number | null
+          created_at?: string
           id?: string
-          rating?: number
-          source?: string | null
+          regla?: string | null
+          subtipo?: string | null
+          tipo?: string | null
+          unidad_cobro?: string | null
         }
         Relationships: []
       }
-      vehicle_types: {
+      cotizaciones: {
         Row: {
-          category: string
-          created_at: string | null
+          cliente_acepto: boolean
+          cliente_id: string
+          comision_app: number | null
+          costo_adicionales: number | null
+          costo_entrega: number | null
+          costo_recoleccion: number | null
+          created_at: string
+          destino: string | null
+          estatus: string | null
+          fecha_llegada: string | null
+          fecha_salida: string | null
+          folio: string | null
           id: string
-          name: string
-          price_coefficient: number
+          margen_negocio: number | null
+          modalidad: string | null
+          modalidad_sugerida: string | null
+          observaciones: string | null
+          origen: string | null
+          porcentaje_urgencia: number
+          precio_base: number | null
+          precio_total: number | null
+          seguro_costo: number | null
+          seguro_monto: number | null
+          seguro_porcentaje: number | null
+          tipo_servicio: string | null
+          unidad_sugerida: string | null
+          updated_at: string
+          urgencia: boolean
+          volumen_cobrable: number | null
+          volumen_total: number | null
         }
         Insert: {
-          category: string
-          created_at?: string | null
+          cliente_acepto?: boolean
+          cliente_id: string
+          comision_app?: number | null
+          costo_adicionales?: number | null
+          costo_entrega?: number | null
+          costo_recoleccion?: number | null
+          created_at?: string
+          destino?: string | null
+          estatus?: string | null
+          fecha_llegada?: string | null
+          fecha_salida?: string | null
+          folio?: string | null
           id?: string
-          name: string
-          price_coefficient?: number
+          margen_negocio?: number | null
+          modalidad?: string | null
+          modalidad_sugerida?: string | null
+          observaciones?: string | null
+          origen?: string | null
+          porcentaje_urgencia?: number
+          precio_base?: number | null
+          precio_total?: number | null
+          seguro_costo?: number | null
+          seguro_monto?: number | null
+          seguro_porcentaje?: number | null
+          tipo_servicio?: string | null
+          unidad_sugerida?: string | null
+          updated_at?: string
+          urgencia?: boolean
+          volumen_cobrable?: number | null
+          volumen_total?: number | null
         }
         Update: {
-          category?: string
-          created_at?: string | null
+          cliente_acepto?: boolean
+          cliente_id?: string
+          comision_app?: number | null
+          costo_adicionales?: number | null
+          costo_entrega?: number | null
+          costo_recoleccion?: number | null
+          created_at?: string
+          destino?: string | null
+          estatus?: string | null
+          fecha_llegada?: string | null
+          fecha_salida?: string | null
+          folio?: string | null
           id?: string
-          name?: string
-          price_coefficient?: number
+          margen_negocio?: number | null
+          modalidad?: string | null
+          modalidad_sugerida?: string | null
+          observaciones?: string | null
+          origen?: string | null
+          porcentaje_urgencia?: number
+          precio_base?: number | null
+          precio_total?: number | null
+          seguro_costo?: number | null
+          seguro_monto?: number | null
+          seguro_porcentaje?: number | null
+          tipo_servicio?: string | null
+          unidad_sugerida?: string | null
+          updated_at?: string
+          urgencia?: boolean
+          volumen_cobrable?: number | null
+          volumen_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotizaciones_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eventos_calendario: {
+        Row: {
+          cliente_id: string | null
+          color: string | null
+          cotizacion_id: string | null
+          created_at: string
+          estatus: string | null
+          fecha_fin: string | null
+          fecha_inicio: string | null
+          id: string
+          observaciones: string | null
+          proveedor_id: string | null
+          titulo: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          color?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          observaciones?: string | null
+          proveedor_id?: string | null
+          titulo?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          color?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          observaciones?: string | null
+          proveedor_id?: string | null
+          titulo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_calendario_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_calendario_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_calendario_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expedientes_servicio: {
+        Row: {
+          cliente_id: string | null
+          comprobante_pago_url: string | null
+          cotizacion_id: string | null
+          created_at: string
+          estatus: string | null
+          id: string
+          orden_servicio_id: string | null
+          poliza_seguro_url: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          comprobante_pago_url?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          id?: string
+          orden_servicio_id?: string | null
+          poliza_seguro_url?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          comprobante_pago_url?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          id?: string
+          orden_servicio_id?: string | null
+          poliza_seguro_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expedientes_servicio_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expedientes_servicio_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expedientes_servicio_orden_servicio_id_fkey"
+            columns: ["orden_servicio_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes_servicio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      folio_counters: {
+        Row: {
+          id: number
+          seq: number
+          yyyymmdd: string
+        }
+        Insert: {
+          id?: number
+          seq?: number
+          yyyymmdd: string
+        }
+        Update: {
+          id?: number
+          seq?: number
+          yyyymmdd?: string
+        }
+        Relationships: []
+      }
+      incidencias: {
+        Row: {
+          cliente_id: string | null
+          cotizacion_id: string | null
+          created_at: string
+          descripcion: string | null
+          estatus: string | null
+          fecha_limite_reembolso: string | null
+          fecha_reporte: string
+          id: string
+          negligencia_proveedor: boolean
+          proveedor_id: string | null
+          reportada_en_app: boolean
+          requiere_reembolso: boolean
+          tipo_incidencia: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estatus?: string | null
+          fecha_limite_reembolso?: string | null
+          fecha_reporte?: string
+          id?: string
+          negligencia_proveedor?: boolean
+          proveedor_id?: string | null
+          reportada_en_app?: boolean
+          requiere_reembolso?: boolean
+          tipo_incidencia?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estatus?: string | null
+          fecha_limite_reembolso?: string | null
+          fecha_reporte?: string
+          id?: string
+          negligencia_proveedor?: boolean
+          proveedor_id?: string | null
+          reportada_en_app?: boolean
+          requiere_reembolso?: boolean
+          tipo_incidencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidencias_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidencias_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidencias_evidencias: {
+        Row: {
+          archivo_url: string | null
+          comentario: string | null
+          created_at: string
+          id: string
+          incidencia_id: string
+          tipo_archivo: string | null
+        }
+        Insert: {
+          archivo_url?: string | null
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          incidencia_id: string
+          tipo_archivo?: string | null
+        }
+        Update: {
+          archivo_url?: string | null
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          incidencia_id?: string
+          tipo_archivo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidencias_evidencias_incidencia_id_fkey"
+            columns: ["incidencia_id"]
+            isOneToOne: false
+            referencedRelation: "incidencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intereses_publicacion: {
+        Row: {
+          created_at: string
+          estatus: string | null
+          id: string
+          proveedor_interesado_id: string
+          publicacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          estatus?: string | null
+          id?: string
+          proveedor_interesado_id: string
+          publicacion_id: string
+        }
+        Update: {
+          created_at?: string
+          estatus?: string | null
+          id?: string
+          proveedor_interesado_id?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intereses_publicacion_proveedor_interesado_id_fkey"
+            columns: ["proveedor_interesado_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intereses_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones_carga"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventario_items: {
+        Row: {
+          articulo: string | null
+          cantidad: number | null
+          categoria: string | null
+          cotizacion_id: string
+          created_at: string
+          id: string
+          m3_unitario: number | null
+          subtotal_m3: number | null
+        }
+        Insert: {
+          articulo?: string | null
+          cantidad?: number | null
+          categoria?: string | null
+          cotizacion_id: string
+          created_at?: string
+          id?: string
+          m3_unitario?: number | null
+          subtotal_m3?: number | null
+        }
+        Update: {
+          articulo?: string | null
+          cantidad?: number | null
+          categoria?: string | null
+          cotizacion_id?: string
+          created_at?: string
+          id?: string
+          m3_unitario?: number | null
+          subtotal_m3?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventario_items_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensajes_chat_publicacion: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          mensaje: string
+          remitente_proveedor_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          mensaje: string
+          remitente_proveedor_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          mensaje?: string
+          remitente_proveedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensajes_chat_publicacion_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats_publicaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_chat_publicacion_remitente_proveedor_id_fkey"
+            columns: ["remitente_proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordenes_servicio: {
+        Row: {
+          contrato_url: string | null
+          cotizacion_id: string
+          created_at: string
+          estatus: string | null
+          folio: string | null
+          id: string
+          pdf_url: string | null
+        }
+        Insert: {
+          contrato_url?: string | null
+          cotizacion_id: string
+          created_at?: string
+          estatus?: string | null
+          folio?: string | null
+          id?: string
+          pdf_url?: string | null
+        }
+        Update: {
+          contrato_url?: string | null
+          cotizacion_id?: string
+          created_at?: string
+          estatus?: string | null
+          folio?: string | null
+          id?: string
+          pdf_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordenes_servicio_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagos: {
+        Row: {
+          cliente_id: string | null
+          comprobante_url: string | null
+          cotizacion_id: string | null
+          created_at: string
+          estatus: string | null
+          fecha_pago: string | null
+          id: string
+          metodo_pago: string | null
+          moneda: string
+          monto: number | null
+          proveedor_id: string | null
+          referencia: string | null
+          tipo_pago: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          comprobante_url?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          fecha_pago?: string | null
+          id?: string
+          metodo_pago?: string | null
+          moneda?: string
+          monto?: number | null
+          proveedor_id?: string | null
+          referencia?: string | null
+          tipo_pago?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          comprobante_url?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          fecha_pago?: string | null
+          id?: string
+          metodo_pago?: string | null
+          moneda?: string
+          monto?: number | null
+          proveedor_id?: string | null
+          referencia?: string | null
+          tipo_pago?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proveedor_unidades: {
+        Row: {
+          activa: boolean
+          capacidad_m3: number | null
+          created_at: string
+          foto_url: string | null
+          id: string
+          placas: string | null
+          proveedor_id: string
+          tipo_unidad: string | null
+        }
+        Insert: {
+          activa?: boolean
+          capacidad_m3?: number | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          placas?: string | null
+          proveedor_id: string
+          tipo_unidad?: string | null
+        }
+        Update: {
+          activa?: boolean
+          capacidad_m3?: number | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          placas?: string | null
+          proveedor_id?: string
+          tipo_unidad?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proveedor_unidades_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proveedores: {
+        Row: {
+          activo: boolean
+          adeudo_cliente_pendiente: number
+          calificacion: number | null
+          ciudades_cobertura: string[] | null
+          correo: string | null
+          created_at: string
+          cuota_reingreso_pendiente: number
+          direccion: string | null
+          estatus: string | null
+          id: string
+          logo_url: string | null
+          nombre_comercial: string
+          premium_activo: boolean
+          razon_social: string | null
+          responsable_nombre: string | null
+          rutas_frecuentes: string[] | null
+          servicios_sin_anticipo_restantes: number
+          supervision_especial: boolean
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          activo?: boolean
+          adeudo_cliente_pendiente?: number
+          calificacion?: number | null
+          ciudades_cobertura?: string[] | null
+          correo?: string | null
+          created_at?: string
+          cuota_reingreso_pendiente?: number
+          direccion?: string | null
+          estatus?: string | null
+          id?: string
+          logo_url?: string | null
+          nombre_comercial: string
+          premium_activo?: boolean
+          razon_social?: string | null
+          responsable_nombre?: string | null
+          rutas_frecuentes?: string[] | null
+          servicios_sin_anticipo_restantes?: number
+          supervision_especial?: boolean
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          activo?: boolean
+          adeudo_cliente_pendiente?: number
+          calificacion?: number | null
+          ciudades_cobertura?: string[] | null
+          correo?: string | null
+          created_at?: string
+          cuota_reingreso_pendiente?: number
+          direccion?: string | null
+          estatus?: string | null
+          id?: string
+          logo_url?: string | null
+          nombre_comercial?: string
+          premium_activo?: boolean
+          razon_social?: string | null
+          responsable_nombre?: string | null
+          rutas_frecuentes?: string[] | null
+          servicios_sin_anticipo_restantes?: number
+          supervision_especial?: boolean
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      publicaciones_carga: {
+        Row: {
+          comision_app_publicador: number | null
+          comision_app_tomador: number | null
+          costo_ofrecido: number | null
+          created_at: string
+          destino: string | null
+          estatus: string | null
+          expira_at: string | null
+          fecha_salida: string | null
+          id: string
+          origen: string | null
+          proveedor_id: string
+          tipo_publicacion: string | null
+          volumen_disponible: number | null
+        }
+        Insert: {
+          comision_app_publicador?: number | null
+          comision_app_tomador?: number | null
+          costo_ofrecido?: number | null
+          created_at?: string
+          destino?: string | null
+          estatus?: string | null
+          expira_at?: string | null
+          fecha_salida?: string | null
+          id?: string
+          origen?: string | null
+          proveedor_id: string
+          tipo_publicacion?: string | null
+          volumen_disponible?: number | null
+        }
+        Update: {
+          comision_app_publicador?: number | null
+          comision_app_tomador?: number | null
+          costo_ofrecido?: number | null
+          created_at?: string
+          destino?: string | null
+          estatus?: string | null
+          expira_at?: string | null
+          fecha_salida?: string | null
+          id?: string
+          origen?: string | null
+          proveedor_id?: string
+          tipo_publicacion?: string | null
+          volumen_disponible?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicaciones_carga_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reembolsos: {
+        Row: {
+          cliente_id: string | null
+          cotizacion_id: string | null
+          created_at: string
+          estatus: string | null
+          evidencia_url: string | null
+          fecha_cumplimiento: string | null
+          fecha_limite: string | null
+          id: string
+          incidencia_id: string | null
+          monto: number | null
+          proveedor_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          evidencia_url?: string | null
+          fecha_cumplimiento?: string | null
+          fecha_limite?: string | null
+          id?: string
+          incidencia_id?: string | null
+          monto?: number | null
+          proveedor_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          estatus?: string | null
+          evidencia_url?: string | null
+          fecha_cumplimiento?: string | null
+          fecha_limite?: string | null
+          id?: string
+          incidencia_id?: string | null
+          monto?: number | null
+          proveedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reembolsos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reembolsos_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reembolsos_incidencia_id_fkey"
+            columns: ["incidencia_id"]
+            isOneToOne: false
+            referencedRelation: "incidencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reembolsos_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rutas: {
+        Row: {
+          activa: boolean
+          costo_m3: number
+          created_at: string
+          destino: string
+          es_directa: boolean
+          id: string
+          notas: string | null
+          origen: string
+        }
+        Insert: {
+          activa?: boolean
+          costo_m3: number
+          created_at?: string
+          destino: string
+          es_directa?: boolean
+          id?: string
+          notas?: string | null
+          origen: string
+        }
+        Update: {
+          activa?: boolean
+          costo_m3?: number
+          created_at?: string
+          destino?: string
+          es_directa?: boolean
+          id?: string
+          notas?: string | null
+          origen?: string
+        }
+        Relationships: []
+      }
+      sanciones_proveedor: {
+        Row: {
+          bloqueado: boolean
+          created_at: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          monto_adeudo: number | null
+          monto_reingreso: number | null
+          motivo: string | null
+          proveedor_id: string
+          servicios_sin_anticipo: number
+          supervision_especial: boolean
+        }
+        Insert: {
+          bloqueado?: boolean
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          monto_adeudo?: number | null
+          monto_reingreso?: number | null
+          motivo?: string | null
+          proveedor_id: string
+          servicios_sin_anticipo?: number
+          supervision_especial?: boolean
+        }
+        Update: {
+          bloqueado?: boolean
+          created_at?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          monto_adeudo?: number | null
+          monto_reingreso?: number | null
+          motivo?: string | null
+          proveedor_id?: string
+          servicios_sin_anticipo?: number
+          supervision_especial?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sanciones_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suscripciones_proveedor: {
+        Row: {
+          autopause: boolean
+          created_at: string
+          estatus: string | null
+          fecha_inicio: string | null
+          fecha_renovacion: string | null
+          fecha_suspension: string | null
+          id: string
+          monto_mensual: number | null
+          plan: string | null
+          proveedor_id: string
+        }
+        Insert: {
+          autopause?: boolean
+          created_at?: string
+          estatus?: string | null
+          fecha_inicio?: string | null
+          fecha_renovacion?: string | null
+          fecha_suspension?: string | null
+          id?: string
+          monto_mensual?: number | null
+          plan?: string | null
+          proveedor_id: string
+        }
+        Update: {
+          autopause?: boolean
+          created_at?: string
+          estatus?: string | null
+          fecha_inicio?: string | null
+          fecha_renovacion?: string | null
+          fecha_suspension?: string | null
+          id?: string
+          monto_mensual?: number | null
+          plan?: string | null
+          proveedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suscripciones_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_identities: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          is_admin: boolean
+          proveedor_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          is_admin?: boolean
+          proveedor_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          is_admin?: boolean
+          proveedor_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_identities_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_identities_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zonas_restringidas: {
+        Row: {
+          camioneta_forzosa: boolean
+          ciudad: string
+          clave_requerida: boolean
+          condicion: string | null
+          costo_extra: number | null
+          created_at: string
+          id: string
+          notas: string | null
+        }
+        Insert: {
+          camioneta_forzosa?: boolean
+          ciudad: string
+          clave_requerida?: boolean
+          condicion?: string | null
+          costo_extra?: number | null
+          created_at?: string
+          id?: string
+          notas?: string | null
+        }
+        Update: {
+          camioneta_forzosa?: boolean
+          ciudad?: string
+          clave_requerida?: boolean
+          condicion?: string | null
+          costo_extra?: number | null
+          created_at?: string
+          id?: string
+          notas?: string | null
         }
         Relationships: []
       }
@@ -377,7 +1158,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
+      next_folio: { Args: never; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
