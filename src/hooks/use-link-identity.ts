@@ -83,7 +83,7 @@ export function useLinkIdentity(): UseLinkIdentityReturn {
         return { success: false, error: msg };
       }
 
-      const result = data as RpcResponse;
+      const result = (data as unknown) as RpcResponse;
       if (!result.success) {
         setError(result.error ?? "Error desconocido");
       } else {
@@ -120,7 +120,7 @@ export function useLinkIdentity(): UseLinkIdentityReturn {
         return { success: false, error: msg };
       }
 
-      const result = data as RpcResponse;
+      const result = (data as unknown) as RpcResponse;
       if (!result.success) {
         setError(result.error ?? "Error desconocido");
       } else {
