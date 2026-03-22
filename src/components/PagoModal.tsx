@@ -5,10 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 
-const STRIPE_PK = 'pk_test_51RJxeEPKCfPJEqp6cBn0kxz3OfSNSVoQpKJkFkO3c2K3d9NQ4y6mWZi7mOkI8dQ3b9v7q2c3V5F8r0d0p0PLACEHOLDER';
-
-// Real publishable key - replace with actual key from Stripe dashboard
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || STRIPE_PK);
+const stripePromise = loadStripe('pk_live_51SiBhiQ3g3KekYqfcy0gdKzvjqgX8XaPcouSARuyGA1ABjEqJwpZ7Yfxl3zZXZaNBnRycpJTrFaOqVBoY779lNZw00JY4R1b7K');
 
 const SPEI_DATA = {
   banco: 'BBVA México',
