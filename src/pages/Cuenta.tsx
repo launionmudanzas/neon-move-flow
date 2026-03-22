@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Truck, ClipboardList, Link2, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { LogOut, User, Truck, ClipboardList, Link2, ArrowLeft, ShieldCheck, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import logoOficial from '@/assets/logo-oficial.png';
 
