@@ -1159,6 +1159,10 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      link_user_identity: {
+        Args: { p_cliente_id?: string; p_proveedor_id?: string }
+        Returns: Json
+      }
       next_folio: { Args: never; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
