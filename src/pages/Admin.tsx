@@ -3,8 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
-  IdCard, Activity, RefreshCw, Eye, Search, ChevronDown,
-  CheckCircle2, Clock, XCircle, Truck, AlertTriangle,
+  IdCard, RefreshCw, Eye, Search, ChevronDown,
+  CheckCircle2, Clock, XCircle, Truck, Star, MapPin,
+  ToggleLeft, ToggleRight, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +24,7 @@ import {
 import logoOficial from '@/assets/logo-oficial.png';
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
-type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines';
+type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores';
 
 interface Cotizacion {
   id: string; folio: string | null; created_at: string;
@@ -45,9 +46,26 @@ interface Orden {
   cotizaciones: { origen: string | null; destino: string | null; precio_total: number | null; cliente_id: string } | null;
 }
 
+interface Proveedor {
+  id: string;
+  nombre_comercial: string;
+  responsable_nombre: string | null;
+  whatsapp: string | null;
+  correo: string | null;
+  estatus: string | null;
+  activo: boolean;
+  calificacion: number | null;
+  ciudades_cobertura: string[] | null;
+  premium_activo: boolean;
+  supervision_especial: boolean;
+  adeudo_cliente_pendiente: number;
+  created_at: string;
+}
+
 /* ─── helpers ────────────────────────────────────────────────────────────── */
 const ESTATUS_COTIZACION = ['borrador','enviada','aceptada','en_proceso','completada','cancelada'];
 const ESTATUS_ORDEN      = ['generada','en_proceso','completada','cancelada'];
+const ESTATUS_PROVEEDOR  = ['activo','suspendido','bloqueado','pendiente_revision'];
 
 const fmt = (n: number | null) =>
   n != null ? `$${n.toLocaleString('es-MX', { minimumFractionDigits: 0 })}` : '—';
@@ -58,17 +76,31 @@ const fmtDate = (iso: string) =>
 function EstatusBadge({ value }: { value: string | null }) {
   const v = value ?? 'desconocido';
   const map: Record<string, string> = {
-    completada: 'bg-green-500/15 text-green-400 border-green-500/30',
-    aceptada:   'bg-primary/15 text-primary border-primary/30',
-    en_proceso: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    enviada:    'bg-blue-400/15 text-blue-400 border-blue-400/30',
-    cancelada:  'bg-destructive/15 text-destructive border-destructive/30',
-    generada:   'bg-primary/15 text-primary border-primary/30',
-    borrador:   'bg-muted/40 text-muted-foreground border-border',
+    completada:         'bg-green-500/15 text-green-400 border-green-500/30',
+    aceptada:           'bg-primary/15 text-primary border-primary/30',
+    en_proceso:         'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    enviada:            'bg-blue-400/15 text-blue-400 border-blue-400/30',
+    cancelada:          'bg-destructive/15 text-destructive border-destructive/30',
+    generada:           'bg-primary/15 text-primary border-primary/30',
+    borrador:           'bg-muted/40 text-muted-foreground border-border',
+    activo:             'bg-green-500/15 text-green-400 border-green-500/30',
+    suspendido:         'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    bloqueado:          'bg-destructive/15 text-destructive border-destructive/30',
+    pendiente_revision: 'bg-blue-400/15 text-blue-400 border-blue-400/30',
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${map[v] ?? 'bg-muted/30 text-muted-foreground border-border'}`}>
-      {v}
+      {v.replace('_', ' ')}
+    </span>
+  );
+}
+
+function StarRating({ value }: { value: number | null }) {
+  if (value == null) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <span className="flex items-center gap-1">
+      <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+      <span className="text-xs font-semibold text-foreground">{value.toFixed(1)}</span>
     </span>
   );
 }
@@ -86,6 +118,7 @@ export default function Admin() {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
 
   // modals
   const [ineModal, setIneModal] = useState<Cliente | null>(null);
@@ -99,14 +132,16 @@ export default function Admin() {
   /* ── fetch ─────────────────────────────────────────────────────────────── */
   const fetchData = async () => {
     setLoading(true);
-    const [c, cl, o] = await Promise.all([
+    const [c, cl, o, p] = await Promise.all([
       supabase.from('cotizaciones').select('id,folio,created_at,origen,destino,precio_total,estatus,modalidad,urgencia,cliente_id').order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre_completo,whatsapp,correo,direccion_principal,ine_frente_url,ine_reverso_url,created_at').order('created_at', { ascending: false }),
       supabase.from('ordenes_servicio').select('id,folio,estatus,created_at,cotizacion_id,pdf_url,cotizaciones(origen,destino,precio_total,cliente_id)').order('created_at', { ascending: false }),
+      supabase.from('proveedores').select('id,nombre_comercial,responsable_nombre,whatsapp,correo,estatus,activo,calificacion,ciudades_cobertura,premium_activo,supervision_especial,adeudo_cliente_pendiente,created_at').order('created_at', { ascending: false }),
     ]);
-    if (c.data) setCotizaciones(c.data as Cotizacion[]);
+    if (c.data)  setCotizaciones(c.data as Cotizacion[]);
     if (cl.data) setClientes(cl.data as Cliente[]);
-    if (o.data) setOrdenes(o.data as Orden[]);
+    if (o.data)  setOrdenes(o.data as Orden[]);
+    if (p.data)  setProveedores(p.data as Proveedor[]);
     setLoading(false);
   };
 
@@ -130,6 +165,20 @@ export default function Admin() {
     setUpdatingId(null);
   };
 
+  const updateEstatusProveedor = async (id: string, estatus: string) => {
+    setUpdatingId(id);
+    await supabase.from('proveedores').update({ estatus }).eq('id', id);
+    setProveedores(prev => prev.map(p => p.id === id ? { ...p, estatus } : p));
+    setUpdatingId(null);
+  };
+
+  const toggleActivoProveedor = async (id: string, current: boolean) => {
+    setUpdatingId(id);
+    await supabase.from('proveedores').update({ activo: !current }).eq('id', id);
+    setProveedores(prev => prev.map(p => p.id === id ? { ...p, activo: !current } : p));
+    setUpdatingId(null);
+  };
+
   /* ── filtered lists ────────────────────────────────────────────────────── */
   const q = search.toLowerCase();
   const filteredCot = cotizaciones.filter(c =>
@@ -145,12 +194,17 @@ export default function Admin() {
     (c.ine_frente_url || c.ine_reverso_url) &&
     [c.nombre_completo, c.correo].some(v => v?.toLowerCase().includes(q))
   );
+  const filteredProv = proveedores.filter(p =>
+    [p.nombre_comercial, p.responsable_nombre, p.whatsapp, p.correo, p.estatus,
+      ...(p.ciudades_cobertura ?? [])].some(v => v?.toLowerCase().includes(q))
+  );
 
   /* ── stats ─────────────────────────────────────────────────────────────── */
   const stats: { id: Tab; label: string; value: number; icon: typeof ClipboardList; color: string }[] = [
     { id: 'cotizaciones', label: 'Cotizaciones', value: cotizaciones.length, icon: ClipboardList, color: 'text-primary' },
     { id: 'clientes',     label: 'Clientes',     value: clientes.length,     icon: Users,         color: 'text-accent' },
-    { id: 'ordenes',      label: 'Órdenes',      value: ordenes.length,      icon: FileText,      color: 'text-neon-orange' },
+    { id: 'ordenes',      label: 'Órdenes',       value: ordenes.length,      icon: FileText,      color: 'text-neon-orange' },
+    { id: 'proveedores',  label: 'Proveedores',   value: proveedores.length,  icon: Truck,         color: 'text-yellow-400' },
     { id: 'ines',         label: 'INEs subidos', value: clientes.filter(c => c.ine_frente_url || c.ine_reverso_url).length, icon: IdCard, color: 'text-neon-green' },
   ];
 
@@ -158,6 +212,7 @@ export default function Admin() {
     { id: 'cotizaciones', label: 'Cotizaciones', icon: ClipboardList },
     { id: 'clientes',     label: 'Clientes',     icon: Users },
     { id: 'ordenes',      label: 'Órdenes',       icon: FileText },
+    { id: 'proveedores',  label: 'Proveedores',   icon: Truck },
     { id: 'ines',         label: 'INEs',           icon: IdCard },
   ];
 
@@ -210,7 +265,7 @@ export default function Admin() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
           {stats.map(s => (
             <motion.button
               key={s.id}
@@ -432,6 +487,121 @@ export default function Admin() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* ── PROVEEDORES ── */}
+          {tab === 'proveedores' && (
+            <div>
+              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+                <Truck className="w-4 h-4 text-yellow-400" />
+                <span className="font-semibold text-foreground text-sm">Proveedores</span>
+                <span className="ml-auto text-xs text-muted-foreground">{filteredProv.length} registros</span>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-muted-foreground text-xs">Empresa</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Contacto</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Calificación</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Ciudades</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Adeudo</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Estatus</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Activo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12 text-sm">Cargando…</TableCell></TableRow>
+                    ) : filteredProv.length === 0 ? (
+                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12 text-sm">Sin proveedores registrados</TableCell></TableRow>
+                    ) : filteredProv.map(p => (
+                      <TableRow key={p.id} className={`border-border hover:bg-muted/20 ${!p.activo ? 'opacity-60' : ''}`}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm text-foreground">{p.nombre_comercial}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {p.premium_activo && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 font-semibold">⭐ Premium</span>
+                              )}
+                              {p.supervision_especial && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold flex items-center gap-1">
+                                  <AlertTriangle className="w-2.5 h-2.5" />Supervisión
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-foreground">{p.responsable_nombre ?? '—'}</span>
+                            {p.whatsapp && <span className="text-[11px] text-muted-foreground">{p.whatsapp}</span>}
+                            {p.correo && <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">{p.correo}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <StarRating value={p.calificacion} />
+                        </TableCell>
+                        <TableCell className="max-w-[160px]">
+                          {p.ciudades_cobertura && p.ciudades_cobertura.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {p.ciudades_cobertura.slice(0, 3).map(c => (
+                                <span key={c} className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border">
+                                  <MapPin className="w-2.5 h-2.5" />{c}
+                                </span>
+                              ))}
+                              {p.ciudades_cobertura.length > 3 && (
+                                <span className="text-[10px] text-muted-foreground">+{p.ciudades_cobertura.length - 3}</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {p.adeudo_cliente_pendiente > 0 ? (
+                            <span className="text-xs font-semibold text-destructive">{fmt(p.adeudo_cliente_pendiente)}</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">$0</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={p.estatus ?? 'activo'}
+                            onValueChange={val => updateEstatusProveedor(p.id, val)}
+                            disabled={updatingId === p.id}
+                          >
+                            <SelectTrigger className="h-7 text-xs bg-transparent border-0 p-0 gap-1 w-auto focus:ring-0">
+                              <EstatusBadge value={p.estatus} />
+                              <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border">
+                              {ESTATUS_PROVEEDOR.map(e => (
+                                <SelectItem key={e} value={e} className="text-xs capitalize">{e.replace('_', ' ')}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => toggleActivoProveedor(p.id, p.activo)}
+                            disabled={updatingId === p.id}
+                            className={`flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                              p.activo ? 'text-green-400 hover:text-green-300' : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {p.activo
+                              ? <ToggleRight className="w-5 h-5" />
+                              : <ToggleLeft className="w-5 h-5" />}
+                            {p.activo ? 'Activo' : 'Inactivo'}
+                          </button>
                         </TableCell>
                       </TableRow>
                     ))}
