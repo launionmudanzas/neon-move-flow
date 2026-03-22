@@ -147,11 +147,11 @@ export default function Admin() {
   );
 
   /* ── stats ─────────────────────────────────────────────────────────────── */
-  const stats = [
-    { label: 'Cotizaciones', value: cotizaciones.length, icon: ClipboardList, color: 'text-primary' },
-    { label: 'Clientes', value: clientes.length, icon: Users, color: 'text-blue-400' },
-    { label: 'Órdenes', value: ordenes.length, icon: FileText, color: 'text-yellow-400' },
-    { label: 'INEs subidos', value: clientes.filter(c => c.ine_frente_url || c.ine_reverso_url).length, icon: IdCard, color: 'text-green-400' },
+  const stats: { id: Tab; label: string; value: number; icon: typeof ClipboardList; color: string }[] = [
+    { id: 'cotizaciones', label: 'Cotizaciones', value: cotizaciones.length, icon: ClipboardList, color: 'text-primary' },
+    { id: 'clientes',     label: 'Clientes',     value: clientes.length,     icon: Users,         color: 'text-accent' },
+    { id: 'ordenes',      label: 'Órdenes',      value: ordenes.length,      icon: FileText,      color: 'text-neon-orange' },
+    { id: 'ines',         label: 'INEs subidos', value: clientes.filter(c => c.ine_frente_url || c.ine_reverso_url).length, icon: IdCard, color: 'text-neon-green' },
   ];
 
   const TABS: { id: Tab; label: string; icon: typeof ClipboardList }[] = [
