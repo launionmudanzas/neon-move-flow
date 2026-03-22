@@ -322,12 +322,13 @@ export default function CotizadorSection() {
 
   const filledItems = Object.entries(inventory).filter(([, v]) => v > 0);
 
-  function buildWAMessage() {
+  function buildWAMessage(folio?: string) {
     const serviceLabel = tipoServicio || 'Mudanza';
     const items = filledItems.map(([k, v]) => `• ${inventoryLabels[k]}: ${v}`).join('\n');
     const insuranceText = seguro ? `\n🛡️ *Seguro:* ${formatMXN(montoSeguro)} asegurado · ${formatMXN(insuranceCost)}` : '';
+    const folioText = folio ? `\n📋 *Folio:* ${folio}` : '';
     return encodeURIComponent(
-      `¡Hola! Quiero apartar mi servicio con *La Unión Mudanzas* 🚛\n\n` +
+      `¡Hola! Quiero apartar mi servicio con *La Unión Mudanzas* 🚛${folioText}\n\n` +
       `👤 *Cliente:* ${nombre}\n📱 *WhatsApp:* ${whatsapp}\n` +
       `📍 *Origen:* ${origen}\n🎯 *Destino:* ${destino}\n📅 *Fecha:* ${fecha || 'Por confirmar'}\n\n` +
       `🏠 *Tipo:* ${serviceLabel}\n🚛 *Modalidad:* ${modalidad}\n` +
@@ -335,6 +336,28 @@ export default function CotizadorSection() {
       `📋 *Inventario:*\n${items || '(por definir)'}\n\n` +
       `#LaUnionMudanzas ❤️`
     );
+  }
+
+  // Save cotizacion to Supabase and open order modal
+  async function handleApartarServicio() {
+    setGuardandoCot(true);
+    const costoPisos = pisos === '2+' && elevador === 'no' ? 500 : 0;
+    const costoAcarreo = acarreo === 'largo' ? 800 : 0;
+    const result = await guardarCotizacion({
+      nombre, whatsapp, origen, destino, fecha,
+      tipoServicio, modalidad,
+      volumenTotal: vol,
+      volumenCobrable: billableVol,
+      unidadSugerida: unit.label,
+      seguro, montoSeguro,
+      costoPisos, costoAcarreo,
+      urgente: false,
+    });
+    setGuardandoCot(false);
+    if (result) {
+      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal });
+    }
+    setOrdenOpen(true);
   }
 
   const navBtn = (label: string, onClick: () => void, variant: 'primary' | 'ghost' = 'ghost') => (
