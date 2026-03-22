@@ -324,7 +324,7 @@ export default function Admin() {
           {tab === 'clientes' && (
             <div>
               <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
+                <Users className="w-4 h-4 text-accent" />
                 <span className="font-semibold text-foreground text-sm">Clientes</span>
                 <span className="ml-auto text-xs text-muted-foreground">{filteredCli.length} registros</span>
               </div>
