@@ -1158,6 +1158,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_publicaciones_now: { Args: never; Returns: number }
       init_user_identity: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       link_user_identity: {
