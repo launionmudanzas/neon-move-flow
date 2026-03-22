@@ -76,10 +76,10 @@ export const ROUTES: RouteDefinition[] = [
     name: 'CDMX–GDL',
     cities: [
       'Ciudad de México', 'Querétaro', 'San Juan del Río', 'San Miguel de Allende',
-      'León', 'Irapuato', 'Salamanca', 'Guadalajara',
+      'León', 'Irapuato', 'Salamanca', 'Morelia', 'Guadalajara',
     ],
     detours: ['Aguascalientes', 'Celaya'],
-    extensions: [],
+    extensions: ['Colima'],
   },
   {
     id: 5,
