@@ -2,12 +2,14 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import {
-  Truck, Home, Building2, Package, LayoutGrid, HelpCircle,
+  Truck, Home, Building2, Package,
   ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
   Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, ArrowRight, Upload, CreditCard
+  Star, Zap, Upload, CreditCard, Loader2
 } from 'lucide-react';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
+import PagoModal from '@/components/PagoModal';
+import { useCotizacion } from '@/hooks/use-cotizacion';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
@@ -241,7 +243,14 @@ export default function CotizadorSection() {
 
   const [step, setStep] = useState(1);
   const [ordenOpen, setOrdenOpen] = useState(false);
+  const [pagoOpen, setPagoOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [savedCotizacion, setSavedCotizacion] = useState<{
+    folio: string; cotizacionId: string; precioTotal: number;
+  } | null>(null);
+  const [guardandoCot, setGuardandoCot] = useState(false);
+
+  const { guardarCotizacion } = useCotizacion();
 
   // INE upload state
   const [ineFrente, setIneFrente] = useState<File | null>(null);
@@ -313,12 +322,13 @@ export default function CotizadorSection() {
 
   const filledItems = Object.entries(inventory).filter(([, v]) => v > 0);
 
-  function buildWAMessage() {
+  function buildWAMessage(folio?: string) {
     const serviceLabel = tipoServicio || 'Mudanza';
     const items = filledItems.map(([k, v]) => `• ${inventoryLabels[k]}: ${v}`).join('\n');
     const insuranceText = seguro ? `\n🛡️ *Seguro:* ${formatMXN(montoSeguro)} asegurado · ${formatMXN(insuranceCost)}` : '';
+    const folioText = folio ? `\n📋 *Folio:* ${folio}` : '';
     return encodeURIComponent(
-      `¡Hola! Quiero apartar mi servicio con *La Unión Mudanzas* 🚛\n\n` +
+      `¡Hola! Quiero apartar mi servicio con *La Unión Mudanzas* 🚛${folioText}\n\n` +
       `👤 *Cliente:* ${nombre}\n📱 *WhatsApp:* ${whatsapp}\n` +
       `📍 *Origen:* ${origen}\n🎯 *Destino:* ${destino}\n📅 *Fecha:* ${fecha || 'Por confirmar'}\n\n` +
       `🏠 *Tipo:* ${serviceLabel}\n🚛 *Modalidad:* ${modalidad}\n` +
@@ -326,6 +336,28 @@ export default function CotizadorSection() {
       `📋 *Inventario:*\n${items || '(por definir)'}\n\n` +
       `#LaUnionMudanzas ❤️`
     );
+  }
+
+  // Save cotizacion to Supabase and open order modal
+  async function handleApartarServicio() {
+    setGuardandoCot(true);
+    const costoPisos = pisos === '2+' && elevador === 'no' ? 500 : 0;
+    const costoAcarreo = acarreo === 'largo' ? 800 : 0;
+    const result = await guardarCotizacion({
+      nombre, whatsapp, origen, destino, fecha,
+      tipoServicio, modalidad,
+      volumenTotal: vol,
+      volumenCobrable: billableVol,
+      unidadSugerida: unit.label,
+      seguro, montoSeguro,
+      costoPisos, costoAcarreo,
+      urgente: false,
+    });
+    setGuardandoCot(false);
+    if (result) {
+      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal });
+    }
+    setOrdenOpen(true);
   }
 
   const navBtn = (label: string, onClick: () => void, variant: 'primary' | 'ghost' = 'ghost') => (
@@ -810,14 +842,19 @@ export default function CotizadorSection() {
                     <span className="text-muted-foreground">#LaUnionMudanzas ❤️ · Salimos todas las semanas · <strong className="text-neon-green">Espacios limitados en rutas compartidas</strong></span>
                   </div>
 
-                  {/* CTAs */}
+                   {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => setStep(6)}
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-lg hover:shadow-[0_0_28px_hsl(142_100%_42%/0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      onClick={handleApartarServicio}
+                      disabled={guardandoCot}
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-orange text-background font-black text-lg hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60"
                     >
-                      🎯 APARTAR MI SERVICIO
+                      {guardandoCot ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" />Generando orden…</>
+                      ) : (
+                        <>🎯 APARTAR MI SERVICIO + PAGAR</>
+                      )}
                     </button>
                     <a
                       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
@@ -997,14 +1034,36 @@ export default function CotizadorSection() {
       <OrdenServicioModal
         isOpen={ordenOpen}
         onClose={() => setOrdenOpen(false)}
+        onPagar={() => { setOrdenOpen(false); setPagoOpen(true); }}
         data={{
           nombre, whatsapp, origen, destino, fecha,
           serviceLabel: tipoServicio ? `Mudanza ${tipoServicio.charAt(0).toUpperCase() + tipoServicio.slice(1)}` : 'Mudanza',
           vol: vol.toFixed(1),
           unitLabel: unit.label,
           unitIcon: unit.icon,
+          folio: savedCotizacion?.folio,
+          precioTotal: savedCotizacion?.precioTotal,
+          cotizacionId: savedCotizacion?.cotizacionId,
         }}
       />
+
+      {/* Pago Modal */}
+      {savedCotizacion && (
+        <PagoModal
+          isOpen={pagoOpen}
+          onClose={() => setPagoOpen(false)}
+          onPagoExitoso={() => { setPagoOpen(false); setStep(6); setConfirmed(true); }}
+          data={{
+            folio: savedCotizacion.folio,
+            nombre,
+            monto: savedCotizacion.precioTotal,
+            origen,
+            destino,
+            serviceLabel: tipoServicio || 'Mudanza',
+            cotizacionId: savedCotizacion.cotizacionId,
+          }}
+        />
+      )}
     </section>
   );
 }
