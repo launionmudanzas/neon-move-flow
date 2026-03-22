@@ -290,7 +290,7 @@ export default function Admin() {
                         <TableCell className="text-xs text-foreground max-w-[160px]">
                           <span className="block truncate">{c.origen ?? '—'}</span>
                           <span className="block truncate text-muted-foreground">→ {c.destino ?? '—'}</span>
-                          {c.urgencia && <span className="text-[10px] text-yellow-400 font-semibold">⚡ Urgente</span>}
+                          {c.urgencia && <span className="text-[10px] text-[hsl(var(--neon-orange))] font-semibold">⚡ Urgente</span>}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground capitalize">{c.modalidad ?? '—'}</TableCell>
                         <TableCell className="text-sm font-semibold text-foreground">{fmt(c.precio_total)}</TableCell>
