@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import logoOficial from '@/assets/logo-oficial.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navLinks = [
   { label: 'Servicios', href: '#servicios' },
