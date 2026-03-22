@@ -848,7 +848,7 @@ export default function CotizadorSection() {
                       type="button"
                       onClick={handleApartarServicio}
                       disabled={guardandoCot}
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-orange to-yellow-500 text-background font-black text-lg hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60"
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-orange text-background font-black text-lg hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60"
                     >
                       {guardandoCot ? (
                         <><Loader2 className="w-5 h-5 animate-spin" />Generando orden…</>
