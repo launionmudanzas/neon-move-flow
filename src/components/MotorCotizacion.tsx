@@ -142,9 +142,9 @@ function CityInput({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-1.5 flex gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
-              <ShieldAlert className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-red-400 font-medium">
+            <div className="mt-1.5 flex gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30">
+              <ShieldAlert className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-destructive font-medium">
                 Esta zona no aplica para servicio compartido. Solo se ofrece servicio exclusivo.
               </p>
             </div>
