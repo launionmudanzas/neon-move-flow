@@ -445,7 +445,7 @@ export default function Admin() {
           {tab === 'ines' && (
             <div>
               <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <IdCard className="w-4 h-4 text-green-400" />
+                <IdCard className="w-4 h-4 text-neon-green" />
                 <span className="font-semibold text-foreground text-sm">INEs de Clientes</span>
                 <span className="ml-auto text-xs text-muted-foreground">{filteredInes.length} con documentos</span>
               </div>
