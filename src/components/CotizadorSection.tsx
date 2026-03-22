@@ -1,15 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import {
   Truck, Home, Building2, Package,
   ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
   Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, Upload, CreditCard, Loader2
+  Star, Zap, Upload, CreditCard, Loader2,
+  BadgeCheck, Navigation, Route as RouteIcon, ShieldAlert, HelpCircle,
 } from 'lucide-react';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
-import { useCotizacion } from '@/hooks/use-cotizacion';
+import { useCotizacion, getDesvioSurcharge } from '@/hooks/use-cotizacion';
+import { classifyCity, ALL_CITIES, CityStatus, CityClassification } from '@/lib/routing-data';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
