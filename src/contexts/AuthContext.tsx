@@ -30,10 +30,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchIdentity = async (userId: string) => {
     const { data } = await supabase
       .from('user_identities')
-      .select('*')
+      .select('user_id, is_admin, cliente_id, proveedor_id, created_at')
       .eq('user_id', userId)
       .maybeSingle();
-    setIdentity(data ?? null);
+    if (data) {
+      setIdentity({
+        user_id: data.user_id,
+        is_admin: data.is_admin,
+        cliente_id: data.cliente_id ?? null,
+        proveedor_id: data.proveedor_id ?? null,
+        created_at: data.created_at,
+      });
+    } else {
+      setIdentity(null);
+    }
   };
 
   const initAndFetchIdentity = async (userId: string) => {
