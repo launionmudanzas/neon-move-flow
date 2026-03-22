@@ -470,13 +470,13 @@ export default function Admin() {
                         <TableCell className="font-medium text-sm text-foreground">{c.nombre_completo}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{c.correo ?? '—'}</TableCell>
                         <TableCell>
-                          {c.ine_frente_url
-                            ? <span className="flex items-center gap-1 text-xs text-green-400 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Subido</span>
+                           {c.ine_frente_url
+                            ? <span className="flex items-center gap-1 text-xs text-neon-green font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Subido</span>
                             : <span className="flex items-center gap-1 text-xs text-muted-foreground"><XCircle className="w-3.5 h-3.5" />Faltante</span>}
                         </TableCell>
                         <TableCell>
                           {c.ine_reverso_url
-                            ? <span className="flex items-center gap-1 text-xs text-green-400 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Subido</span>
+                            ? <span className="flex items-center gap-1 text-xs text-neon-green font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Subido</span>
                             : <span className="flex items-center gap-1 text-xs text-muted-foreground"><XCircle className="w-3.5 h-3.5" />Faltante</span>}
                         </TableCell>
                         <TableCell>
