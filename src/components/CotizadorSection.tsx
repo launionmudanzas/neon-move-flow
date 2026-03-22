@@ -566,11 +566,16 @@ export default function CotizadorSection() {
     </button>
   );
 
+  // City classification (memoized)
+  const origenCls = useMemo(() => origen.trim().length >= 2 ? classifyCity(origen) : null, [origen]);
+  const destinoCls = useMemo(() => destino.trim().length >= 2 ? classifyCity(destino) : null, [destino]);
+  const hasExclusiveZone = origenCls?.status === 'exclusivo' || destinoCls?.status === 'exclusivo';
+
   // Smart alert conditions
   const hasHighVolume = billableVol > 60;
   const hasMultipleFloors = pisos === '2+';
   const noElevator = elevador === 'no' && pisos !== 'pb';
-  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim();
+  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim() && !hasExclusiveZone;
 
   return (
     <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
