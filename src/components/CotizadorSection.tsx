@@ -1046,6 +1046,24 @@ export default function CotizadorSection() {
           cotizacionId: savedCotizacion?.cotizacionId,
         }}
       />
+
+      {/* Pago Modal */}
+      {savedCotizacion && (
+        <PagoModal
+          isOpen={pagoOpen}
+          onClose={() => setPagoOpen(false)}
+          onPagoExitoso={() => { setPagoOpen(false); setStep(6); setConfirmed(true); }}
+          data={{
+            folio: savedCotizacion.folio,
+            nombre,
+            monto: savedCotizacion.precioTotal,
+            origen,
+            destino,
+            serviceLabel: tipoServicio || 'Mudanza',
+            cotizacionId: savedCotizacion.cotizacionId,
+          }}
+        />
+      )}
     </section>
   );
 }
