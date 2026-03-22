@@ -397,6 +397,5 @@ export function useCotizacion() {
   };
 }
 
-// Named exports for use in components (functions already defined/exported above)
+// Named exports for use in components (functions/types already defined/exported above)
 export { DESVIO_CITIES, getDesvioSurcharge, canonicalize };
-export type { TramoResult, RutaRow };
