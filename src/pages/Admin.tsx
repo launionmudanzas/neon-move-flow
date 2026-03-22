@@ -503,7 +503,7 @@ export default function Admin() {
         <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
-              <IdCard className="w-5 h-5 text-green-400" />
+              <IdCard className="w-5 h-5 text-neon-green" />
               INE — {ineModal?.nombre_completo}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm">
