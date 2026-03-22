@@ -397,5 +397,5 @@ export function useCotizacion() {
   };
 }
 
-// Re-export helpers for use in components
-export { DESVIO_CITIES, getDesvioSurcharge, canonicalize, calcularRuta };
+// Named exports for use in components (functions already exported above)
+export { DESVIO_CITIES, getDesvioSurcharge, canonicalize };
