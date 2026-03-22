@@ -243,7 +243,14 @@ export default function CotizadorSection() {
 
   const [step, setStep] = useState(1);
   const [ordenOpen, setOrdenOpen] = useState(false);
+  const [pagoOpen, setPagoOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [savedCotizacion, setSavedCotizacion] = useState<{
+    folio: string; cotizacionId: string; precioTotal: number;
+  } | null>(null);
+  const [guardandoCot, setGuardandoCot] = useState(false);
+
+  const { guardarCotizacion } = useCotizacion();
 
   // INE upload state
   const [ineFrente, setIneFrente] = useState<File | null>(null);
