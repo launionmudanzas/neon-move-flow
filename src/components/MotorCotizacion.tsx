@@ -1,43 +1,34 @@
 /**
  * MotorCotizacion – standalone logistics pricing engine UI
  * La Unión Mudanzas · zona/tramo-based m³ quotation tool
+ * v2 — with city classification (en_ruta / desvio / extension / exclusivo / desconocida)
  */
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, ArrowRight, Package, AlertTriangle, CheckCircle2,
-  Info, Route, Zap, Search, RotateCcw, ChevronDown
+  Info, Route, Zap, Search, RotateCcw, ShieldAlert, BadgeCheck,
+  Navigation, HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useCotizacion, calcularRuta, DESVIO_CITIES, RutaRow } from '@/hooks/use-cotizacion';
+import { useCotizacion, calcularRuta } from '@/hooks/use-cotizacion';
+import { classifyCity, ALL_CITIES, CityClassification, CityStatus } from '@/lib/routing-data';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// City autocomplete list
-// ──────────────────────────────────────────────────────────────────────────────
-
-const CIUDADES = [
-  'Ciudad de México','Guadalajara','Monterrey','Tijuana','Los Cabos','La Paz',
-  'Querétaro','Puebla','San Luis Potosí','Morelia','León','Irapuato','Salamanca',
-  'Aguascalientes','San Miguel de Allende','Durango','Chihuahua','Cd. Juárez',
-  'Acapulco','Lázaro Cárdenas','Ixtapa','Zihuatanejo','Veracruz','Oaxaca',
-  'Mérida','Cancún','Chiapas','Villahermosa','Vallarta','Colima','Mazatlán',
-  'Culiacán','Hermosillo','Nogales','Cozumel','Reynosa','Nuevo Laredo',
-  // Desvío cities
-  'Piedras Negras','Tampico','Toluca','Valle de Bravo','Lerma',
-  'Metepec','Bacalar','Chetumal','Ciudad del Carmen',
-].sort();
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Constants
 // ──────────────────────────────────────────────────────────────────────────────
 
 const MARGEN = 0.30;
 const RECOLECCION = 500;
 const ENTREGA = 500;
 const MIN_VOL = 5;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────────────────
 
 function getUnit(vol: number) {
   if (vol <= 10) return { label: 'Nissan / Camioneta', emoji: '🚐' };
@@ -53,7 +44,57 @@ function fmt(n: number) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Sub-component: CityInput with autocomplete
+// City status badge
+// ──────────────────────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<CityStatus, {
+  icon: React.ReactNode;
+  color: string;
+  label: string;
+}> = {
+  en_ruta: {
+    icon: <BadgeCheck className="w-3 h-3" />,
+    color: 'bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan',
+    label: 'En ruta',
+  },
+  desvio: {
+    icon: <Navigation className="w-3 h-3" />,
+    color: 'bg-neon-orange/10 border-neon-orange/30 text-neon-orange',
+    label: 'Con desvío',
+  },
+  extension: {
+    icon: <Route className="w-3 h-3" />,
+    color: 'bg-neon-blue/10 border-neon-blue/30 text-neon-blue',
+    label: 'Extensión',
+  },
+  exclusivo: {
+    icon: <ShieldAlert className="w-3 h-3" />,
+    color: 'bg-destructive/10 border-destructive/30 text-destructive',
+    label: 'Solo exclusivo',
+  },
+  desconocida: {
+    icon: <HelpCircle className="w-3 h-3" />,
+    color: 'bg-muted border-border text-muted-foreground',
+    label: 'No encontrada',
+  },
+};
+
+function CityStatusBadge({ classification }: { classification: CityClassification }) {
+  if (!classification.status || classification.status === 'desconocida') return null;
+  const cfg = STATUS_CONFIG[classification.status];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.color}`}>
+      {cfg.icon}
+      {cfg.label}
+      {classification.routeNames.length > 0 && (
+        <span className="opacity-70 font-normal">· {classification.routeNames.slice(0, 2).join(', ')}</span>
+      )}
+    </span>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CityInput with autocomplete + classification badge
 // ──────────────────────────────────────────────────────────────────────────────
 
 function CityInput({
@@ -67,12 +108,19 @@ function CityInput({
 }) {
   const [open, setOpen] = useState(false);
   const filtered = value.length >= 2
-    ? CIUDADES.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
+    ? ALL_CITIES.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 10)
     : [];
+
+  const classification = value.trim().length >= 2 ? classifyCity(value) : null;
 
   return (
     <div className="relative">
-      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5 block">{label}</Label>
+      <div className="flex items-center justify-between mb-1.5">
+        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{label}</Label>
+        {classification && classification.status !== 'desconocida' && (
+          <CityStatusBadge classification={classification} />
+        )}
+      </div>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{icon}</span>
         <Input
@@ -84,6 +132,42 @@ function CityInput({
           className="pl-10 bg-surface border-border focus:border-neon-cyan/60 text-foreground placeholder:text-muted-foreground/50"
         />
       </div>
+
+      {/* Restricted zone warning */}
+      <AnimatePresence>
+        {classification?.status === 'exclusivo' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-1.5 flex gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30">
+              <ShieldAlert className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-destructive font-medium">
+                Esta zona no aplica para servicio compartido. Solo se ofrece servicio exclusivo.
+              </p>
+            </div>
+          </motion.div>
+        )}
+        {classification?.status === 'desconocida' && value.trim().length >= 3 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-1.5 flex gap-2 p-2.5 rounded-lg bg-muted border border-border">
+              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground font-medium">
+                Ciudad no encontrada en el sistema. Verificar con operaciones.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Autocomplete dropdown */}
       <AnimatePresence>
         {open && filtered.length > 0 && (
           <motion.ul
@@ -93,18 +177,30 @@ function CityInput({
             transition={{ duration: 0.15 }}
             className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-xl shadow-xl overflow-hidden"
           >
-            {filtered.map(city => (
-              <li key={city}>
-                <button
-                  type="button"
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
-                  onMouseDown={() => { onChange(city); setOpen(false); }}
-                >
-                  <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                  {city}
-                </button>
-              </li>
-            ))}
+            {filtered.map(city => {
+              const cls = classifyCity(city);
+              const cfg = STATUS_CONFIG[cls.status];
+              return (
+                <li key={city}>
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between gap-2"
+                    onMouseDown={() => { onChange(city); setOpen(false); }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      {city}
+                    </span>
+                    {cls.status !== 'desconocida' && (
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border flex-shrink-0 ${cfg.color}`}>
+                        {cfg.icon}
+                        {cfg.label}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </motion.ul>
         )}
       </AnimatePresence>
@@ -128,6 +224,8 @@ interface CotizacionResultado {
   precioTotal: number;
   volumenCobrable: number;
   unit: { label: string; emoji: string };
+  origenClassification: CityClassification;
+  destinoClassification: CityClassification;
 }
 
 function ResultCard({ r }: { r: CotizacionResultado }) {
@@ -137,6 +235,10 @@ function ResultCard({ r }: { r: CotizacionResultado }) {
     tramos: { label: 'Vía tramos', color: 'bg-neon-orange/15 text-neon-orange border-neon-orange/30' },
     no_disponible: { label: 'Estimado', color: 'bg-destructive/15 text-destructive border-destructive/30' },
   }[r.tipo];
+
+  const hasExclusivo =
+    r.origenClassification.status === 'exclusivo' ||
+    r.destinoClassification.status === 'exclusivo';
 
   return (
     <motion.div
@@ -149,14 +251,32 @@ function ResultCard({ r }: { r: CotizacionResultado }) {
       <div className="px-6 py-5 border-b border-border bg-gradient-to-r from-surface to-background">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${tipoBadge.color} mb-2`}>
-              <Route className="w-3 h-3" />
-              {tipoBadge.label}
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-4xl font-black text-foreground">{fmt(r.precioTotal)}</span>
-              <span className="text-sm text-muted-foreground font-semibold">total estimado</span>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${tipoBadge.color}`}>
+                <Route className="w-3 h-3" />
+                {tipoBadge.label}
+              </span>
+              {/* Origin / destination route badges */}
+              {r.origenClassification.status !== 'desconocida' && (
+                <CityStatusBadge classification={r.origenClassification} />
+              )}
+              {r.destinoClassification.status !== 'desconocida' && (
+                <CityStatusBadge classification={r.destinoClassification} />
+              )}
             </div>
+            {hasExclusivo ? (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-2">
+                <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0" />
+                <p className="text-sm text-destructive font-bold">
+                  Una o más ciudades son de zona restringida. Solo servicio exclusivo disponible.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-4xl font-black text-foreground">{fmt(r.precioTotal)}</span>
+                <span className="text-sm text-muted-foreground font-semibold">total estimado</span>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <p className="text-3xl">{r.unit.emoji}</p>
@@ -165,7 +285,7 @@ function ResultCard({ r }: { r: CotizacionResultado }) {
         </div>
       </div>
 
-      {/* Tramos route map */}
+      {/* Route path */}
       {r.tramos.length > 0 && (
         <div className="px-6 py-4 border-b border-border">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Trayecto</p>
@@ -199,24 +319,53 @@ function ResultCard({ r }: { r: CotizacionResultado }) {
       )}
 
       {/* Price breakdown */}
-      <div className="px-6 py-4 border-b border-border">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Desglose</p>
-        <div className="space-y-2">
-          <Row label="Tarifa de ruta" value={`${fmt(r.costoM3)}/m³`} accent />
-          <Row label={`Volumen cobrable (${r.volumenCobrable} m³)`} value={fmt(r.precioBase)} />
-          <Row label="Recolección + entrega" value={fmt(RECOLECCION + ENTREGA)} />
-          {r.costoDesvio > 0 && (
-            <Row label="Cargo por desvío" value={fmt(r.costoDesvio)} warn />
-          )}
-          <div className="border-t border-border pt-2 mt-1">
-            <Row label="Subtotal sin margen" value={fmt(r.precioBase + RECOLECCION + ENTREGA + r.costoDesvio)} />
-            <Row label={`Margen operativo (${MARGEN * 100}%)`} value={fmt(r.conMargen - (r.precioBase + RECOLECCION + ENTREGA + r.costoDesvio))} />
-          </div>
-          <div className="border-t-2 border-neon-cyan/30 pt-2">
-            <Row label="TOTAL ESTIMADO" value={fmt(r.precioTotal)} total />
+      {!hasExclusivo && (
+        <div className="px-6 py-4 border-b border-border">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Desglose</p>
+          <div className="space-y-2">
+            <Row label="Tarifa de ruta" value={`${fmt(r.costoM3)}/m³`} accent />
+            <Row label={`Volumen cobrable (${r.volumenCobrable} m³)`} value={fmt(r.precioBase)} />
+            <Row label="Recolección + entrega" value={fmt(RECOLECCION + ENTREGA)} />
+            {r.costoDesvio > 0 && (
+              <Row label="Cargo por desvío" value={fmt(r.costoDesvio)} warn />
+            )}
+            <div className="border-t border-border pt-2 mt-1">
+              <Row label="Subtotal sin margen" value={fmt(r.precioBase + RECOLECCION + ENTREGA + r.costoDesvio)} />
+              <Row label={`Margen operativo (${MARGEN * 100}%)`} value={fmt(r.conMargen - (r.precioBase + RECOLECCION + ENTREGA + r.costoDesvio))} />
+            </div>
+            <div className="border-t-2 border-neon-cyan/30 pt-2">
+              <Row label="TOTAL ESTIMADO" value={fmt(r.precioTotal)} total />
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Route classification details */}
+      {(r.origenClassification.status !== 'desconocida' || r.destinoClassification.status !== 'desconocida') && (
+        <div className="px-6 py-4 border-b border-border">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Clasificación de ciudades</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Origen', cls: r.origenClassification },
+              { label: 'Destino', cls: r.destinoClassification },
+            ].map(({ label, cls }) => {
+              const cfg = STATUS_CONFIG[cls.status];
+              return (
+                <div key={label} className={`p-3 rounded-xl border ${cfg.color}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{label}</p>
+                  <div className="flex items-center gap-1.5">
+                    {cfg.icon}
+                    <span className="text-xs font-bold">{cfg.label}</span>
+                  </div>
+                  {cls.routeNames.length > 0 && (
+                    <p className="text-[10px] mt-1 opacity-70">{cls.routeNames.slice(0, 3).join(' · ')}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Warnings */}
       {r.advertencias.length > 0 && (
@@ -293,24 +442,53 @@ export default function MotorCotizacion() {
       return;
     }
 
+    const origenCls = classifyCity(origen);
+    const destinoCls = classifyCity(destino);
+
+    // Validate exclusive zones — warn but still calculate (ops will handle)
+    if (origenCls.status === 'exclusivo' || destinoCls.status === 'exclusivo') {
+      setErrMsg('Una o más ciudades son de zona restringida. Solo se ofrece servicio exclusivo. Contacta a operaciones.');
+      return;
+    }
+
     setCalculando(true);
     try {
       const rutas = await cargarRutas();
       const volCob = Math.max(MIN_VOL, vol);
-      const res = calcularRuta(rutas, origen, destino, volCob, tieneDesvio, ciudadDesvio);
+
+      // Auto-detect detour: if origin or dest is a known detour city, enable surcharge
+      const autoDesvio = origenCls.status === 'desvio' || destinoCls.status === 'desvio';
+      const efectivoDesvio = tieneDesvio || autoDesvio;
+      const ciudadDesvioEfectiva = ciudadDesvio.trim() ||
+        (origenCls.status === 'desvio' ? origen : destinoCls.status === 'desvio' ? destino : '');
+
+      const res = calcularRuta(rutas, origen, destino, volCob, efectivoDesvio, ciudadDesvioEfectiva);
 
       const precioBase = volCob * res.costoM3;
       const subtotal = precioBase + RECOLECCION + ENTREGA + res.costoDesvio;
       const conMargen = subtotal * (1 + MARGEN);
       const precioTotal = Math.round(conMargen);
 
+      // If origin or dest was auto-detected as detour, add an advisory
+      const advertencias = [...res.advertencias];
+      if (autoDesvio && !tieneDesvio) {
+        const desvioCity = origenCls.status === 'desvio' ? origen : destino;
+        advertencias.unshift(`📍 "${desvioCity}" es una ciudad con desvío. Se aplicó cargo adicional automáticamente.`);
+      }
+      if (origenCls.status === 'extension' || destinoCls.status === 'extension') {
+        advertencias.push('📌 Una o más ciudades son extensiones de ruta. Confirmar disponibilidad con operaciones.');
+      }
+
       setResultado({
         ...res,
+        advertencias,
         precioBase,
         conMargen,
         precioTotal,
         volumenCobrable: volCob,
         unit: getUnit(volCob),
+        origenClassification: origenCls,
+        destinoClassification: destinoCls,
       });
     } catch {
       setErrMsg('Error al calcular la ruta. Intenta de nuevo.');
@@ -354,8 +532,21 @@ export default function MotorCotizacion() {
             Calcula tu mudanza <span className="text-neon-cyan">al instante</span>
           </h2>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            Rutas directas, espejo y por tramos · Cargos por desvío · 130+ ciudades de México
+            20 rutas operativas · Detección de desvíos automática · 200+ ciudades
           </p>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+            {(['en_ruta', 'desvio', 'extension', 'exclusivo'] as CityStatus[]).map(s => {
+              const cfg = STATUS_CONFIG[s];
+              return (
+                <span key={s} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border ${cfg.color}`}>
+                  {cfg.icon}
+                  {cfg.label}
+                </span>
+              );
+            })}
+          </div>
         </motion.div>
 
         {/* Form card */}
@@ -428,7 +619,7 @@ export default function MotorCotizacion() {
           <div className="p-4 rounded-xl border border-border bg-background">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <Route className="w-4 h-4 text-muted-foreground" />
+                <Navigation className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-bold text-foreground">¿Incluye desvío?</span>
               </div>
               <Switch
@@ -437,7 +628,7 @@ export default function MotorCotizacion() {
               />
             </div>
             <p className="text-xs text-muted-foreground ml-6">
-              Parada adicional fuera de ruta principal (cargo fijo por volumen)
+              Parada adicional fuera de ruta principal · También se detecta automáticamente
             </p>
 
             <AnimatePresence>
@@ -457,7 +648,7 @@ export default function MotorCotizacion() {
                       value={ciudadDesvio}
                       onChange={v => { setCiudadDesvio(v); setResultado(null); }}
                       placeholder="Ciudad del desvío…"
-                      icon={<Route className="w-4 h-4 text-neon-orange" />}
+                      icon={<Navigation className="w-4 h-4 text-neon-orange" />}
                     />
                     {/* Desvío rate preview */}
                     {typeof volumen === 'number' && volumen >= 5 && (
@@ -537,7 +728,7 @@ export default function MotorCotizacion() {
         >
           <p className="text-xs text-muted-foreground text-center leading-relaxed">
             💡 Precios estimados con margen operativo del 30% · No incluyen seguro, maniobras adicionales ni IVA ·
-            Para cotización formal con folio llama o escríbenos por WhatsApp
+            Para cotización formal con folio escríbenos por WhatsApp
           </p>
         </motion.div>
       </div>

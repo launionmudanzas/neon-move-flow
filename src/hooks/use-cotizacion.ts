@@ -1,5 +1,14 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  ALL_DETOUR_CITIES,
+  classifyCity,
+  ALL_CITIES,
+  ROUTES,
+  RESTRICTED_ZONES,
+} from '@/lib/routing-data';
+export type { CityStatus, CityClassification, RouteDefinition } from '@/lib/routing-data';
+export { classifyCity, ALL_CITIES, ROUTES, RESTRICTED_ZONES };
 
 // ──────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -60,11 +69,8 @@ const COSTO_ENTREGA = 500;
 // Primary routing hubs (order matters: prefer cheapest)
 const HUBS = ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Tijuana'];
 
-// Cities requiring a detour surcharge
-const DESVIO_CITIES = [
-  'Piedras Negras', 'Tampico', 'Toluca', 'Valle de Bravo', 'Lerma',
-  'Metepec', 'Morelos', 'Hidalgo', 'Bacalar', 'Chetumal', 'Ciudad del Carmen',
-];
+// Detour cities derived from routing-data (single source of truth)
+const DESVIO_CITIES = ALL_DETOUR_CITIES;
 
 // Detour surcharge table (flat fee by volume range, NOT per m³)
 const DESVIO_RATES: { min: number; max: number; costo: number }[] = [
