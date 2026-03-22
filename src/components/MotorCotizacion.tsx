@@ -54,22 +54,22 @@ const STATUS_CONFIG: Record<CityStatus, {
 }> = {
   en_ruta: {
     icon: <BadgeCheck className="w-3 h-3" />,
-    color: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
+    color: 'bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan',
     label: 'En ruta',
   },
   desvio: {
     icon: <Navigation className="w-3 h-3" />,
-    color: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+    color: 'bg-neon-orange/10 border-neon-orange/30 text-neon-orange',
     label: 'Con desvío',
   },
   extension: {
     icon: <Route className="w-3 h-3" />,
-    color: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+    color: 'bg-neon-blue/10 border-neon-blue/30 text-neon-blue',
     label: 'Extensión',
   },
   exclusivo: {
     icon: <ShieldAlert className="w-3 h-3" />,
-    color: 'bg-red-500/10 border-red-500/30 text-red-400',
+    color: 'bg-destructive/10 border-destructive/30 text-destructive',
     label: 'Solo exclusivo',
   },
   desconocida: {
