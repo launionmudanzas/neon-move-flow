@@ -1158,6 +1158,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      init_user_identity: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       link_user_identity: {
         Args: { p_cliente_id?: string; p_proveedor_id?: string }
