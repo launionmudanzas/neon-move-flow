@@ -377,7 +377,7 @@ export default function Admin() {
           {tab === 'ordenes' && (
             <div>
               <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <FileText className="w-4 h-4 text-yellow-400" />
+                <FileText className="w-4 h-4 text-[hsl(var(--neon-orange))]" />
                 <span className="font-semibold text-foreground text-sm">Órdenes de Servicio</span>
                 <span className="ml-auto text-xs text-muted-foreground">{filteredOrd.length} registros</span>
               </div>
