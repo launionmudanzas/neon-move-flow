@@ -48,6 +48,15 @@ interface CotizacionInput {
   urgente: boolean;
 }
 
+export interface CotizacionResult {
+  cotizacionId: string;
+  clienteId: string;
+  folio: string;
+  precioBase: number;
+  precioTotal: number;
+  costoRuta: number;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ──────────────────────────────────────────────────────────────────────────────
