@@ -1,14 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  FileText,
-  CheckCircle2,
-  Download,
-  MessageSquare,
-  AlertTriangle,
-  CheckSquare,
-  Square,
+  X, FileText, CheckCircle2, MessageSquare, AlertTriangle,
+  CheckSquare, Square, CreditCard,
 } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '4421270514';
@@ -16,6 +10,7 @@ const WHATSAPP_NUMBER = '4421270514';
 interface OrdenServicioProps {
   isOpen: boolean;
   onClose: () => void;
+  onPagar?: () => void;
   data: {
     nombre: string;
     whatsapp: string;
@@ -26,6 +21,9 @@ interface OrdenServicioProps {
     vol: string;
     unitLabel: string;
     unitIcon: string;
+    folio?: string;
+    precioTotal?: number;
+    cotizacionId?: string;
   };
 }
 
@@ -78,11 +76,15 @@ const NOT_INCLUDES = [
   'Acarreos de larga distancia no pactados',
 ];
 
-export default function OrdenServicioModal({ isOpen, onClose, data }: OrdenServicioProps) {
+export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: OrdenServicioProps) {
   const [accepted, setAccepted] = useState(false);
-  const [paid, setPaid] = useState(false);
-  const folio = useState(() => generateFolio())[0];
+  const [folio] = useState(() => data.folio || generateFolio());
   const emisionDate = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  // Reset accepted when modal opens
+  useEffect(() => {
+    if (isOpen) setAccepted(false);
+  }, [isOpen]);
 
   const waMessage = encodeURIComponent(
     `¡Hola! Confirmo mi servicio con *La Unión Mudanzas* 🚛\n\n` +
@@ -99,6 +101,8 @@ export default function OrdenServicioModal({ isOpen, onClose, data }: OrdenServi
   );
 
   if (!isOpen) return null;
+
+  const precioAnticipo = data.precioTotal ? Math.ceil(data.precioTotal * 0.5) : null;
 
   return (
     <AnimatePresence>
@@ -166,6 +170,12 @@ export default function OrdenServicioModal({ isOpen, onClose, data }: OrdenServi
                 <p className="font-display font-black text-foreground text-lg">{data.unitLabel}</p>
                 <p className="text-muted-foreground text-sm">Volumen estimado: <span className="text-neon-cyan font-bold">{data.vol} m³</span></p>
               </div>
+              {data.precioTotal && (
+                <div className="ml-auto text-right">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Precio total</p>
+                  <p className="font-black text-xl text-neon-green">${data.precioTotal.toLocaleString('es-MX')}</p>
+                </div>
+              )}
             </div>
 
             {/* Includes / Not includes */}
@@ -202,6 +212,12 @@ export default function OrdenServicioModal({ isOpen, onClose, data }: OrdenServi
             <div className="p-4 rounded-xl bg-neon-orange/10 border border-neon-orange/30 mb-6 text-sm text-foreground">
               <p className="font-bold text-neon-orange mb-1">Forma de pago</p>
               <p className="text-muted-foreground text-xs">50% anticipo al confirmar · 50% restante se liquida al momento de la carga. <strong className="text-foreground">No se descarga sin liquidación del servicio.</strong></p>
+              {precioAnticipo && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Anticipo requerido:</span>
+                  <span className="font-black text-neon-orange text-lg">${precioAnticipo.toLocaleString('es-MX')} MXN</span>
+                </div>
+              )}
             </div>
 
             {/* Legal acceptance */}
@@ -231,13 +247,30 @@ export default function OrdenServicioModal({ isOpen, onClose, data }: OrdenServi
             )}
 
             {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3">
+              {/* Pay button - primary CTA */}
+              {onPagar && data.precioTotal && (
+                <button
+                  onClick={() => { if (accepted) onPagar(); }}
+                  disabled={!accepted}
+                  className={`flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-black text-base transition-all duration-300 ${
+                    accepted
+                      ? 'bg-gradient-to-r from-neon-orange to-yellow-500 text-background hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Pagar anticipo 50% — ${precioAnticipo?.toLocaleString('es-MX')} MXN
+                </button>
+              )}
+
+              {/* WhatsApp confirm */}
               <a
                 href={accepted ? `https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}` : '#'}
                 target={accepted ? '_blank' : '_self'}
                 rel="noopener noreferrer"
                 onClick={(e) => { if (!accepted) e.preventDefault(); }}
-                className={`flex-1 flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
+                className={`flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
                   accepted
                     ? 'bg-neon-green text-background hover:shadow-glow-green hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
                     : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'

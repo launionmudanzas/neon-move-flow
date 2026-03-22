@@ -2,12 +2,14 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import {
-  Truck, Home, Building2, Package, LayoutGrid, HelpCircle,
+  Truck, Home, Building2, Package,
   ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
   Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, ArrowRight, Upload, CreditCard
+  Star, Zap, Upload, CreditCard, Loader2
 } from 'lucide-react';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
+import PagoModal from '@/components/PagoModal';
+import { useCotizacion } from '@/hooks/use-cotizacion';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
