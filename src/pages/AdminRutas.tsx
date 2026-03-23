@@ -2,7 +2,7 @@
  * /admin/rutas — Operational Routes Manager
  * La Unión Mudanzas — admin-only editable route table
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
