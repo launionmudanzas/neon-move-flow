@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
   IdCard, RefreshCw, Eye, Search, ChevronDown,
   CheckCircle2, Clock, XCircle, Truck, Star, MapPin,
-  ToggleLeft, ToggleRight, AlertTriangle, Route,
+  ToggleLeft, ToggleRight, AlertTriangle, Route, CalendarDays,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
