@@ -40,7 +40,7 @@ function StripeCheckoutForm({
   clientSecret: string;
   monto: number;
   folio: string;
-  onSuccess: () => void;
+  onSuccess: (tipo: string) => void;
   onCancel: () => void;
 }) {
   const stripe = useStripe();
