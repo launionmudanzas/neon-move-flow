@@ -202,6 +202,22 @@ export default function Admin() {
     setUpdatingId(null);
   };
 
+  const updateEventoEstatus = async (id: string, estatus: string) => {
+    setUpdatingId(id);
+    const COLOR_MAP: Record<string, string> = {
+      cotizado:   '#6b7280',
+      confirmado: '#22c55e',
+      en_ruta:    '#3b82f6',
+      finalizado: '#111827',
+      cancelado:  '#ef4444',
+    };
+    await supabase.from('eventos_calendario')
+      .update({ estatus, color: COLOR_MAP[estatus] ?? '#6b7280' })
+      .eq('id', id);
+    setEventos(prev => prev.map(e => e.id === id ? { ...e, estatus, color: COLOR_MAP[estatus] ?? '#6b7280' } : e));
+    setUpdatingId(null);
+  };
+
   /* ── filtered lists ────────────────────────────────────────────────────── */
   const q = search.toLowerCase();
   const filteredCot = cotizaciones.filter(c =>
