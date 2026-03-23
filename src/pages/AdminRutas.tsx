@@ -251,6 +251,7 @@ export default function AdminRutas() {
   const [saved, setSaved] = useState(false);
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all');
 
+  // Auth guard — after all hooks
   if (!isLoading && (!user || !isAdmin)) {
     navigate('/');
     return null;
