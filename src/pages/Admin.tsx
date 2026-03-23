@@ -229,6 +229,7 @@ export default function Admin() {
     { id: 'ordenes',      label: 'Órdenes',       value: ordenes.length,      icon: FileText,      color: 'text-neon-orange' },
     { id: 'proveedores',  label: 'Proveedores',   value: proveedores.length,  icon: Truck,         color: 'text-yellow-400' },
     { id: 'ines',         label: 'INEs subidos', value: clientes.filter(c => c.ine_frente_url || c.ine_reverso_url).length, icon: IdCard, color: 'text-neon-green' },
+    { id: 'calendario',   label: 'Servicios',    value: eventos.length,       icon: CalendarDays,  color: 'text-neon-blue' },
   ];
 
   const TABS: { id: Tab; label: string; icon: typeof ClipboardList }[] = [
@@ -237,6 +238,7 @@ export default function Admin() {
     { id: 'ordenes',      label: 'Órdenes',       icon: FileText },
     { id: 'proveedores',  label: 'Proveedores',   icon: Truck },
     { id: 'ines',         label: 'INEs',           icon: IdCard },
+    { id: 'calendario',   label: 'Calendario',     icon: CalendarDays },
   ];
 
   if (isLoading) return (
