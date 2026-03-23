@@ -582,9 +582,15 @@ export default function AdminProveedores() {
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell">
                       <div className="flex items-center gap-1.5">
-                        {p.premium_activo && <Crown className="w-3.5 h-3.5 text-yellow-400" title="Premium" />}
-                        {p.supervision_especial && <AlertTriangle className="w-3.5 h-3.5 text-destructive" title="Supervisión especial" />}
-                        {p.adeudo_cliente_pendiente > 0 && <BadgeAlert className="w-3.5 h-3.5 text-orange-400" title={`Adeudo: ${fmt(p.adeudo_cliente_pendiente)}`} />}
+                        {p.premium_activo && (
+                          <span title="Premium"><Crown className="w-3.5 h-3.5 text-yellow-400" /></span>
+                        )}
+                        {p.supervision_especial && (
+                          <span title="Supervisión especial"><AlertTriangle className="w-3.5 h-3.5 text-destructive" /></span>
+                        )}
+                        {p.adeudo_cliente_pendiente > 0 && (
+                          <span title={`Adeudo: ${fmt(p.adeudo_cliente_pendiente)}`}><BadgeAlert className="w-3.5 h-3.5 text-orange-400" /></span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
