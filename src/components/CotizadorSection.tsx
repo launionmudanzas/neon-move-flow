@@ -575,7 +575,7 @@ export default function CotizadorSection() {
   const hasHighVolume = billableVol > 60;
   const hasMultipleFloors = pisos === '2+';
   const noElevator = elevador === 'no' && pisos !== 'pb';
-  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim() && !hasExclusiveZone;
+  const canProceedStep1 = Boolean(nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim()) && !hasExclusiveZone;
 
   return (
     <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
