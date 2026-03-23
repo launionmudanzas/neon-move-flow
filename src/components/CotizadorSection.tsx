@@ -440,7 +440,8 @@ export default function CotizadorSection() {
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
 
-  const { guardarCotizacion } = useCotizacion();
+  const { guardarCotizacion, crearEventoCalendario } = useCotizacion();
+  const [savedClienteId, setSavedClienteId] = useState<string | null>(null);
 
   // INE upload state
   const [ineFrente, setIneFrente] = useState<File | null>(null);
