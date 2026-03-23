@@ -5,7 +5,7 @@ import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
   IdCard, RefreshCw, Eye, Search, ChevronDown,
   CheckCircle2, Clock, XCircle, Truck, Star, MapPin,
-  ToggleLeft, ToggleRight, AlertTriangle,
+  ToggleLeft, ToggleRight, AlertTriangle, Route,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -252,16 +252,24 @@ export default function Admin() {
               <span className="font-bold text-foreground text-lg">Panel Admin</span>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchData}
-            disabled={loading}
-            className="border-border text-muted-foreground hover:text-foreground gap-2 self-start sm:self-auto"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Link to="/admin/rutas">
+              <Button variant="outline" size="sm" className="border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 gap-1.5">
+                <Route className="w-4 h-4" />
+                Rutas
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchData}
+              disabled={loading}
+              className="border-border text-muted-foreground hover:text-foreground gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}

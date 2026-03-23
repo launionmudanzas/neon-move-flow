@@ -390,11 +390,45 @@ export function useCotizacion() {
     return orden.id;
   }, []);
 
+  /** Create a calendar event for the service */
+  const crearEventoCalendario = useCallback(async ({
+    cotizacionId,
+    clienteId,
+    fechaSalida,
+    origen,
+    destino,
+    folio,
+  }: {
+    cotizacionId: string;
+    clienteId: string;
+    fechaSalida: string;
+    origen: string;
+    destino: string;
+    folio: string;
+  }): Promise<void> => {
+    const fechaInicio = fechaSalida
+      ? new Date(fechaSalida + 'T09:00:00').toISOString()
+      : new Date(Date.now() + 86400000).toISOString();
+    const fechaFin = new Date(new Date(fechaInicio).getTime() + 8 * 3600000).toISOString();
+
+    await supabase.from('eventos_calendario').insert({
+      cotizacion_id: cotizacionId,
+      cliente_id: clienteId,
+      titulo: `${folio} · ${origen} → ${destino}`,
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin,
+      estatus: 'cotizado',
+      color: '#6b7280', // gray — cotizado
+      observaciones: `Servicio generado automáticamente desde cotizador.`,
+    });
+  }, []);
+
   return {
     loading,
     error,
     guardarCotizacion,
     crearOrdenServicio,
+    crearEventoCalendario,
     buscarRuta,
     cargarRutas,
     calcularRuta,
