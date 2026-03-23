@@ -25,7 +25,20 @@ import {
 import logoOficial from '@/assets/logo-oficial.png';
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
-type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores';
+type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores' | 'calendario';
+
+interface EventoCalendario {
+  id: string;
+  titulo: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  estatus: string | null;
+  color: string | null;
+  cotizacion_id: string | null;
+  cliente_id: string | null;
+  observaciones: string | null;
+  created_at: string;
+}
 
 interface Cotizacion {
   id: string; folio: string | null; created_at: string;
