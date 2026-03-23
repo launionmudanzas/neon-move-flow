@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
   IdCard, RefreshCw, Eye, Search, ChevronDown,
   CheckCircle2, Clock, XCircle, Truck, Star, MapPin,
-  ToggleLeft, ToggleRight, AlertTriangle, Route,
+  ToggleLeft, ToggleRight, AlertTriangle, Route, CalendarDays,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +25,20 @@ import {
 import logoOficial from '@/assets/logo-oficial.png';
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
-type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores';
+type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores' | 'calendario';
+
+interface EventoCalendario {
+  id: string;
+  titulo: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  estatus: string | null;
+  color: string | null;
+  cotizacion_id: string | null;
+  cliente_id: string | null;
+  observaciones: string | null;
+  created_at: string;
+}
 
 interface Cotizacion {
   id: string; folio: string | null; created_at: string;
@@ -119,6 +133,13 @@ export default function Admin() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [eventos, setEventos] = useState<EventoCalendario[]>([]);
+
+  // calendar nav
+  const [calMonth, setCalMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   // modals
   const [ineModal, setIneModal] = useState<Cliente | null>(null);
@@ -132,16 +153,18 @@ export default function Admin() {
   /* ── fetch ─────────────────────────────────────────────────────────────── */
   const fetchData = async () => {
     setLoading(true);
-    const [c, cl, o, p] = await Promise.all([
+    const [c, cl, o, p, ev] = await Promise.all([
       supabase.from('cotizaciones').select('id,folio,created_at,origen,destino,precio_total,estatus,modalidad,urgencia,cliente_id').order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre_completo,whatsapp,correo,direccion_principal,ine_frente_url,ine_reverso_url,created_at').order('created_at', { ascending: false }),
       supabase.from('ordenes_servicio').select('id,folio,estatus,created_at,cotizacion_id,pdf_url,cotizaciones(origen,destino,precio_total,cliente_id)').order('created_at', { ascending: false }),
       supabase.from('proveedores').select('id,nombre_comercial,responsable_nombre,whatsapp,correo,estatus,activo,calificacion,ciudades_cobertura,premium_activo,supervision_especial,adeudo_cliente_pendiente,created_at').order('created_at', { ascending: false }),
+      supabase.from('eventos_calendario').select('id,titulo,fecha_inicio,fecha_fin,estatus,color,cotizacion_id,cliente_id,observaciones,created_at').order('fecha_inicio', { ascending: true }),
     ]);
     if (c.data)  setCotizaciones(c.data as Cotizacion[]);
     if (cl.data) setClientes(cl.data as Cliente[]);
     if (o.data)  setOrdenes(o.data as Orden[]);
     if (p.data)  setProveedores(p.data as Proveedor[]);
+    if (ev.data) setEventos(ev.data as EventoCalendario[]);
     setLoading(false);
   };
 
@@ -179,6 +202,22 @@ export default function Admin() {
     setUpdatingId(null);
   };
 
+  const updateEventoEstatus = async (id: string, estatus: string) => {
+    setUpdatingId(id);
+    const COLOR_MAP: Record<string, string> = {
+      cotizado:   '#6b7280',
+      confirmado: '#22c55e',
+      en_ruta:    '#3b82f6',
+      finalizado: '#111827',
+      cancelado:  '#ef4444',
+    };
+    await supabase.from('eventos_calendario')
+      .update({ estatus, color: COLOR_MAP[estatus] ?? '#6b7280' })
+      .eq('id', id);
+    setEventos(prev => prev.map(e => e.id === id ? { ...e, estatus, color: COLOR_MAP[estatus] ?? '#6b7280' } : e));
+    setUpdatingId(null);
+  };
+
   /* ── filtered lists ────────────────────────────────────────────────────── */
   const q = search.toLowerCase();
   const filteredCot = cotizaciones.filter(c =>
@@ -206,6 +245,7 @@ export default function Admin() {
     { id: 'ordenes',      label: 'Órdenes',       value: ordenes.length,      icon: FileText,      color: 'text-neon-orange' },
     { id: 'proveedores',  label: 'Proveedores',   value: proveedores.length,  icon: Truck,         color: 'text-yellow-400' },
     { id: 'ines',         label: 'INEs subidos', value: clientes.filter(c => c.ine_frente_url || c.ine_reverso_url).length, icon: IdCard, color: 'text-neon-green' },
+    { id: 'calendario',   label: 'Servicios',    value: eventos.length,       icon: CalendarDays,  color: 'text-neon-blue' },
   ];
 
   const TABS: { id: Tab; label: string; icon: typeof ClipboardList }[] = [
@@ -214,6 +254,7 @@ export default function Admin() {
     { id: 'ordenes',      label: 'Órdenes',       icon: FileText },
     { id: 'proveedores',  label: 'Proveedores',   icon: Truck },
     { id: 'ines',         label: 'INEs',           icon: IdCard },
+    { id: 'calendario',   label: 'Calendario',     icon: CalendarDays },
   ];
 
   if (isLoading) return (
@@ -671,6 +712,117 @@ export default function Admin() {
                   </TableBody>
                 </Table>
               </div>
+            </div>
+          )}
+
+          {/* ── CALENDARIO ── */}
+          {tab === 'calendario' && (
+            <div>
+              <div className="px-5 py-4 border-b border-border flex items-center gap-2 flex-wrap">
+                <CalendarDays className="w-4 h-4 text-neon-blue" />
+                <span className="font-semibold text-foreground text-sm">Calendario de Servicios</span>
+                <div className="ml-auto flex items-center gap-2">
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-bold text-foreground min-w-[120px] text-center capitalize">
+                    {calMonth.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="px-5 py-3 flex flex-wrap gap-3 border-b border-border">
+                {[
+                  { label: 'Cotizado',   color: 'bg-muted border-border text-muted-foreground' },
+                  { label: 'Confirmado', color: 'bg-green-500/15 border-green-500/30 text-green-400' },
+                  { label: 'En ruta',    color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
+                  { label: 'Finalizado', color: 'bg-foreground/10 border-border text-foreground' },
+                  { label: 'Cancelado',  color: 'bg-destructive/15 border-destructive/30 text-destructive' },
+                ].map(({ label, color }) => (
+                  <span key={label} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              {/* List view — events this month */}
+              {(() => {
+                const monthStart = calMonth;
+                const monthEnd = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0);
+                const monthEvents = eventos.filter(e => {
+                  if (!e.fecha_inicio) return false;
+                  const d = new Date(e.fecha_inicio);
+                  return d >= monthStart && d <= monthEnd;
+                });
+
+                const ESTATUS_COLOR: Record<string, string> = {
+                  cotizado:   'bg-muted border-border text-muted-foreground',
+                  confirmado: 'bg-green-500/15 border-green-500/30 text-green-400',
+                  en_ruta:    'bg-blue-500/15 border-blue-500/30 text-blue-400',
+                  finalizado: 'bg-foreground/10 border-border text-foreground',
+                  cancelado:  'bg-destructive/15 border-destructive/30 text-destructive',
+                };
+
+                const ESTATUS_OPTIONS = ['cotizado', 'confirmado', 'en_ruta', 'finalizado', 'cancelado'];
+
+                if (loading) return (
+                  <div className="py-12 text-center text-muted-foreground text-sm">Cargando…</div>
+                );
+
+                if (monthEvents.length === 0) return (
+                  <div className="py-12 text-center text-muted-foreground text-sm">
+                    <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                    Sin servicios agendados este mes
+                  </div>
+                );
+
+                return (
+                  <div className="divide-y divide-border">
+                    {monthEvents.map(ev => (
+                      <div key={ev.id} className="px-5 py-4 flex items-start gap-4 hover:bg-muted/10 transition-colors">
+                        {/* Date block */}
+                        <div className="flex-shrink-0 w-12 text-center">
+                          <p className="text-lg font-black text-foreground leading-none">
+                            {new Date(ev.fecha_inicio!).getDate()}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground uppercase">
+                            {new Date(ev.fecha_inicio!).toLocaleDateString('es-MX', { month: 'short' })}
+                          </p>
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">{ev.titulo ?? 'Servicio'}</p>
+                          {ev.observaciones && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{ev.observaciones}</p>
+                          )}
+                        </div>
+                        {/* Status select */}
+                        <Select
+                          value={ev.estatus ?? 'cotizado'}
+                          onValueChange={val => updateEventoEstatus(ev.id, val)}
+                          disabled={updatingId === ev.id}
+                        >
+                          <SelectTrigger className="h-7 text-xs bg-transparent border-0 p-0 gap-1 w-auto focus:ring-0 flex-shrink-0">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${ESTATUS_COLOR[ev.estatus ?? 'cotizado'] ?? 'bg-muted border-border text-muted-foreground'}`}>
+                              {ev.estatus?.replace('_', ' ') ?? 'cotizado'}
+                            </span>
+                            <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {ESTATUS_OPTIONS.map(e => (
+                              <SelectItem key={e} value={e} className="text-xs capitalize">{e.replace('_', ' ')}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
