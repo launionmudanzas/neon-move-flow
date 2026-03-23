@@ -714,6 +714,117 @@ export default function Admin() {
               </div>
             </div>
           )}
+
+          {/* ── CALENDARIO ── */}
+          {tab === 'calendario' && (
+            <div>
+              <div className="px-5 py-4 border-b border-border flex items-center gap-2 flex-wrap">
+                <CalendarDays className="w-4 h-4 text-neon-blue" />
+                <span className="font-semibold text-foreground text-sm">Calendario de Servicios</span>
+                <div className="ml-auto flex items-center gap-2">
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-bold text-foreground min-w-[120px] text-center capitalize">
+                    {calMonth.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="px-5 py-3 flex flex-wrap gap-3 border-b border-border">
+                {[
+                  { label: 'Cotizado',   color: 'bg-muted border-border text-muted-foreground' },
+                  { label: 'Confirmado', color: 'bg-green-500/15 border-green-500/30 text-green-400' },
+                  { label: 'En ruta',    color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
+                  { label: 'Finalizado', color: 'bg-foreground/10 border-border text-foreground' },
+                  { label: 'Cancelado',  color: 'bg-destructive/15 border-destructive/30 text-destructive' },
+                ].map(({ label, color }) => (
+                  <span key={label} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              {/* List view — events this month */}
+              {(() => {
+                const monthStart = calMonth;
+                const monthEnd = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0);
+                const monthEvents = eventos.filter(e => {
+                  if (!e.fecha_inicio) return false;
+                  const d = new Date(e.fecha_inicio);
+                  return d >= monthStart && d <= monthEnd;
+                });
+
+                const ESTATUS_COLOR: Record<string, string> = {
+                  cotizado:   'bg-muted border-border text-muted-foreground',
+                  confirmado: 'bg-green-500/15 border-green-500/30 text-green-400',
+                  en_ruta:    'bg-blue-500/15 border-blue-500/30 text-blue-400',
+                  finalizado: 'bg-foreground/10 border-border text-foreground',
+                  cancelado:  'bg-destructive/15 border-destructive/30 text-destructive',
+                };
+
+                const ESTATUS_OPTIONS = ['cotizado', 'confirmado', 'en_ruta', 'finalizado', 'cancelado'];
+
+                if (loading) return (
+                  <div className="py-12 text-center text-muted-foreground text-sm">Cargando…</div>
+                );
+
+                if (monthEvents.length === 0) return (
+                  <div className="py-12 text-center text-muted-foreground text-sm">
+                    <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                    Sin servicios agendados este mes
+                  </div>
+                );
+
+                return (
+                  <div className="divide-y divide-border">
+                    {monthEvents.map(ev => (
+                      <div key={ev.id} className="px-5 py-4 flex items-start gap-4 hover:bg-muted/10 transition-colors">
+                        {/* Date block */}
+                        <div className="flex-shrink-0 w-12 text-center">
+                          <p className="text-lg font-black text-foreground leading-none">
+                            {new Date(ev.fecha_inicio!).getDate()}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground uppercase">
+                            {new Date(ev.fecha_inicio!).toLocaleDateString('es-MX', { month: 'short' })}
+                          </p>
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground truncate">{ev.titulo ?? 'Servicio'}</p>
+                          {ev.observaciones && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{ev.observaciones}</p>
+                          )}
+                        </div>
+                        {/* Status select */}
+                        <Select
+                          value={ev.estatus ?? 'cotizado'}
+                          onValueChange={val => updateEventoEstatus(ev.id, val)}
+                          disabled={updatingId === ev.id}
+                        >
+                          <SelectTrigger className="h-7 text-xs bg-transparent border-0 p-0 gap-1 w-auto focus:ring-0 flex-shrink-0">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${ESTATUS_COLOR[ev.estatus ?? 'cotizado'] ?? 'bg-muted border-border text-muted-foreground'}`}>
+                              {ev.estatus?.replace('_', ' ') ?? 'cotizado'}
+                            </span>
+                            <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {ESTATUS_OPTIONS.map(e => (
+                              <SelectItem key={e} value={e} className="text-xs capitalize">{e.replace('_', ' ')}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
 
