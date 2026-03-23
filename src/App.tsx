@@ -9,6 +9,11 @@ import Auth from "./pages/Auth.tsx";
 import Cuenta from "./pages/Cuenta.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminRutas from "./pages/AdminRutas.tsx";
+import AdminCRM from "./pages/AdminCRM.tsx";
+import AdminProveedores from "./pages/AdminProveedores.tsx";
+import AdminMarketplace from "./pages/AdminMarketplace.tsx";
+import AdminServicios from "./pages/AdminServicios.tsx";
+import AdminIncidencias from "./pages/AdminIncidencias.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
