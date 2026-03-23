@@ -74,7 +74,7 @@ function StripeCheckoutForm({
       setError(confirmErr.message || 'Error al confirmar el pago');
       setLoading(false);
     } else {
-      onSuccess();
+      onSuccess('tarjeta');
     }
   };
 
