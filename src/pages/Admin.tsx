@@ -153,16 +153,18 @@ export default function Admin() {
   /* ── fetch ─────────────────────────────────────────────────────────────── */
   const fetchData = async () => {
     setLoading(true);
-    const [c, cl, o, p] = await Promise.all([
+    const [c, cl, o, p, ev] = await Promise.all([
       supabase.from('cotizaciones').select('id,folio,created_at,origen,destino,precio_total,estatus,modalidad,urgencia,cliente_id').order('created_at', { ascending: false }),
       supabase.from('clientes').select('id,nombre_completo,whatsapp,correo,direccion_principal,ine_frente_url,ine_reverso_url,created_at').order('created_at', { ascending: false }),
       supabase.from('ordenes_servicio').select('id,folio,estatus,created_at,cotizacion_id,pdf_url,cotizaciones(origen,destino,precio_total,cliente_id)').order('created_at', { ascending: false }),
       supabase.from('proveedores').select('id,nombre_comercial,responsable_nombre,whatsapp,correo,estatus,activo,calificacion,ciudades_cobertura,premium_activo,supervision_especial,adeudo_cliente_pendiente,created_at').order('created_at', { ascending: false }),
+      supabase.from('eventos_calendario').select('id,titulo,fecha_inicio,fecha_fin,estatus,color,cotizacion_id,cliente_id,observaciones,created_at').order('fecha_inicio', { ascending: true }),
     ]);
     if (c.data)  setCotizaciones(c.data as Cotizacion[]);
     if (cl.data) setClientes(cl.data as Cliente[]);
     if (o.data)  setOrdenes(o.data as Orden[]);
     if (p.data)  setProveedores(p.data as Proveedor[]);
+    if (ev.data) setEventos(ev.data as EventoCalendario[]);
     setLoading(false);
   };
 
