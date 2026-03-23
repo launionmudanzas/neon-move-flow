@@ -575,7 +575,7 @@ export default function CotizadorSection() {
   const hasHighVolume = billableVol > 60;
   const hasMultipleFloors = pisos === '2+';
   const noElevator = elevador === 'no' && pisos !== 'pb';
-  const canProceedStep1 = nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim() && !hasExclusiveZone;
+  const canProceedStep1 = Boolean(nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim()) && !hasExclusiveZone;
 
   return (
     <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
@@ -703,6 +703,14 @@ export default function CotizadorSection() {
                     Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
                   </div>
 
+                  {/* Exclusive zone block */}
+                  {hasExclusiveZone && (
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
+                      <ShieldAlert className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <span>La ruta incluye una <strong>zona exclusiva</strong>. No aplica servicio compartido. Contáctanos para cotizar servicio exclusivo.</span>
+                    </div>
+                  )}
+
                   {/* Incomplete fields warning */}
                   {!canProceedStep1 && !hasExclusiveZone && (nombre || whatsapp || origen || destino || fecha) && (
                     <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
@@ -711,14 +719,25 @@ export default function CotizadorSection() {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    disabled={!canProceedStep1}
-                    onClick={() => setStep(2)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
-                  >
-                    Continuar a Detalles <ChevronRight className="w-5 h-5" />
-                  </button>
+                  {hasExclusiveZone ? (
+                    <a
+                      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, quiero cotizar servicio EXCLUSIVO desde ${origen} hasta ${destino}.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-destructive/80 hover:bg-destructive text-white font-black text-base hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                    >
+                      <ShieldAlert className="w-5 h-5" /> Solicitar servicio exclusivo por WhatsApp
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!canProceedStep1}
+                      onClick={() => setStep(2)}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                    >
+                      Continuar a Detalles <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
                 </motion.div>
               )}
 
