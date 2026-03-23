@@ -293,21 +293,39 @@ export default function Admin() {
               <span className="font-bold text-foreground text-lg">Panel Admin</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <Link to="/admin/rutas">
-              <Button variant="outline" size="sm" className="border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 gap-1.5">
-                <Route className="w-4 h-4" />
-                Rutas
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <Link to="/admin/crm">
+              <Button variant="outline" size="sm" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 gap-1 text-xs h-8 px-2">
+                <Users className="w-3.5 h-3.5" />CRM
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchData}
-              disabled={loading}
-              className="border-border text-muted-foreground hover:text-foreground gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <Link to="/admin/proveedores">
+              <Button variant="outline" size="sm" className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 gap-1 text-xs h-8 px-2">
+                <Truck className="w-3.5 h-3.5" />Proveedores
+              </Button>
+            </Link>
+            <Link to="/admin/marketplace">
+              <Button variant="outline" size="sm" className="border-green-500/30 text-green-400 hover:bg-green-500/10 gap-1 text-xs h-8 px-2">
+                <Star className="w-3.5 h-3.5" />Marketplace
+              </Button>
+            </Link>
+            <Link to="/admin/servicios">
+              <Button variant="outline" size="sm" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 gap-1 text-xs h-8 px-2">
+                <CheckCircle2 className="w-3.5 h-3.5" />Servicios
+              </Button>
+            </Link>
+            <Link to="/admin/incidencias">
+              <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10 gap-1 text-xs h-8 px-2">
+                <AlertTriangle className="w-3.5 h-3.5" />Incidencias
+              </Button>
+            </Link>
+            <Link to="/admin/rutas">
+              <Button variant="outline" size="sm" className="border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 gap-1 text-xs h-8 px-2">
+                <Route className="w-3.5 h-3.5" />Rutas
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="border-border text-muted-foreground hover:text-foreground gap-2 h-8 px-2 text-xs">
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
           </div>
