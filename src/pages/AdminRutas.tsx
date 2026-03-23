@@ -251,11 +251,10 @@ export default function AdminRutas() {
   const [saved, setSaved] = useState(false);
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all');
 
-  // Auth guard — after all hooks
-  if (!isLoading && (!user || !isAdmin)) {
-    navigate('/');
-    return null;
-  }
+  // Auth guard — via useEffect to avoid hook-order violations
+  useEffect(() => {
+    if (!isLoading && (!user || !isAdmin)) navigate('/');
+  }, [isLoading, user, isAdmin, navigate]);
 
   const dirtyCount = routes.filter(r => r.dirty).length;
   const activeCount = routes.filter(r => r.active).length;
