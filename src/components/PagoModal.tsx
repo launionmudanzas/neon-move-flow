@@ -219,6 +219,38 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
     initStripe();
   }
 
+  // After successful payment: update cotizacion status + send email
+  const handlePaymentSuccess = async (tipoPago: string) => {
+    // Update cotizacion to confirmado
+    if (data.cotizacionId) {
+      await supabase.from('cotizaciones')
+        .update({ estatus: 'confirmado', cliente_acepto: true })
+        .eq('id', data.cotizacionId);
+      // Update calendar event to confirmado
+      await supabase.from('eventos_calendario')
+        .update({ estatus: 'confirmado', color: '#22c55e' })
+        .eq('cotizacion_id', data.cotizacionId);
+    }
+    // Fire email (non-blocking)
+    void supabase.functions.invoke('send-service-email', {
+      body: {
+        folio: data.folio,
+        nombre: data.nombre,
+        whatsapp: '',
+        origen: data.origen,
+        destino: data.destino,
+        fecha: '',
+        serviceLabel: data.serviceLabel ?? 'Mudanza',
+        vol: '',
+        unitLabel: '',
+        precioTotal: data.monto,
+        precioAnticipo: montoAnticipo,
+        tipoPago,
+      },
+    });
+    setExitoso(true);
+  };
+
   if (!isOpen) return null;
 
   if (exitoso) {
