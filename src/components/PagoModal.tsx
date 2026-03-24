@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CreditCard, Building2, CheckCircle2, AlertTriangle, Copy, Check, Loader2 } from 'lucide-react';
+import { X, CreditCard, Building2, CheckCircle2, AlertTriangle, Copy, Check, Loader2, Download } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { sendServiceEmail } from '@/lib/email-service';
+import { generateAndSaveOrden, type OrdenPDFData } from '@/lib/pdf-orden-service';
+import OrdenGeneradaModal from '@/components/OrdenGeneradaModal';
 
 const stripePromise = loadStripe('pk_live_51SiBhiQ3g3KekYqfcy0gdKzvjqgX8XaPcouSARuyGA1ABjEqJwpZ7Yfxl3zZXZaNBnRycpJTrFaOqVBoY779lNZw00JY4R1b7K');
 
