@@ -510,7 +510,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
                     >
                       <StripeCheckoutForm
                         clientSecret={clientSecret}
-                        monto={montoAnticipo * 100}
+                        monto={montoPagar * 100}
                         folio={data.folio}
                         onSuccess={(tipo) => handlePaymentSuccess(tipo)}
                         onCancel={onClose}
