@@ -310,10 +310,14 @@ export function useCotizacion() {
 
       if (clienteExistente) {
         clienteId = clienteExistente.id;
+        // Update correo if provided and not already set
+        if (input.correo) {
+          await supabase.from('clientes').update({ correo: input.correo }).eq('id', clienteId);
+        }
       } else {
         const { data: nuevoCliente, error: errCliente } = await supabase
           .from('clientes')
-          .insert({ nombre_completo: input.nombre, whatsapp: input.whatsapp })
+          .insert({ nombre_completo: input.nombre, whatsapp: input.whatsapp, correo: input.correo || null })
           .select('id')
           .single();
         if (errCliente || !nuevoCliente) throw new Error('Error creando cliente');
