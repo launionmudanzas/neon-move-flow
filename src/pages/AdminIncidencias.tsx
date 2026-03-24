@@ -114,6 +114,12 @@ function IncidenciaDetail({
     setLocalEstatus(estatus);
     setSaving(false);
     onUpdate();
+    // Send incidencia email on status change (non-blocking)
+    void sendServiceEmail({
+      type: 'incidencia',
+      folio: incidencia.cotizacion_id ?? undefined,
+      service_type: incidencia.tipo_incidencia?.replace(/_/g, ' ') ?? 'Incidencia',
+    });
   };
 
   const applySanction = async () => {
