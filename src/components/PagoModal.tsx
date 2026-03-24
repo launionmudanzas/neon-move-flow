@@ -243,28 +243,85 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
     initStripe();
   }
 
-  // After successful payment: update cotizacion status + send email
+  // After successful payment: generate PDF, update DB, send emails
   const handlePaymentSuccess = async (tipoPago: string) => {
     // Update cotizacion to confirmado
     if (data.cotizacionId) {
       await supabase.from('cotizaciones')
         .update({ estatus: 'confirmado', cliente_acepto: true })
         .eq('id', data.cotizacionId);
-      // Update calendar event to confirmado
       await supabase.from('eventos_calendario')
         .update({ estatus: 'confirmado', color: '#22c55e' })
         .eq('cotizacion_id', data.cotizacionId);
     }
-    // Fire email — confirmacion_pago (non-blocking)
+
+    // Fire payment confirmation email (non-blocking)
     void sendServiceEmail({
       type: 'confirmacion_pago',
       folio: data.folio,
       customer_name: data.nombre,
+      to: data.correo,
       route: `${data.origen} → ${data.destino}`,
       service_type: data.serviceLabel ?? 'Mudanza',
       amount: data.monto,
     });
-    setExitoso(true);
+
+    // Generate PDF and show orden generada modal
+    setExitoso(false);
+    setOrdenGeneradaOpen(true);
+    setPdfLoading(true);
+    setPdfError(null);
+
+    try {
+      if (data.cotizacionId) {
+        const pdfData: OrdenPDFData = {
+          folio: data.folio,
+          nombre: data.nombre,
+          whatsapp: data.whatsapp || '',
+          correo: data.correo,
+          origen: data.origen,
+          destino: data.destino,
+          fecha: data.fecha || '',
+          serviceLabel: data.serviceLabel || 'Mudanza',
+          tipoServicio: data.tipoServicio,
+          modalidad: data.modalidad,
+          vol: data.vol || '—',
+          unitLabel: data.unitLabel || '—',
+          precioTotal: data.monto,
+          precioBase: data.precioBase,
+          costoRecoleccion: data.costoRecoleccion,
+          costoEntrega: data.costoEntrega,
+          costoAdicionales: data.costoAdicionales,
+          seguroMonto: data.seguroMonto,
+          seguroCosto: data.seguroCosto,
+          inventario: data.inventario,
+          inventarioLabels: data.inventarioLabels,
+        };
+        const { pdfUrl: url } = await generateAndSaveOrden(pdfData, data.cotizacionId);
+        setPdfUrl(url);
+        // Send orden_servicio email with PDF link
+        void sendServiceEmail({
+          type: 'orden_servicio',
+          folio: data.folio,
+          customer_name: data.nombre,
+          to: data.correo,
+          route: `${data.origen} → ${data.destino}`,
+          service_date: data.fecha,
+          service_type: data.serviceLabel ?? 'Mudanza',
+          volume: data.vol,
+          unit: data.unitLabel,
+          amount: data.monto,
+          pdf_url: url,
+        });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error generando PDF';
+      setPdfError(`No se pudo generar el PDF: ${msg}. Puedes solicitarlo desde el panel.`);
+    } finally {
+      setPdfLoading(false);
+    }
+
+    onPagoExitoso?.(tipoPago);
   };
 
   if (!isOpen) return null;
