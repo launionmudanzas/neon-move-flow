@@ -198,6 +198,7 @@ function SpeiPanel({ folio, monto }: { folio: string; monto: number }) {
 // ─── Main Modal ────────────────────────────────────────────────────────────
 export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: PagoModalProps) {
   const [tab, setTab] = useState<'tarjeta' | 'spei'>('tarjeta');
+  const [tipoPago, setTipoPago] = useState<'anticipo' | 'completo'>('anticipo');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingPI, setLoadingPI] = useState(false);
   const [piError, setPiError] = useState<string | null>(null);
@@ -209,6 +210,8 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   const [ordenGeneradaOpen, setOrdenGeneradaOpen] = useState(false);
 
   const montoAnticipo = Math.ceil(data.monto * 0.5);
+  const montoCompleto = data.monto;
+  const montoPagar = tipoPago === 'completo' ? montoCompleto : montoAnticipo;
 
   const initStripe = async () => {
     if (clientSecret) return;
