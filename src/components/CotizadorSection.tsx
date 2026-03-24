@@ -558,6 +558,17 @@ export default function CotizadorSection() {
         destino,
         folio: result.folio,
       });
+      // Send cotizacion email (non-blocking)
+      void sendServiceEmail({
+        type: 'cotizacion',
+        folio: result.folio,
+        customer_name: nombre,
+        route: `${origen} → ${destino}`,
+        service_date: fecha,
+        service_type: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
+        volume: billableVol.toFixed(1),
+        unit: unit.label,
+      });
     }
     setOrdenOpen(true);
   }

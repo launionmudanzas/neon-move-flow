@@ -4,6 +4,7 @@ import {
   X, FileText, CheckCircle2, MessageSquare, AlertTriangle,
   CheckSquare, Square, CreditCard,
 } from 'lucide-react';
+import { sendServiceEmail } from '@/lib/email-service';
 
 const WHATSAPP_NUMBER = '4421270514';
 
