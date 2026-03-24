@@ -293,7 +293,8 @@ export default function AdminServicios() {
       .from('ordenes_servicio')
       .select(`
         id, folio, estatus, pdf_url, created_at, cotizacion_id,
-        cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia)
+        cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia, volumen_cobrable, unidad_sugerida, folio),
+        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo))
       `)
       .order('created_at', { ascending: false });
     if (data) setServicios(data as Servicio[]);
