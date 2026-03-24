@@ -521,7 +521,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
               )}
 
               {tab === 'spei' && (
-                <SpeiPanel folio={data.folio} monto={montoAnticipo} />
+                <SpeiPanel folio={data.folio} monto={montoPagar} />
               )}
 
               <p className="text-[10px] text-muted-foreground text-center mt-4">
