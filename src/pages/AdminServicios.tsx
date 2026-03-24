@@ -473,11 +473,25 @@ export default function AdminServicios() {
         </div>
       </div>
 
-      <ServicioDetail
-        servicio={selected}
-        onClose={() => setSelected(null)}
-        onUpdate={fetchData}
-      />
+      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+        <DialogContent className="bg-card border-border max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-foreground">
+                  <Truck className="w-5 h-5 text-primary" />
+                  Expediente — {selected.folio ?? selected.id.slice(0, 8)}
+                </DialogTitle>
+              </DialogHeader>
+              <ExpedienteServicio
+                servicio={selected as any}
+                onClose={() => setSelected(null)}
+                onUpdate={fetchData}
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
