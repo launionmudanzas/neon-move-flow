@@ -437,7 +437,7 @@ export default function CotizadorSection() {
   const [pagoOpen, setPagoOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [savedCotizacion, setSavedCotizacion] = useState<{
-    folio: string; cotizacionId: string; precioTotal: number;
+    folio: string; cotizacionId: string; precioTotal: number; precioBase?: number;
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
 
