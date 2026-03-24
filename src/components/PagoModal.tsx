@@ -140,7 +140,7 @@ function StripeCheckoutForm({
 }
 
 // ─── SPEI Info Panel ───────────────────────────────────────────────────────
-function SpeiPanel({ folio, monto }: { folio: string; monto: number }) {
+function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; tipoPago: 'anticipo' | 'completo' }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = (val: string, key: string) => {
@@ -189,7 +189,7 @@ function SpeiPanel({ folio, monto }: { folio: string; monto: number }) {
       <div className="p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 text-xs text-center">
         <p className="text-muted-foreground">Monto a transferir:</p>
         <p className="font-black text-2xl text-neon-green">${(monto).toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN</p>
-        <p className="text-muted-foreground mt-0.5">Anticipo 50% del servicio</p>
+        <p className="text-muted-foreground mt-0.5">{tipoPago === 'anticipo' ? 'Anticipo 50% del servicio' : 'Pago completo del servicio'}</p>
       </div>
     </div>
   );
@@ -384,7 +384,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
               {/* Header */}
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="font-display font-black text-xl text-foreground">Anticipo del servicio</h2>
+                  <h2 className="font-display font-black text-xl text-foreground">Confirmar servicio</h2>
                   <p className="text-xs text-neon-cyan font-mono">{data.folio}</p>
                 </div>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
@@ -392,21 +392,67 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
                 </button>
               </div>
 
-              {/* Resumen */}
-              <div className="p-4 rounded-xl bg-surface border border-border mb-5">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-muted-foreground">Ruta</span>
-                  <span className="text-xs font-bold text-foreground">{data.origen} → {data.destino}</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-muted-foreground">Monto total</span>
-                  <span className="text-xs font-bold text-foreground">${data.monto.toLocaleString('es-MX')} MXN</span>
-                </div>
-                <div className="neon-line my-2" />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-foreground">Anticipo 50%</span>
-                  <span className="font-black text-xl text-neon-cyan">${montoAnticipo.toLocaleString('es-MX')} MXN</span>
-                </div>
+              {/* Resumen ruta */}
+              <div className="flex justify-between items-center px-1 mb-4">
+                <span className="text-xs text-muted-foreground">Ruta</span>
+                <span className="text-xs font-bold text-foreground truncate ml-2">{data.origen} → {data.destino}</span>
+              </div>
+
+              {/* Selector de tipo de pago */}
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {/* Anticipo */}
+                <button
+                  onClick={() => handleTipoPagoChange('anticipo')}
+                  className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all text-left ${
+                    tipoPago === 'anticipo'
+                      ? 'border-neon-cyan bg-neon-cyan/10 shadow-glow-cyan'
+                      : 'border-border bg-surface hover:border-neon-cyan/40'
+                  }`}
+                >
+                  {tipoPago === 'anticipo' && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-neon-cyan flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-background" />
+                    </span>
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-full">Apartar servicio</span>
+                  <span className={`font-black text-2xl w-full ${tipoPago === 'anticipo' ? 'text-neon-cyan' : 'text-foreground'}`}>
+                    ${montoAnticipo.toLocaleString('es-MX')}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground w-full">Anticipo 50% · MXN</span>
+                  <span className="mt-1 text-[10px] text-neon-orange/80 w-full">Resto al finalizar</span>
+                </button>
+
+                {/* Completo */}
+                <button
+                  onClick={() => handleTipoPagoChange('completo')}
+                  className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all text-left ${
+                    tipoPago === 'completo'
+                      ? 'border-neon-blue bg-neon-blue/10 shadow-glow-blue'
+                      : 'border-border bg-surface hover:border-neon-blue/40'
+                  }`}
+                >
+                  {tipoPago === 'completo' && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-neon-blue flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-background" />
+                    </span>
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-full">Pago completo</span>
+                  <span className={`font-black text-2xl w-full ${tipoPago === 'completo' ? 'text-neon-blue' : 'text-foreground'}`}>
+                    ${montoCompleto.toLocaleString('es-MX')}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground w-full">100% · MXN</span>
+                  <span className="mt-1 text-[10px] text-neon-green/80 w-full">Sin cobros adicionales</span>
+                </button>
+              </div>
+
+              {/* Resumen monto seleccionado */}
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface border border-border mb-5">
+                <span className="text-sm text-muted-foreground">
+                  {tipoPago === 'anticipo' ? 'Pagas ahora (50%)' : 'Pagas ahora (100%)'}
+                </span>
+                <span className={`font-black text-xl ${tipoPago === 'anticipo' ? 'text-neon-cyan' : 'text-neon-blue'}`}>
+                  ${montoPagar.toLocaleString('es-MX')} MXN
+                </span>
               </div>
 
               {/* Tab switcher */}
@@ -464,7 +510,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
                     >
                       <StripeCheckoutForm
                         clientSecret={clientSecret}
-                        monto={montoAnticipo * 100}
+                        monto={montoPagar * 100}
                         folio={data.folio}
                         onSuccess={(tipo) => handlePaymentSuccess(tipo)}
                         onCancel={onClose}
@@ -475,7 +521,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
               )}
 
               {tab === 'spei' && (
-                <SpeiPanel folio={data.folio} monto={montoAnticipo} />
+                <SpeiPanel folio={data.folio} monto={montoPagar} tipoPago={tipoPago} />
               )}
 
               <p className="text-[10px] text-muted-foreground text-center mt-4">
