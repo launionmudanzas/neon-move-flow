@@ -537,7 +537,7 @@ export default function CotizadorSection() {
     const costoPisos = pisos === '2+' && elevador === 'no' ? 500 : 0;
     const costoAcarreo = acarreo === 'largo' ? 800 : 0;
     const result = await guardarCotizacion({
-      nombre, whatsapp, origen, destino, fecha,
+      nombre, whatsapp, correo, origen, destino, fecha,
       tipoServicio, modalidad,
       volumenTotal: vol,
       volumenCobrable: billableVol,
@@ -564,11 +564,13 @@ export default function CotizadorSection() {
         type: 'cotizacion',
         folio: result.folio,
         customer_name: nombre,
+        to: correo || undefined,
         route: `${origen} → ${destino}`,
         service_date: fecha,
         service_type: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
         volume: billableVol.toFixed(1),
         unit: unit.label,
+        amount: result.precioTotal,
       });
     }
     setOrdenOpen(true);
