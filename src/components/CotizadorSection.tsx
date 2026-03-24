@@ -12,6 +12,7 @@ import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
 import { useCotizacion, getDesvioSurcharge } from '@/hooks/use-cotizacion';
 import { classifyCity, ALL_CITIES, CityStatus, CityClassification } from '@/lib/routing-data';
+import { sendServiceEmail } from '@/lib/email-service';
 
 const WHATSAPP_NUMBER = '4421270514';
 const TOTAL_STEPS = 6;
@@ -556,6 +557,17 @@ export default function CotizadorSection() {
         origen,
         destino,
         folio: result.folio,
+      });
+      // Send cotizacion email (non-blocking)
+      void sendServiceEmail({
+        type: 'cotizacion',
+        folio: result.folio,
+        customer_name: nombre,
+        route: `${origen} → ${destino}`,
+        service_date: fecha,
+        service_type: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
+        volume: billableVol.toFixed(1),
+        unit: unit.label,
       });
     }
     setOrdenOpen(true);

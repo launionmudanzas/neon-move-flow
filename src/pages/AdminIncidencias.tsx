@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { sendServiceEmail } from '@/lib/email-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -113,6 +114,12 @@ function IncidenciaDetail({
     setLocalEstatus(estatus);
     setSaving(false);
     onUpdate();
+    // Send incidencia email on status change (non-blocking)
+    void sendServiceEmail({
+      type: 'incidencia',
+      folio: incidencia.cotizacion_id ?? undefined,
+      service_type: incidencia.tipo_incidencia?.replace(/_/g, ' ') ?? 'Incidencia',
+    });
   };
 
   const applySanction = async () => {
