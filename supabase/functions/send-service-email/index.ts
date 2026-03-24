@@ -144,10 +144,14 @@ function buildOrdenServicioHTML(p: EmailPayload): string {
   const vol = p.volume || p.vol || '—';
   const unidad = p.unit || p.unitLabel || '—';
   const tipo = p.service_type || p.serviceLabel || 'Mudanza';
+  const pdfBtn = p.pdf_url
+    ? `<div style="text-align:center;margin-bottom:16px;"><a href="${p.pdf_url}" style="display:inline-block;background:#FF6B00;color:#fff;font-weight:900;font-size:13px;padding:11px 24px;border-radius:10px;text-decoration:none;">📄 Descargar Orden de Servicio PDF</a></div>`
+    : '';
   return wrap(`
     <div class="hero"><h1>Tu Orden de Servicio</h1><p>Hola <strong>${nombre}</strong>, tu servicio está apartado y documentado.</p></div>
     <div class="folio"><span>📋 Folio: ${folio}</span></div>
     ${detailRows([['Cliente', nombre], ['Ruta', ruta], ['Tipo de servicio', tipo], ['Volumen', `${vol} m³`], ['Unidad asignada', unidad], ['Fecha de carga', fechaCarga], ['Fecha estimada de entrega', fechaEntrega]])}
+    ${pdfBtn}
     <div class="alert-warn"><p>⚠️ Reglas del servicio:</p><ul><li>El 50% restante se paga al momento de la carga</li><li>No se descarga sin liquidación total</li><li>Reporta cualquier anomalía antes de firmar</li><li>Cancelaciones con menos de 24 hrs: sin reembolso</li></ul></div>
     <div class="cta"><a href="https://wa.me/${WA_NUMBER}?text=Hola%2C+confirmo+mi+orden+folio+${folio}">✅ Confirmar por WhatsApp</a></div>
   `);
