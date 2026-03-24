@@ -252,7 +252,22 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
               {/* Pay button - primary CTA */}
               {onPagar && data.precioTotal && (
                 <button
-                  onClick={() => { if (accepted) onPagar(); }}
+                  onClick={() => {
+                    if (!accepted) return;
+                    void sendServiceEmail({
+                      type: 'orden_servicio',
+                      folio: folio,
+                      customer_name: data.nombre,
+                      route: `${data.origen} → ${data.destino}`,
+                      service_date: formatDate(data.fecha),
+                      delivery_date: getDeliveryDate(data.fecha),
+                      service_type: data.serviceLabel,
+                      volume: data.vol,
+                      unit: data.unitLabel,
+                      amount: data.precioTotal,
+                    });
+                    onPagar();
+                  }}
                   disabled={!accepted}
                   className={`flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl font-black text-base transition-all duration-300 ${
                     accepted
