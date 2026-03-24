@@ -454,6 +454,7 @@ export default function CotizadorSection() {
   const [fecha, setFecha] = useState('');
   const [nombre, setNombre] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [correo, setCorreo] = useState('');
 
   // Step 2 – Detalles
   const [tipoServicio, setTipoServicio] = useState<string>('');
@@ -536,7 +537,7 @@ export default function CotizadorSection() {
     const costoPisos = pisos === '2+' && elevador === 'no' ? 500 : 0;
     const costoAcarreo = acarreo === 'largo' ? 800 : 0;
     const result = await guardarCotizacion({
-      nombre, whatsapp, origen, destino, fecha,
+      nombre, whatsapp, correo, origen, destino, fecha,
       tipoServicio, modalidad,
       volumenTotal: vol,
       volumenCobrable: billableVol,
@@ -563,11 +564,13 @@ export default function CotizadorSection() {
         type: 'cotizacion',
         folio: result.folio,
         customer_name: nombre,
+        to: correo || undefined,
         route: `${origen} → ${destino}`,
         service_date: fecha,
         service_type: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
         volume: billableVol.toFixed(1),
         unit: unit.label,
+        amount: result.precioTotal,
       });
     }
     setOrdenOpen(true);
@@ -665,6 +668,12 @@ export default function CotizadorSection() {
                       <div>
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">WhatsApp</label>
                         <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="442 127 0514" type="tel" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                          Correo electrónico <span className="text-muted-foreground/60 font-normal normal-case">(para recibir tu orden de servicio)</span>
+                        </label>
+                        <input value={correo} onChange={e => setCorreo(e.target.value)} placeholder="tu@correo.com" type="email" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
                       </div>
                     </div>
 
@@ -1325,6 +1334,7 @@ export default function CotizadorSection() {
             folio: savedCotizacion.folio,
             nombre,
             whatsapp,
+            correo: correo || undefined,
             monto: savedCotizacion.precioTotal,
             origen,
             destino,
@@ -1339,7 +1349,7 @@ export default function CotizadorSection() {
             costoRecoleccion: 500,
             costoEntrega: 500,
             seguroMonto: seguro ? montoSeguro : undefined,
-            seguroCosto: seguro ? montoSeguro * (seguro ? 0.025 : 0) : undefined,
+            seguroCosto: seguro ? montoSeguro * 0.025 : undefined,
             inventario: inventory,
             inventarioLabels: {
               cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',

@@ -33,6 +33,7 @@ export interface TramoResult {
 interface CotizacionInput {
   nombre: string;
   whatsapp: string;
+  correo?: string;
   origen: string;
   destino: string;
   fecha: string;
@@ -309,10 +310,14 @@ export function useCotizacion() {
 
       if (clienteExistente) {
         clienteId = clienteExistente.id;
+        // Update correo if provided and not already set
+        if (input.correo) {
+          await supabase.from('clientes').update({ correo: input.correo }).eq('id', clienteId);
+        }
       } else {
         const { data: nuevoCliente, error: errCliente } = await supabase
           .from('clientes')
-          .insert({ nombre_completo: input.nombre, whatsapp: input.whatsapp })
+          .insert({ nombre_completo: input.nombre, whatsapp: input.whatsapp, correo: input.correo || null })
           .select('id')
           .single();
         if (errCliente || !nuevoCliente) throw new Error('Error creando cliente');
@@ -362,7 +367,7 @@ export function useCotizacion() {
           seguro_monto: input.seguro ? input.montoSeguro : null,
           seguro_costo: input.seguro ? seguroCosto : null,
           seguro_porcentaje: input.seguro ? 2.5 : null,
-          estatus: 'borrador',
+          estatus: 'cotizado',
           cliente_acepto: false,
         })
         .select('id')
