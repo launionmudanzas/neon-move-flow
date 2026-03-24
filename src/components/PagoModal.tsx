@@ -202,6 +202,11 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   const [loadingPI, setLoadingPI] = useState(false);
   const [piError, setPiError] = useState<string | null>(null);
   const [exitoso, setExitoso] = useState(false);
+  // PDF generation state
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [ordenGeneradaOpen, setOrdenGeneradaOpen] = useState(false);
 
   const montoAnticipo = Math.ceil(data.monto * 0.5);
 
