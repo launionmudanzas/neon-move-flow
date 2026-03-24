@@ -231,22 +231,14 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
         .update({ estatus: 'confirmado', color: '#22c55e' })
         .eq('cotizacion_id', data.cotizacionId);
     }
-    // Fire email (non-blocking)
-    void supabase.functions.invoke('send-service-email', {
-      body: {
-        folio: data.folio,
-        nombre: data.nombre,
-        whatsapp: '',
-        origen: data.origen,
-        destino: data.destino,
-        fecha: '',
-        serviceLabel: data.serviceLabel ?? 'Mudanza',
-        vol: '',
-        unitLabel: '',
-        precioTotal: data.monto,
-        precioAnticipo: montoAnticipo,
-        tipoPago,
-      },
+    // Fire email — confirmacion_pago (non-blocking)
+    void sendServiceEmail({
+      type: 'confirmacion_pago',
+      folio: data.folio,
+      customer_name: data.nombre,
+      route: `${data.origen} → ${data.destino}`,
+      service_type: data.serviceLabel ?? 'Mudanza',
+      amount: data.monto,
     });
     setExitoso(true);
   };
