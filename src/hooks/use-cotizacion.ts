@@ -367,7 +367,7 @@ export function useCotizacion() {
           seguro_monto: input.seguro ? input.montoSeguro : null,
           seguro_costo: input.seguro ? seguroCosto : null,
           seguro_porcentaje: input.seguro ? 2.5 : null,
-          estatus: 'borrador',
+          estatus: 'cotizado',
           cliente_acepto: false,
         })
         .select('id')
