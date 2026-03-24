@@ -1334,6 +1334,7 @@ export default function CotizadorSection() {
             folio: savedCotizacion.folio,
             nombre,
             whatsapp,
+            correo: correo || undefined,
             monto: savedCotizacion.precioTotal,
             origen,
             destino,
@@ -1348,7 +1349,7 @@ export default function CotizadorSection() {
             costoRecoleccion: 500,
             costoEntrega: 500,
             seguroMonto: seguro ? montoSeguro : undefined,
-            seguroCosto: seguro ? montoSeguro * (seguro ? 0.025 : 0) : undefined,
+            seguroCosto: seguro ? montoSeguro * 0.025 : undefined,
             inventario: inventory,
             inventarioLabels: {
               cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',
