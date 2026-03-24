@@ -27,6 +27,7 @@ export interface SendEmailPayload {
   volume?: string;
   unit?: string;
   amount?: number;
+  pdf_url?: string;      // link to the generated PDF
 }
 
 /**

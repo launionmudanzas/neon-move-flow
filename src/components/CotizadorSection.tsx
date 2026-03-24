@@ -437,7 +437,7 @@ export default function CotizadorSection() {
   const [pagoOpen, setPagoOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [savedCotizacion, setSavedCotizacion] = useState<{
-    folio: string; cotizacionId: string; precioTotal: number;
+    folio: string; cotizacionId: string; precioTotal: number; precioBase?: number;
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
 
@@ -547,7 +547,7 @@ export default function CotizadorSection() {
     });
     setGuardandoCot(false);
     if (result) {
-      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal });
+      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal, precioBase: result.precioBase });
       setSavedClienteId(result.clienteId);
       // Auto-create calendar event on quote generation
       void crearEventoCalendario({
@@ -1324,11 +1324,34 @@ export default function CotizadorSection() {
           data={{
             folio: savedCotizacion.folio,
             nombre,
+            whatsapp,
             monto: savedCotizacion.precioTotal,
             origen,
             destino,
-            serviceLabel: tipoServicio || 'Mudanza',
+            fecha,
+            serviceLabel: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
+            tipoServicio,
+            modalidad,
+            vol: billableVol.toFixed(1),
+            unitLabel: unit.label,
             cotizacionId: savedCotizacion.cotizacionId,
+            precioBase: savedCotizacion.precioBase ?? undefined,
+            costoRecoleccion: 500,
+            costoEntrega: 500,
+            seguroMonto: seguro ? montoSeguro : undefined,
+            seguroCosto: seguro ? montoSeguro * (seguro ? 0.025 : 0) : undefined,
+            inventario: inventory,
+            inventarioLabels: {
+              cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',
+              sofa_3_plazas: 'Sofá 3 plazas', sofa_2_plazas: 'Sofá 2 plazas', sofa_individual: 'Sillón', sofa_cama: 'Sofá-cama',
+              comedor_6: 'Comedor 6p', comedor_4: 'Comedor 4p', mesa_centro: 'Mesa de centro',
+              ropero_3p: 'Ropero 3p', ropero_2p: 'Ropero 2p', cajones_3: 'Cajonera', buros: 'Buró', tocador: 'Tocador', librero: 'Librero',
+              refrigerador_duplex: 'Refrigerador dúplex', refrigerador_14: 'Refrigerador', estufa: 'Estufa',
+              lavadora: 'Lavadora', secadora: 'Secadora',
+              tv_55: 'TV 55"', tv_65: 'TV 65"', tv_75: 'TV 75"+',
+              escritorio: 'Escritorio', silla_oficina: 'Silla oficina', archivero: 'Archivero', computadora: 'Computadora',
+              bicicleta: 'Bicicleta', caja_estandar: 'Caja estándar',
+            },
           }}
         />
       )}
