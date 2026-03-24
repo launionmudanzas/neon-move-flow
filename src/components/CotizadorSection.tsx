@@ -454,6 +454,7 @@ export default function CotizadorSection() {
   const [fecha, setFecha] = useState('');
   const [nombre, setNombre] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [correo, setCorreo] = useState('');
 
   // Step 2 – Detalles
   const [tipoServicio, setTipoServicio] = useState<string>('');
