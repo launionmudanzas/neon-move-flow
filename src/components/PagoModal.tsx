@@ -213,18 +213,18 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   const montoCompleto = data.monto;
   const montoPagar = tipoPago === 'completo' ? montoCompleto : montoAnticipo;
 
-  const initStripe = async () => {
-    if (clientSecret) return;
+  const initStripe = async (monto: number, tipo: 'anticipo' | 'completo') => {
+    setClientSecret(null);
     setLoadingPI(true);
     setPiError(null);
     try {
       const { data: fnData, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
-          amount: montoAnticipo,
+          amount: monto,
           folio: data.folio,
           nombre: data.nombre,
-          descripcion: `Anticipo 50% - ${data.origen} → ${data.destino}`,
-          tipo: 'anticipo',
+          descripcion: `${tipo === 'completo' ? 'Pago completo' : 'Anticipo 50%'} - ${data.origen} → ${data.destino}`,
+          tipo,
         },
       });
       if (error) throw error;
@@ -238,24 +238,43 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
 
   const handleTabChange = (t: 'tarjeta' | 'spei') => {
     setTab(t);
-    if (t === 'tarjeta') initStripe();
+    if (t === 'tarjeta') initStripe(montoPagar, tipoPago);
+  };
+
+  const handleTipoPagoChange = (t: 'anticipo' | 'completo') => {
+    setTipoPago(t);
+    setClientSecret(null);
+    if (tab === 'tarjeta') {
+      const monto = t === 'completo' ? montoCompleto : montoAnticipo;
+      initStripe(monto, t);
+    }
   };
 
   // Init stripe on open
   if (isOpen && !clientSecret && !loadingPI && !piError && tab === 'tarjeta') {
-    initStripe();
+    initStripe(montoPagar, tipoPago);
   }
 
   // After successful payment: generate PDF, update DB, send emails
-  const handlePaymentSuccess = async (tipoPago: string) => {
-    // Update cotizacion to confirmado
+  const handlePaymentSuccess = async (metodo: string) => {
+    const esCompleto = tipoPago === 'completo';
+    const nuevoEstatus = esCompleto ? 'pagado' : 'apartado';
+
     if (data.cotizacionId) {
       await supabase.from('cotizaciones')
-        .update({ estatus: 'confirmado', cliente_acepto: true })
+        .update({ estatus: nuevoEstatus, cliente_acepto: true })
         .eq('id', data.cotizacionId);
       await supabase.from('eventos_calendario')
-        .update({ estatus: 'confirmado', color: '#22c55e' })
+        .update({ estatus: nuevoEstatus, color: esCompleto ? '#0066ff' : '#22c55e' })
         .eq('cotizacion_id', data.cotizacionId);
+      // Register bitácora
+      await supabase.from('bitacora_servicio').insert({
+        cotizacion_id: data.cotizacionId,
+        evento: esCompleto ? 'pago_completo' : 'anticipo_recibido',
+        estatus_anterior: 'cotizado',
+        estatus_nuevo: nuevoEstatus,
+        descripcion: `Pago ${esCompleto ? 'completo' : 'anticipo 50%'} recibido vía ${metodo}. Monto: $${montoPagar.toLocaleString('es-MX')} MXN`,
+      });
     }
 
     // Fire payment confirmation email (non-blocking)
@@ -266,11 +285,10 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
       to: data.correo,
       route: `${data.origen} → ${data.destino}`,
       service_type: data.serviceLabel ?? 'Mudanza',
-      amount: data.monto,
+      amount: montoPagar,
     });
 
     // Generate PDF and show orden generada modal
-    setExitoso(false);
     setOrdenGeneradaOpen(true);
     setPdfLoading(true);
     setPdfError(null);
@@ -302,7 +320,6 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
         };
         const { pdfUrl: url } = await generateAndSaveOrden(pdfData, data.cotizacionId);
         setPdfUrl(url);
-        // Send orden_servicio email with PDF link
         void sendServiceEmail({
           type: 'orden_servicio',
           folio: data.folio,
@@ -324,7 +341,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
       setPdfLoading(false);
     }
 
-    onPagoExitoso?.(tipoPago);
+    onPagoExitoso?.(metodo);
   };
 
   if (!isOpen && !ordenGeneradaOpen) return null;
