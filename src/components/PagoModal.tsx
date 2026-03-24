@@ -189,7 +189,7 @@ function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; t
       <div className="p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 text-xs text-center">
         <p className="text-muted-foreground">Monto a transferir:</p>
         <p className="font-black text-2xl text-neon-green">${(monto).toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN</p>
-        <p className="text-muted-foreground mt-0.5">Anticipo 50% del servicio</p>
+        <p className="text-muted-foreground mt-0.5">{tipoPago === 'anticipo' ? 'Anticipo 50% del servicio' : 'Pago completo del servicio'}</p>
       </div>
     </div>
   );
