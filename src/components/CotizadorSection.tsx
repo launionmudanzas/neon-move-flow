@@ -547,7 +547,7 @@ export default function CotizadorSection() {
     });
     setGuardandoCot(false);
     if (result) {
-      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal });
+      setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal, precioBase: result.precioBase });
       setSavedClienteId(result.clienteId);
       // Auto-create calendar event on quote generation
       void crearEventoCalendario({
