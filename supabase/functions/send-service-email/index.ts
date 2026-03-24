@@ -35,6 +35,7 @@ interface EmailPayload {
   unit?: string;
   amount?: number;
   html?: string;       // custom html override
+  pdf_url?: string;    // link to generated PDF
   // Legacy fields (keep backward compat)
   nombre?: string;
   whatsapp?: string;
