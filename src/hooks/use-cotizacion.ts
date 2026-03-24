@@ -33,6 +33,7 @@ export interface TramoResult {
 interface CotizacionInput {
   nombre: string;
   whatsapp: string;
+  correo?: string;
   origen: string;
   destino: string;
   fecha: string;
