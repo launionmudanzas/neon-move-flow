@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      bitacora_servicio: {
+        Row: {
+          cotizacion_id: string | null
+          created_at: string
+          descripcion: string | null
+          estatus_anterior: string | null
+          estatus_nuevo: string | null
+          evento: string
+          id: string
+          orden_id: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estatus_anterior?: string | null
+          estatus_nuevo?: string | null
+          evento: string
+          id?: string
+          orden_id?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estatus_anterior?: string | null
+          estatus_nuevo?: string | null
+          evento?: string
+          id?: string
+          orden_id?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bitacora_servicio_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bitacora_servicio_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes_servicio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats_publicaciones: {
         Row: {
           contacto_desbloqueado: boolean
@@ -161,6 +212,7 @@ export type Database = {
           porcentaje_urgencia: number
           precio_base: number | null
           precio_total: number | null
+          proveedor_id: string | null
           seguro_costo: number | null
           seguro_monto: number | null
           seguro_porcentaje: number | null
@@ -193,6 +245,7 @@ export type Database = {
           porcentaje_urgencia?: number
           precio_base?: number | null
           precio_total?: number | null
+          proveedor_id?: string | null
           seguro_costo?: number | null
           seguro_monto?: number | null
           seguro_porcentaje?: number | null
@@ -225,6 +278,7 @@ export type Database = {
           porcentaje_urgencia?: number
           precio_base?: number | null
           precio_total?: number | null
+          proveedor_id?: string | null
           seguro_costo?: number | null
           seguro_monto?: number | null
           seguro_porcentaje?: number | null
@@ -241,6 +295,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotizaciones_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
         ]
@@ -305,6 +366,54 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evidencias_servicio: {
+        Row: {
+          cotizacion_id: string | null
+          created_at: string
+          descripcion: string | null
+          id: string
+          orden_id: string | null
+          subido_por: string | null
+          tipo: string
+          url: string
+        }
+        Insert: {
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          orden_id?: string | null
+          subido_por?: string | null
+          tipo: string
+          url: string
+        }
+        Update: {
+          cotizacion_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          orden_id?: string | null
+          subido_por?: string | null
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidencias_servicio_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidencias_servicio_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes_servicio"
             referencedColumns: ["id"]
           },
         ]

@@ -1,5 +1,5 @@
 /**
- * /admin/servicios — Service Tracking with Timeline
+ * /admin/servicios — Service Tracking with full Expediente
  * La Unión Mudanzas — Full operational service lifecycle
  */
 import { useEffect, useState, useCallback } from 'react';
@@ -7,9 +7,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Truck, Search, RefreshCw,
-  MapPin, Calendar, Package, CreditCard, AlertCircle,
-  CheckCircle2, Clock, Circle, ArrowRight, Eye,
-  Upload, FileText, Image as ImageIcon, ChevronRight,
+  MapPin, Calendar, Package, CreditCard,
+  CheckCircle2, ArrowRight, ChevronRight,
+  FileText, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logoOficial from '@/assets/logo-oficial.png';
+import ExpedienteServicio from '@/components/admin/ExpedienteServicio';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface Servicio {
@@ -292,7 +293,8 @@ export default function AdminServicios() {
       .from('ordenes_servicio')
       .select(`
         id, folio, estatus, pdf_url, created_at, cotizacion_id,
-        cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia)
+        cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia, volumen_cobrable, unidad_sugerida, folio),
+        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo))
       `)
       .order('created_at', { ascending: false });
     if (data) setServicios(data as Servicio[]);
@@ -471,11 +473,25 @@ export default function AdminServicios() {
         </div>
       </div>
 
-      <ServicioDetail
-        servicio={selected}
-        onClose={() => setSelected(null)}
-        onUpdate={fetchData}
-      />
+      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+        <DialogContent className="bg-card border-border max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-foreground">
+                  <Truck className="w-5 h-5 text-primary" />
+                  Expediente — {selected.folio ?? selected.id.slice(0, 8)}
+                </DialogTitle>
+              </DialogHeader>
+              <ExpedienteServicio
+                servicio={selected as any}
+                onClose={() => setSelected(null)}
+                onUpdate={fetchData}
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
