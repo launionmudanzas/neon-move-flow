@@ -669,6 +669,12 @@ export default function CotizadorSection() {
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">WhatsApp</label>
                         <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="442 127 0514" type="tel" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
                       </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                          Correo electrónico <span className="text-muted-foreground/60 font-normal normal-case">(para recibir tu orden de servicio)</span>
+                        </label>
+                        <input value={correo} onChange={e => setCorreo(e.target.value)} placeholder="tu@correo.com" type="email" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
                     </div>
 
                     {/* Route visual with classification */}
