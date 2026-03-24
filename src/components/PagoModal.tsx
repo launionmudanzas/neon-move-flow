@@ -4,6 +4,7 @@ import { X, CreditCard, Building2, CheckCircle2, AlertTriangle, Copy, Check, Loa
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
+import { sendServiceEmail } from '@/lib/email-service';
 
 const stripePromise = loadStripe('pk_live_51SiBhiQ3g3KekYqfcy0gdKzvjqgX8XaPcouSARuyGA1ABjEqJwpZ7Yfxl3zZXZaNBnRycpJTrFaOqVBoY779lNZw00JY4R1b7K');
 
