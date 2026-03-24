@@ -134,12 +134,6 @@ export default function Admin() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [eventos, setEventos] = useState<EventoCalendario[]>([]);
 
-  // calendar nav
-  const [calMonth, setCalMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-
   // modals
   const [ineModal, setIneModal] = useState<Cliente | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
