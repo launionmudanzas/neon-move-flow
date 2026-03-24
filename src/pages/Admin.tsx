@@ -4,15 +4,13 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
   IdCard, RefreshCw, Eye, Search, ChevronDown,
-  CheckCircle2, Clock, XCircle, Truck, Star, MapPin,
+  CheckCircle2, XCircle, Truck, Star, MapPin,
   ToggleLeft, ToggleRight, AlertTriangle, Route, CalendarDays,
-  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -23,6 +21,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import logoOficial from '@/assets/logo-oficial.png';
+import CalendarioOperativo from '@/components/admin/CalendarioOperativo';
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
 type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores' | 'calendario';

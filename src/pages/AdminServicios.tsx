@@ -1,5 +1,5 @@
 /**
- * /admin/servicios — Service Tracking with Timeline
+ * /admin/servicios — Service Tracking with full Expediente
  * La Unión Mudanzas — Full operational service lifecycle
  */
 import { useEffect, useState, useCallback } from 'react';
@@ -7,9 +7,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, ShieldCheck, Truck, Search, RefreshCw,
-  MapPin, Calendar, Package, CreditCard, AlertCircle,
-  CheckCircle2, Clock, Circle, ArrowRight, Eye,
-  Upload, FileText, Image as ImageIcon, ChevronRight,
+  MapPin, Calendar, Package, CreditCard,
+  CheckCircle2, ArrowRight, ChevronRight,
+  FileText, MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logoOficial from '@/assets/logo-oficial.png';
+import ExpedienteServicio from '@/components/admin/ExpedienteServicio';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface Servicio {
