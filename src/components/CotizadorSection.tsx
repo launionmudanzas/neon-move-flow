@@ -1340,7 +1340,7 @@ export default function CotizadorSection() {
             costoEntrega: 500,
             seguroMonto: seguro ? montoSeguro : undefined,
             seguroCosto: seguro ? montoSeguro * (seguro ? 0.025 : 0) : undefined,
-            inventario,
+            inventario: inventory,
             inventarioLabels: {
               cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',
               sofa_3_plazas: 'Sofá 3 plazas', sofa_2_plazas: 'Sofá 2 plazas', sofa_individual: 'Sillón', sofa_cama: 'Sofá-cama',
