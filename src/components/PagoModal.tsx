@@ -29,6 +29,22 @@ interface PagoModalProps {
     destino: string;
     serviceLabel?: string;
     cotizacionId?: string;
+    // Extended data for PDF generation
+    fecha?: string;
+    vol?: string;
+    unitLabel?: string;
+    tipoServicio?: string;
+    modalidad?: string;
+    precioBase?: number;
+    costoRecoleccion?: number;
+    costoEntrega?: number;
+    costoAdicionales?: number;
+    seguroMonto?: number;
+    seguroCosto?: number;
+    inventario?: Record<string, number>;
+    inventarioLabels?: Record<string, string>;
+    correo?: string;
+    whatsapp?: string;
   };
 }
 
