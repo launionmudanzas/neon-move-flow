@@ -140,7 +140,7 @@ function StripeCheckoutForm({
 }
 
 // ─── SPEI Info Panel ───────────────────────────────────────────────────────
-function SpeiPanel({ folio, monto }: { folio: string; monto: number }) {
+function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; tipoPago: 'anticipo' | 'completo' }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = (val: string, key: string) => {
