@@ -103,7 +103,7 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
 
   if (!isOpen) return null;
 
-  const precioAnticipo = data.precioTotal ? Math.ceil(data.precioTotal * 0.5) : null;
+  // Remove fixed-anticipo references; apartado is chosen in PagoModal
 
   return (
     <AnimatePresence>
