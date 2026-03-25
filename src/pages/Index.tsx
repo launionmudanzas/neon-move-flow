@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
+import LeadFormSection from '@/components/LeadFormSection';
 import BenefitsSection from '@/components/BenefitsSection';
 import CotizadorSection from '@/components/CotizadorSection';
 import MotorCotizacion from '@/components/MotorCotizacion';
@@ -15,6 +16,7 @@ import FAQSection from '@/components/FAQSection';
 import CierreSection from '@/components/CierreSection';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import StickyMobileCTA from '@/components/StickyMobileCTA';
 import PixelScript from '@/components/PixelScript';
 
 export default function Index() {
@@ -23,6 +25,7 @@ export default function Index() {
       <PixelScript />
       <Navbar />
       <HeroSection />
+      <LeadFormSection />
       <BenefitsSection />
       <CotizadorSection />
       <MotorCotizacion />
@@ -38,6 +41,7 @@ export default function Index() {
       <CierreSection />
       <Footer />
       <WhatsAppButton />
+      <StickyMobileCTA />
     </div>
   );
 }
