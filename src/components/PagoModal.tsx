@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CreditCard, Building2, CheckCircle2, AlertTriangle, Copy, Check, Loader2, Download } from 'lucide-react';
+import { X, CreditCard, Building2, CheckCircle2, AlertTriangle, Copy, Check, Loader2, Info } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,11 @@ const SPEI_DATA = {
   concepto: 'Folio del servicio',
 };
 
+// Suggested apartado: 30% of total, rounded up
+function calcSuggestedApartado(total: number): number {
+  return Math.ceil(total * 0.3);
+}
+
 interface PagoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +34,6 @@ interface PagoModalProps {
     destino: string;
     serviceLabel?: string;
     cotizacionId?: string;
-    // Extended data for PDF generation
     fecha?: string;
     vol?: string;
     unitLabel?: string;
@@ -100,12 +104,7 @@ function StripeCheckoutForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 rounded-xl bg-surface border border-border">
-        <PaymentElement
-          options={{
-            layout: 'tabs',
-            defaultValues: { billingDetails: { name: '' } },
-          }}
-        />
+        <PaymentElement options={{ layout: 'tabs', defaultValues: { billingDetails: { name: '' } } }} />
       </div>
 
       {error && (
@@ -140,7 +139,7 @@ function StripeCheckoutForm({
 }
 
 // ─── SPEI Info Panel ───────────────────────────────────────────────────────
-function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; tipoPago: 'anticipo' | 'completo' }) {
+function SpeiPanel({ folio, monto }: { folio: string; monto: number }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = (val: string, key: string) => {
@@ -187,9 +186,56 @@ function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; t
       </div>
 
       <div className="p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 text-xs text-center">
-        <p className="text-muted-foreground">Monto a transferir:</p>
-        <p className="font-black text-2xl text-neon-green">${(monto).toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN</p>
-        <p className="text-muted-foreground mt-0.5">{tipoPago === 'anticipo' ? 'Anticipo 50% del servicio' : 'Pago completo del servicio'}</p>
+        <p className="text-muted-foreground">Apartado a transferir:</p>
+        <p className="font-black text-2xl text-neon-green">${monto.toLocaleString('es-MX', { minimumFractionDigits: 0 })} MXN</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Payment Breakdown ─────────────────────────────────────────────────────
+function PaymentBreakdown({
+  total,
+  apartado,
+}: {
+  total: number;
+  apartado: number;
+}) {
+  const saldoRestante = total - apartado;
+  const alCargar = Math.ceil(saldoRestante / 2);
+  const antesDescargar = saldoRestante - alCargar;
+
+  return (
+    <div className="space-y-2 p-4 rounded-xl bg-surface border border-border">
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Desglose de pagos</p>
+
+      <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+        <span className="text-xs text-muted-foreground">Precio total</span>
+        <span className="text-sm font-black text-foreground">${total.toLocaleString('es-MX')} MXN</span>
+      </div>
+      <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+        <span className="text-xs text-neon-cyan font-semibold">Apartado (pagas ahora)</span>
+        <span className="text-sm font-black text-neon-cyan">${apartado.toLocaleString('es-MX')} MXN</span>
+      </div>
+      <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+        <span className="text-xs text-muted-foreground">Saldo restante</span>
+        <span className="text-sm font-bold text-foreground">${saldoRestante.toLocaleString('es-MX')} MXN</span>
+      </div>
+      <div className="flex justify-between items-center py-1.5 border-b border-border/40">
+        <span className="text-xs text-neon-orange font-semibold">50% al cargar</span>
+        <span className="text-sm font-bold text-neon-orange">${alCargar.toLocaleString('es-MX')} MXN</span>
+      </div>
+      <div className="flex justify-between items-center py-1.5">
+        <span className="text-xs text-neon-blue font-semibold">50% antes de descargar</span>
+        <span className="text-sm font-bold text-neon-blue">${antesDescargar.toLocaleString('es-MX')} MXN</span>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-border/40 flex items-start gap-2">
+        <Info className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          El apartado asegura tu servicio. El saldo restante se liquida: 50% al cargar y 50% antes de la descarga.{' '}
+          <strong className="text-foreground">No se permiten pagos posteriores a la descarga.</strong>
+        </p>
       </div>
     </div>
   );
@@ -197,23 +243,31 @@ function SpeiPanel({ folio, monto, tipoPago }: { folio: string; monto: number; t
 
 // ─── Main Modal ────────────────────────────────────────────────────────────
 export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: PagoModalProps) {
+  const suggested = calcSuggestedApartado(data.monto);
   const [tab, setTab] = useState<'tarjeta' | 'spei'>('tarjeta');
-  const [tipoPago, setTipoPago] = useState<'anticipo' | 'completo'>('anticipo');
+  const [apartadoInput, setApartadoInput] = useState<string>(String(suggested));
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingPI, setLoadingPI] = useState(false);
   const [piError, setPiError] = useState<string | null>(null);
-  const [exitoso, setExitoso] = useState(false);
-  // PDF generation state
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [ordenGeneradaOpen, setOrdenGeneradaOpen] = useState(false);
 
-  const montoAnticipo = Math.ceil(data.monto * 0.5);
-  const montoCompleto = data.monto;
-  const montoPagar = tipoPago === 'completo' ? montoCompleto : montoAnticipo;
+  // Parse & validate apartado
+  const apartadoNum = parseInt(apartadoInput.replace(/\D/g, ''), 10) || 0;
+  const total = data.monto;
+  const isApartadoValid = apartadoNum > 0 && apartadoNum <= total && total > 0;
+  const apartadoError =
+    total === 0
+      ? 'El precio total no puede ser cero.'
+      : apartadoNum === 0
+      ? 'El apartado es obligatorio.'
+      : apartadoNum > total
+      ? 'El apartado no puede superar el precio total.'
+      : null;
 
-  const initStripe = async (monto: number, tipo: 'anticipo' | 'completo') => {
+  const initStripe = async (monto: number) => {
     setClientSecret(null);
     setLoadingPI(true);
     setPiError(null);
@@ -223,13 +277,13 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
           amount: monto,
           folio: data.folio,
           nombre: data.nombre,
-          descripcion: `${tipo === 'completo' ? 'Pago completo' : 'Anticipo 50%'} - ${data.origen} → ${data.destino}`,
-          tipo,
+          descripcion: `Apartado - ${data.origen} → ${data.destino}`,
+          tipo: 'anticipo',
         },
       });
       if (error) throw error;
       setClientSecret(fnData.clientSecret);
-    } catch (err) {
+    } catch {
       setPiError('No se pudo iniciar el pago. Usa transferencia SPEI.');
     } finally {
       setLoadingPI(false);
@@ -238,46 +292,43 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
 
   const handleTabChange = (t: 'tarjeta' | 'spei') => {
     setTab(t);
-    if (t === 'tarjeta') initStripe(montoPagar, tipoPago);
+    if (t === 'tarjeta' && isApartadoValid) initStripe(apartadoNum);
   };
 
-  const handleTipoPagoChange = (t: 'anticipo' | 'completo') => {
-    setTipoPago(t);
+  const handleApartadoChange = (val: string) => {
+    setApartadoInput(val);
     setClientSecret(null);
-    if (tab === 'tarjeta') {
-      const monto = t === 'completo' ? montoCompleto : montoAnticipo;
-      initStripe(monto, t);
-    }
   };
 
-  // Init stripe on open
-  if (isOpen && !clientSecret && !loadingPI && !piError && tab === 'tarjeta') {
-    initStripe(montoPagar, tipoPago);
+  const handleConfirmarApartado = () => {
+    if (!isApartadoValid) return;
+    if (tab === 'tarjeta') initStripe(apartadoNum);
+  };
+
+  // Init stripe on open if valid
+  if (isOpen && !clientSecret && !loadingPI && !piError && tab === 'tarjeta' && isApartadoValid && apartadoNum === suggested) {
+    initStripe(apartadoNum);
   }
 
-  // After successful payment: generate PDF, update DB, send emails
   const handlePaymentSuccess = async (metodo: string) => {
-    const esCompleto = tipoPago === 'completo';
-    const nuevoEstatus = esCompleto ? 'pagado' : 'apartado';
+    const nuevoEstatus = 'apartado';
 
     if (data.cotizacionId) {
       await supabase.from('cotizaciones')
         .update({ estatus: nuevoEstatus, cliente_acepto: true })
         .eq('id', data.cotizacionId);
       await supabase.from('eventos_calendario')
-        .update({ estatus: nuevoEstatus, color: esCompleto ? '#0066ff' : '#22c55e' })
+        .update({ estatus: nuevoEstatus, color: '#22c55e' })
         .eq('cotizacion_id', data.cotizacionId);
-      // Register bitácora
       await supabase.from('bitacora_servicio').insert({
         cotizacion_id: data.cotizacionId,
-        evento: esCompleto ? 'pago_completo' : 'anticipo_recibido',
+        evento: 'anticipo_recibido',
         estatus_anterior: 'cotizado',
         estatus_nuevo: nuevoEstatus,
-        descripcion: `Pago ${esCompleto ? 'completo' : 'anticipo 50%'} recibido vía ${metodo}. Monto: $${montoPagar.toLocaleString('es-MX')} MXN`,
+        descripcion: `Apartado recibido vía ${metodo}. Monto: $${apartadoNum.toLocaleString('es-MX')} MXN. Saldo restante: $${(total - apartadoNum).toLocaleString('es-MX')} MXN (50% al cargar / 50% antes de descargar).`,
       });
     }
 
-    // Fire payment confirmation email (non-blocking)
     void sendServiceEmail({
       type: 'confirmacion_pago',
       folio: data.folio,
@@ -285,10 +336,9 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
       to: data.correo,
       route: `${data.origen} → ${data.destino}`,
       service_type: data.serviceLabel ?? 'Mudanza',
-      amount: montoPagar,
+      amount: apartadoNum,
     });
 
-    // Generate PDF and show orden generada modal
     setOrdenGeneradaOpen(true);
     setPdfLoading(true);
     setPdfError(null);
@@ -348,7 +398,6 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
 
   return (
     <>
-      {/* OrdenGeneradaModal — shown after payment success */}
       <OrdenGeneradaModal
         isOpen={ordenGeneradaOpen}
         onClose={() => { setOrdenGeneradaOpen(false); onClose(); }}
@@ -356,6 +405,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
         pdfUrl={pdfUrl}
         loading={pdfLoading}
         error={pdfError}
+        apartado={apartadoNum}
         data={{
           nombre: data.nombre,
           origen: data.origen,
@@ -368,169 +418,174 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
       />
 
       {isOpen && (
-      <AnimatePresence>
-        <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <AnimatePresence>
+          <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
 
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            className="relative w-full sm:max-w-md max-h-[95vh] overflow-y-auto glass-card rounded-t-3xl sm:rounded-2xl border border-neon-cyan/20 shadow-glow-cyan"
-          >
-            <div className="h-1 bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-cyan" />
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              className="relative w-full sm:max-w-md max-h-[95vh] overflow-y-auto glass-card rounded-t-3xl sm:rounded-2xl border border-neon-cyan/20 shadow-glow-cyan"
+            >
+              <div className="h-1 bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-cyan" />
 
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="font-display font-black text-xl text-foreground">Confirmar servicio</h2>
-                  <p className="text-xs text-neon-cyan font-mono">{data.folio}</p>
-                </div>
-                <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Resumen ruta */}
-              <div className="flex justify-between items-center px-1 mb-4">
-                <span className="text-xs text-muted-foreground">Ruta</span>
-                <span className="text-xs font-bold text-foreground truncate ml-2">{data.origen} → {data.destino}</span>
-              </div>
-
-              {/* Selector de tipo de pago */}
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                {/* Anticipo */}
-                <button
-                  onClick={() => handleTipoPagoChange('anticipo')}
-                  className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all text-left ${
-                    tipoPago === 'anticipo'
-                      ? 'border-neon-cyan bg-neon-cyan/10 shadow-glow-cyan'
-                      : 'border-border bg-surface hover:border-neon-cyan/40'
-                  }`}
-                >
-                  {tipoPago === 'anticipo' && (
-                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-neon-cyan flex items-center justify-center">
-                      <CheckCircle2 className="w-3 h-3 text-background" />
-                    </span>
-                  )}
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-full">Apartar servicio</span>
-                  <span className={`font-black text-2xl w-full ${tipoPago === 'anticipo' ? 'text-neon-cyan' : 'text-foreground'}`}>
-                    ${montoAnticipo.toLocaleString('es-MX')}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground w-full">Anticipo 50% · MXN</span>
-                  <span className="mt-1 text-[10px] text-neon-orange/80 w-full">Resto al finalizar</span>
-                </button>
-
-                {/* Completo */}
-                <button
-                  onClick={() => handleTipoPagoChange('completo')}
-                  className={`relative flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all text-left ${
-                    tipoPago === 'completo'
-                      ? 'border-neon-blue bg-neon-blue/10 shadow-glow-blue'
-                      : 'border-border bg-surface hover:border-neon-blue/40'
-                  }`}
-                >
-                  {tipoPago === 'completo' && (
-                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-neon-blue flex items-center justify-center">
-                      <CheckCircle2 className="w-3 h-3 text-background" />
-                    </span>
-                  )}
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-full">Pago completo</span>
-                  <span className={`font-black text-2xl w-full ${tipoPago === 'completo' ? 'text-neon-blue' : 'text-foreground'}`}>
-                    ${montoCompleto.toLocaleString('es-MX')}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground w-full">100% · MXN</span>
-                  <span className="mt-1 text-[10px] text-neon-green/80 w-full">Sin cobros adicionales</span>
-                </button>
-              </div>
-
-              {/* Resumen monto seleccionado */}
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface border border-border mb-5">
-                <span className="text-sm text-muted-foreground">
-                  {tipoPago === 'anticipo' ? 'Pagas ahora (50%)' : 'Pagas ahora (100%)'}
-                </span>
-                <span className={`font-black text-xl ${tipoPago === 'anticipo' ? 'text-neon-cyan' : 'text-neon-blue'}`}>
-                  ${montoPagar.toLocaleString('es-MX')} MXN
-                </span>
-              </div>
-
-              {/* Tab switcher */}
-              <div className="flex bg-muted/30 rounded-xl p-1 mb-5 gap-1">
-                {([
-                  { id: 'tarjeta', label: '💳 Tarjeta', icon: CreditCard },
-                  { id: 'spei', label: '🏦 Transferencia SPEI', icon: Building2 },
-                ] as const).map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleTabChange(t.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                      tab === t.id
-                        ? 'bg-primary text-primary-foreground shadow-glow-cyan'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {t.label}
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="font-display font-black text-xl text-foreground">Confirmar servicio</h2>
+                    <p className="text-xs text-neon-cyan font-mono">{data.folio}</p>
+                  </div>
+                  <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
+                    <X className="w-5 h-5" />
                   </button>
-                ))}
-              </div>
+                </div>
 
-              {/* Tab content */}
-              {tab === 'tarjeta' && (
-                <div>
-                  {loadingPI && (
-                    <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Iniciando pago seguro…
-                    </div>
-                  )}
-                  {piError && (
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-xs text-destructive mb-4">
-                      <AlertTriangle className="w-4 h-4 inline mr-1" />
-                      {piError}
-                    </div>
-                  )}
-                  {clientSecret && !loadingPI && (
-                    <Elements
-                      stripe={stripePromise}
-                      options={{
-                        clientSecret,
-                        appearance: {
-                          theme: 'night',
-                          variables: {
-                            colorPrimary: '#00f5ff',
-                            colorBackground: '#0b1f3a',
-                            colorText: '#f0f8ff',
-                            colorDanger: '#ef4444',
-                            fontFamily: 'Inter, sans-serif',
-                            borderRadius: '12px',
-                          },
-                        },
-                      }}
-                    >
-                      <StripeCheckoutForm
-                        clientSecret={clientSecret}
-                        monto={montoPagar * 100}
-                        folio={data.folio}
-                        onSuccess={(tipo) => handlePaymentSuccess(tipo)}
-                        onCancel={onClose}
+                {/* Ruta */}
+                <div className="flex justify-between items-center px-1 mb-5">
+                  <span className="text-xs text-muted-foreground">Ruta</span>
+                  <span className="text-xs font-bold text-foreground truncate ml-2">{data.origen} → {data.destino}</span>
+                </div>
+
+                {/* Precio total */}
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface border border-border mb-5">
+                  <span className="text-sm text-muted-foreground">Precio total del servicio</span>
+                  <span className="font-black text-xl text-neon-green">${total.toLocaleString('es-MX')} MXN</span>
+                </div>
+
+                {/* Apartado input */}
+                <div className="mb-2">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    Apartado <span className="text-destructive">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">$</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={total}
+                        value={apartadoInput}
+                        onChange={(e) => handleApartadoChange(e.target.value)}
+                        onBlur={() => {
+                          if (isApartadoValid && tab === 'tarjeta') initStripe(apartadoNum);
+                        }}
+                        className="w-full pl-7 pr-3 py-3 rounded-xl bg-surface border border-border text-foreground font-bold text-sm focus:outline-none focus:border-neon-cyan transition-colors"
+                        placeholder="Ingresa el monto"
                       />
-                    </Elements>
+                    </div>
+                    <button
+                      onClick={() => { setApartadoInput(String(suggested)); handleApartadoChange(String(suggested)); if (tab === 'tarjeta') initStripe(suggested); }}
+                      className="px-3 py-2 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan text-xs font-bold hover:bg-neon-cyan/20 transition-colors whitespace-nowrap"
+                    >
+                      Sugerido 30%<br />${suggested.toLocaleString('es-MX')}
+                    </button>
+                  </div>
+                  {apartadoError && (
+                    <p className="flex items-center gap-1 mt-1.5 text-xs text-destructive">
+                      <AlertTriangle className="w-3.5 h-3.5" />{apartadoError}
+                    </p>
                   )}
                 </div>
-              )}
 
-              {tab === 'spei' && (
-                <SpeiPanel folio={data.folio} monto={montoPagar} tipoPago={tipoPago} />
-              )}
+                {/* Desglose de pagos */}
+                {isApartadoValid && (
+                  <div className="mb-5 mt-4">
+                    <PaymentBreakdown total={total} apartado={apartadoNum} />
+                  </div>
+                )}
 
-              <p className="text-[10px] text-muted-foreground text-center mt-4">
-                🔒 Pagos seguros · SSL · La Unión Mudanzas SA de CV
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </AnimatePresence>
+                {/* Tab switcher */}
+                <div className="flex bg-muted/30 rounded-xl p-1 mb-5 gap-1">
+                  {([
+                    { id: 'tarjeta', label: '💳 Tarjeta' },
+                    { id: 'spei', label: '🏦 Transferencia SPEI' },
+                  ] as const).map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleTabChange(t.id)}
+                      disabled={!isApartadoValid}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                        tab === t.id
+                          ? 'bg-primary text-primary-foreground shadow-glow-cyan'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content */}
+                {!isApartadoValid && (
+                  <div className="flex items-center gap-2 p-4 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground mb-4">
+                    <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0" />
+                    Ingresa un apartado válido para continuar con el pago.
+                  </div>
+                )}
+
+                {isApartadoValid && tab === 'tarjeta' && (
+                  <div>
+                    {loadingPI && (
+                      <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Iniciando pago seguro…
+                      </div>
+                    )}
+                    {piError && (
+                      <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-xs text-destructive mb-4">
+                        <AlertTriangle className="w-4 h-4 inline mr-1" />
+                        {piError}
+                        <button
+                          onClick={handleConfirmarApartado}
+                          className="block mt-2 text-neon-cyan underline"
+                        >
+                          Reintentar
+                        </button>
+                      </div>
+                    )}
+                    {clientSecret && !loadingPI && (
+                      <Elements
+                        stripe={stripePromise}
+                        options={{
+                          clientSecret,
+                          appearance: {
+                            theme: 'night',
+                            variables: {
+                              colorPrimary: '#00f5ff',
+                              colorBackground: '#0b1f3a',
+                              colorText: '#f0f8ff',
+                              colorDanger: '#ef4444',
+                              fontFamily: 'Inter, sans-serif',
+                              borderRadius: '12px',
+                            },
+                          },
+                        }}
+                      >
+                        <StripeCheckoutForm
+                          clientSecret={clientSecret}
+                          monto={apartadoNum * 100}
+                          folio={data.folio}
+                          onSuccess={(tipo) => handlePaymentSuccess(tipo)}
+                          onCancel={onClose}
+                        />
+                      </Elements>
+                    )}
+                  </div>
+                )}
+
+                {isApartadoValid && tab === 'spei' && (
+                  <SpeiPanel folio={data.folio} monto={apartadoNum} />
+                )}
+
+                <p className="text-[10px] text-muted-foreground text-center mt-4">
+                  🔒 Pagos seguros · SSL · La Unión Mudanzas SA de CV
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>
       )}
     </>
   );

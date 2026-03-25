@@ -1,7 +1,6 @@
 /**
  * OrdenGeneradaModal — La Unión Mudanzas
- * Shown after a successful payment/apartado + PDF generation.
- * Offers: Download PDF · WhatsApp follow-up · View summary
+ * Shown after a successful apartado + PDF generation.
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +15,7 @@ interface OrdenGeneradaModalProps {
   pdfUrl?: string | null;
   loading?: boolean;
   error?: string | null;
+  apartado?: number;
   data: {
     nombre: string;
     origen: string;
@@ -28,11 +28,14 @@ interface OrdenGeneradaModalProps {
 }
 
 export default function OrdenGeneradaModal({
-  isOpen, onClose, folio, pdfUrl, loading, error, data,
+  isOpen, onClose, folio, pdfUrl, loading, error, apartado, data,
 }: OrdenGeneradaModalProps) {
   if (!isOpen) return null;
 
-  const anticipo = Math.ceil(data.precioTotal * 0.5);
+  const apartadoPagado = apartado ?? Math.ceil(data.precioTotal * 0.3);
+  const saldoRestante = data.precioTotal - apartadoPagado;
+  const alCargar = Math.ceil(saldoRestante / 2);
+  const antesDescargar = saldoRestante - alCargar;
 
   const waMessage = encodeURIComponent(
     `¡Hola! Confirmé mi servicio con *La Unión Mudanzas* 🚛\n\n` +
@@ -42,14 +45,16 @@ export default function OrdenGeneradaModal({
     `📅 *Fecha:* ${data.fecha}\n` +
     `🚚 *Unidad:* ${data.unitLabel}\n` +
     `📐 *Volumen:* ${data.vol} m³\n` +
-    `💰 *Anticipo pagado:* $${anticipo.toLocaleString('es-MX')} MXN\n\n` +
+    `💰 *Apartado pagado:* $${apartadoPagado.toLocaleString('es-MX')} MXN\n` +
+    `📊 *Saldo restante:* $${saldoRestante.toLocaleString('es-MX')} MXN\n` +
+    `  - 50% al cargar: $${alCargar.toLocaleString('es-MX')} MXN\n` +
+    `  - 50% antes de descargar: $${antesDescargar.toLocaleString('es-MX')} MXN\n\n` +
     `Mi orden de servicio fue generada automáticamente. ¡Quedo en contacto!`
   );
 
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        {/* Overlay */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -65,15 +70,10 @@ export default function OrdenGeneradaModal({
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
           className="relative glass-card rounded-3xl border border-neon-green/40 p-8 max-w-sm w-full shadow-glow-green text-center"
         >
-          {/* Close */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1"
-          >
+          <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1">
             <X className="w-4 h-4" />
           </button>
 
-          {/* Success icon */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -83,15 +83,12 @@ export default function OrdenGeneradaModal({
             <CheckCircle2 className="w-10 h-10 text-neon-green" />
           </motion.div>
 
-          <h3 className="font-display font-black text-2xl text-foreground mb-1">
-            ¡Orden generada!
-          </h3>
+          <h3 className="font-display font-black text-2xl text-foreground mb-1">¡Servicio apartado!</h3>
           <p className="text-neon-cyan font-mono font-bold text-sm mb-1">{folio}</p>
           <p className="text-muted-foreground text-xs mb-5">
             Tu orden de servicio fue creada y guardada automáticamente.
           </p>
 
-          {/* PDF loading/error/ready state */}
           {loading && (
             <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-surface border border-border mb-4 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin text-neon-cyan" />
@@ -105,9 +102,7 @@ export default function OrdenGeneradaModal({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col gap-3">
-            {/* Download PDF */}
             {pdfUrl && (
               <a
                 href={pdfUrl}
@@ -117,11 +112,10 @@ export default function OrdenGeneradaModal({
                 className="flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-sm hover:shadow-glow-cyan hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
               >
                 <Download className="w-4 h-4" />
-                Descargar mi Orden de Servicio PDF
+                Descargar Orden de Servicio PDF
               </a>
             )}
 
-            {/* WhatsApp */}
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`}
               target="_blank"
@@ -132,29 +126,29 @@ export default function OrdenGeneradaModal({
               Seguimiento por WhatsApp
             </a>
 
-            {/* Summary info */}
+            {/* Payment breakdown summary */}
             <div className="p-3 rounded-xl bg-surface border border-border text-left">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <FileText className="w-3 h-3" /> Resumen del servicio
+                <FileText className="w-3 h-3" /> Desglose de pagos
               </p>
               {[
-                ['Ruta', `${data.origen} → ${data.destino}`],
-                ['Fecha de carga', data.fecha],
-                ['Unidad', data.unitLabel],
-                ['Volumen', `${data.vol} m³`],
-                ['Anticipo pagado', `$${anticipo.toLocaleString('es-MX')} MXN`],
+                ['Precio total', `$${data.precioTotal.toLocaleString('es-MX')} MXN`],
+                ['Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
+                ['Saldo restante', `$${saldoRestante.toLocaleString('es-MX')} MXN`],
+                ['50% al cargar', `$${alCargar.toLocaleString('es-MX')} MXN`],
+                ['50% antes de descargar', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0 text-xs">
                   <span className="text-muted-foreground">{label}</span>
                   <span className="font-semibold text-foreground">{value}</span>
                 </div>
               ))}
+              <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
+                No se permiten pagos posteriores a la descarga.
+              </p>
             </div>
 
-            <button
-              onClick={onClose}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-            >
+            <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1">
               Cerrar
             </button>
           </div>
