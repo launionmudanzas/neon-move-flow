@@ -211,14 +211,13 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
 
             {/* Payment note */}
             <div className="p-4 rounded-xl bg-neon-orange/10 border border-neon-orange/30 mb-6 text-sm text-foreground">
-              <p className="font-bold text-neon-orange mb-1">Forma de pago</p>
-              <p className="text-muted-foreground text-xs">50% anticipo al confirmar · 50% restante se liquida al momento de la carga. <strong className="text-foreground">No se descarga sin liquidación del servicio.</strong></p>
-              {precioAnticipo && (
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Anticipo requerido:</span>
-                  <span className="font-black text-neon-orange text-lg">${precioAnticipo.toLocaleString('es-MX')} MXN</span>
-                </div>
-              )}
+              <p className="font-bold text-neon-orange mb-2">Forma de pago</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                El apartado asegura tu servicio. El saldo restante se liquida:{' '}
+                <strong className="text-foreground">50% al cargar</strong> y{' '}
+                <strong className="text-foreground">50% antes de la descarga</strong>.{' '}
+                <strong className="text-neon-orange">No se permiten pagos posteriores a la descarga.</strong>
+              </p>
             </div>
 
             {/* Legal acceptance */}
