@@ -275,7 +275,7 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
                   }`}
                 >
                   <CreditCard className="w-5 h-5" />
-                  Pagar anticipo 50% — ${precioAnticipo?.toLocaleString('es-MX')} MXN
+                  Apartar mi servicio
                 </button>
               )}
 
