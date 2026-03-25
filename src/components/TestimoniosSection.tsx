@@ -1,48 +1,48 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Star } from 'lucide-react';
+import { Star, AlertTriangle } from 'lucide-react';
 
 const testimonios = [
   {
     nombre: 'Gabriela Ramírez',
     ciudad: 'CDMX → Guadalajara',
-    texto: 'Increíble servicio. Llegaron puntual, empacaron todo con cuidado y entregaron sin ningún daño. El equipo fue muy profesional y amable durante todo el proceso.',
+    texto: 'Excelente servicio, rápido y seguro. Llegaron puntual, empacaron todo con cuidado y entregaron sin ningún daño.',
     estrellas: 5,
     tipo: 'Mudanza residencial',
   },
   {
     nombre: 'Carlos Mendoza',
     ciudad: 'Monterrey → CDMX',
-    texto: 'Trasladamos toda la oficina en un fin de semana sin interrumpir nuestras operaciones el lunes. La coordinación fue impecable. 100% recomendados.',
+    texto: 'Llegaron en tiempo y sin daños. Trasladamos toda la oficina en un fin de semana sin interrumpir operaciones. 100% recomendados.',
     estrellas: 5,
     tipo: 'Mudanza corporativa',
   },
   {
     nombre: 'Patricia Soto',
     ciudad: 'Puebla → Cancún',
-    texto: 'Servicio compartido muy bien organizado. Excelente precio y mis cosas llegaron en perfecto estado. La comunicación fue constante durante el traslado.',
+    texto: 'Muy atentos todo el proceso. Excelente precio y mis cosas llegaron en perfecto estado. La comunicación fue constante.',
     estrellas: 5,
     tipo: 'Servicio compartido',
   },
   {
     nombre: 'Roberto Fuentes',
     ciudad: 'Tijuana → Hermosillo',
-    texto: 'Necesitaba mover mi Ford Ranger y quedé muy satisfecho. La plataforma llegó puntual, el vehículo llegó sin un rasguño. Profesionalismo de nivel.',
+    texto: 'Necesitaba mover mi Ford Ranger y quedé muy satisfecho. La plataforma llegó puntual, el vehículo llegó sin un rasguño.',
     estrellas: 5,
     tipo: 'Traslado de vehículo',
   },
   {
     nombre: 'Ana Gutiérrez',
     ciudad: 'CDMX → Mérida',
-    texto: 'Mudanza completa de casa grande. Todo perfectamente empacado y etiquetado. Llegaron antes del tiempo estimado. Sin duda los volvería a contratar.',
+    texto: 'Todo perfectamente empacado y etiquetado. Llegaron antes del tiempo estimado. Sin duda los volvería a contratar.',
     estrellas: 5,
     tipo: 'Mudanza residencial',
   },
   {
     nombre: 'Miguel Torres',
     ciudad: 'León → Querétaro',
-    texto: 'Muy buena experiencia desde la cotización. Rápida, clara y sin sorpresas. El día de la mudanza todo salió exactamente como lo prometieron.',
+    texto: 'Muy buena experiencia desde la cotización. Rápida, clara y sin sorpresas. Todo salió exactamente como lo prometieron.',
     estrellas: 5,
     tipo: 'Mudanza residencial',
   },
@@ -70,9 +70,20 @@ export default function TestimoniosSection() {
             Sus historias,{' '}
             <span className="text-neon-cyan text-glow-cyan">nuestra reputación</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Más de 500 familias y empresas que confiaron en nosotros. Estas son algunas de sus historias.
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-4">
+            Más de 500 familias y empresas que confiaron en nosotros.
           </p>
+
+          {/* Aggregate stars */}
+          <div className="inline-flex flex-col items-center gap-1 px-5 py-3 rounded-2xl bg-neon-orange/10 border border-neon-orange/20">
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(i => (
+                <Star key={i} className="w-5 h-5 fill-neon-orange text-neon-orange" />
+              ))}
+            </div>
+            <span className="text-sm font-bold text-foreground">4.9 / 5.0</span>
+            <span className="text-xs text-muted-foreground">Basado en +500 servicios</span>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -109,6 +120,25 @@ export default function TestimoniosSection() {
             </motion.div>
           ))}
         </div>
+
+        {/* Urgency note */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-neon-orange/10 border border-neon-orange/30 text-neon-orange text-sm font-semibold">
+            <AlertTriangle className="w-4 h-4" />
+            Salimos todas las semanas — Espacios limitados
+          </div>
+          <a
+            href="#lead-form"
+            className="flex items-center gap-2 px-5 py-2 rounded-full bg-neon-cyan text-background font-bold text-sm hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02]"
+          >
+            Cotizar ahora →
+          </a>
+        </motion.div>
       </div>
     </section>
   );
