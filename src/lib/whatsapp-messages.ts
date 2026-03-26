@@ -28,7 +28,10 @@ export type WAEvent =
   | 'entrega_realizada'
   | 'incidencia'
   | 'reagendacion'
-  | 'confirmacion_apartado';
+  | 'confirmacion_apartado'
+  | 'seguimiento_1'
+  | 'seguimiento_2'
+  | 'seguimiento_3';
 
 const EMOJI: Record<WAEvent, string> = {
   cotizacion_generada: '📋',
