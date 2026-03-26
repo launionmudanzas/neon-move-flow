@@ -320,12 +320,49 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
     const nuevoEstatus = 'apartado';
 
     if (data.cotizacionId) {
+      // 1. Update cotización status
       await supabase.from('cotizaciones')
         .update({ estatus: nuevoEstatus, cliente_acepto: true })
         .eq('id', data.cotizacionId);
-      await supabase.from('eventos_calendario')
-        .update({ estatus: nuevoEstatus, color: '#22c55e' })
-        .eq('cotizacion_id', data.cotizacionId);
+
+      // 2. Upsert calendar event — create if it doesn't exist yet
+      const { data: existingEvt } = await supabase
+        .from('eventos_calendario')
+        .select('id')
+        .eq('cotizacion_id', data.cotizacionId)
+        .maybeSingle();
+
+      if (existingEvt) {
+        await supabase.from('eventos_calendario')
+          .update({ estatus: nuevoEstatus, color: '#22c55e' })
+          .eq('cotizacion_id', data.cotizacionId);
+      } else {
+        await supabase.from('eventos_calendario').insert({
+          cotizacion_id: data.cotizacionId,
+          titulo: `${data.folio} · ${data.origen} → ${data.destino}`,
+          estatus: nuevoEstatus,
+          color: '#22c55e',
+          fecha_inicio: data.fecha ? new Date(data.fecha).toISOString() : new Date().toISOString(),
+          fecha_fin: data.fecha
+            ? new Date(new Date(data.fecha).getTime() + 24 * 60 * 60 * 1000).toISOString()
+            : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          observaciones: `Vol: ${data.vol ?? '—'} m³ · ${data.unitLabel ?? '—'} · Apartado: $${apartadoNum.toLocaleString('es-MX')} MXN`,
+        });
+      }
+
+      // 3. Register payment in pagos table
+      await supabase.from('pagos').insert({
+        cotizacion_id: data.cotizacionId,
+        monto: apartadoNum,
+        tipo_pago: 'anticipo',
+        metodo_pago: metodo,
+        moneda: 'MXN',
+        estatus: 'confirmado',
+        referencia: data.folio,
+        fecha_pago: new Date().toISOString(),
+      });
+
+      // 4. Bitácora
       await supabase.from('bitacora_servicio').insert({
         cotizacion_id: data.cotizacionId,
         evento: 'anticipo_recibido',

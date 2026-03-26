@@ -58,15 +58,15 @@ const TITULO: Record<WAEvent, string> = {
 
 const MENSAJE_EXTRA: Record<WAEvent, string> = {
   cotizacion_generada: 'Tu cotización está lista. Por favor confírmala para apartar el servicio.',
-  pago_recibido: '¡Anticipo recibido con éxito! Tu servicio está confirmado.',
-  orden_generada: 'Tu orden de servicio ha sido generada. Revísala en el enlace adjunto.',
-  servicio_programado: 'Tu mudanza está programada. Nos pondremos en contacto el día anterior para confirmar detalles.',
-  inicio_carga: 'El equipo ya está en tu domicilio iniciando la carga. Por favor mantente disponible.',
-  en_ruta: '¡Tu mudanza ya está en camino! Tiempo estimado de llegada según la ruta.',
-  entrega_realizada: '¡Tu mudanza fue entregada! Por favor confirma la recepción y firma de conformidad.',
-  incidencia: 'Se registró una incidencia en tu servicio. Nuestro equipo te contactará de inmediato.',
-  reagendacion: 'Tu servicio ha sido reagendado. Te confirmamos la nueva fecha a continuación.',
-  confirmacion_apartado: 'Tu servicio ha sido apartado exitosamente. El 50% restante se paga al momento de la carga.',
+  pago_recibido: '¡Anticipo recibido con éxito! Tu servicio está confirmado en agenda.',
+  orden_generada: 'Tu orden de servicio ha sido generada y guardada. Puedes descargarla desde el enlace.',
+  servicio_programado: 'Tu mudanza está en agenda. Te contactaremos un día antes para confirmar logística.',
+  inicio_carga: '🚨 El equipo ya está en tu domicilio iniciando la carga. Por favor mantente disponible.',
+  en_ruta: '🚛 ¡Tu mudanza ya está en camino! Te avisamos al llegar al destino.',
+  entrega_realizada: '✅ ¡Entrega realizada! Por favor confirma la recepción y firma de conformidad.',
+  incidencia: '⚠️ Se registró una incidencia. Nuestro equipo te contactará de inmediato para resolverla.',
+  reagendacion: 'Tu servicio ha sido reagendado. Revisa la nueva fecha y confírmanos.',
+  confirmacion_apartado: '🔐 Servicio confirmado en agenda.\n\n💳 Recuerda el esquema de pagos:\n  • Apartado: ya pagado ✅\n  • 50% del total: al momento de la carga\n  • Resto: antes de la descarga\n\nGuarda este mensaje como comprobante.',
 };
 
 export function buildWhatsAppMessage(event: WAEvent, data: ServiceData): string {
