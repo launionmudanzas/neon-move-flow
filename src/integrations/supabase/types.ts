@@ -715,6 +715,48 @@ export type Database = {
           },
         ]
       }
+      notas_lead: {
+        Row: {
+          autor_id: string | null
+          cliente_id: string | null
+          contenido: string
+          cotizacion_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          autor_id?: string | null
+          cliente_id?: string | null
+          contenido: string
+          cotizacion_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          autor_id?: string | null
+          cliente_id?: string | null
+          contenido?: string
+          cotizacion_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_lead_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_lead_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordenes_servicio: {
         Row: {
           contrato_url: string | null
@@ -1139,6 +1181,60 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seguimientos: {
+        Row: {
+          cliente_id: string
+          cotizacion_id: string
+          created_at: string
+          estatus: string
+          fecha_completado: string | null
+          fecha_programada: string
+          id: string
+          mensaje: string | null
+          notas: string | null
+          tipo: string
+        }
+        Insert: {
+          cliente_id: string
+          cotizacion_id: string
+          created_at?: string
+          estatus?: string
+          fecha_completado?: string | null
+          fecha_programada: string
+          id?: string
+          mensaje?: string | null
+          notas?: string | null
+          tipo?: string
+        }
+        Update: {
+          cliente_id?: string
+          cotizacion_id?: string
+          created_at?: string
+          estatus?: string
+          fecha_completado?: string | null
+          fecha_programada?: string
+          id?: string
+          mensaje?: string | null
+          notas?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seguimientos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seguimientos_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
             referencedColumns: ["id"]
           },
         ]
