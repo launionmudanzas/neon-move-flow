@@ -50,7 +50,7 @@ export default function OrdenGeneradaModal({
     vol: data.vol,
     tipoServicio: data.tipoServicio,
     total: data.precioTotal,
-  }, data.whatsapp ? data.whatsapp.replace(/\D/g, '') : WHATSAPP_NUMBER);
+  }, data.whatsapp ? data.whatsapp.replace(/\D/g, '') : WHATSAPP_EMPRESA);
 
   return (
     <AnimatePresence>
