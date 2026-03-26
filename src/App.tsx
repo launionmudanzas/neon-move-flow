@@ -13,6 +13,7 @@ import AdminCRM from "./pages/AdminCRM.tsx";
 import AdminProveedores from "./pages/AdminProveedores.tsx";
 import AdminMarketplace from "./pages/AdminMarketplace.tsx";
 import AdminServicios from "./pages/AdminServicios.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminIncidencias from "./pages/AdminIncidencias.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/admin/proveedores" element={<AdminProveedores />} />
             <Route path="/admin/marketplace" element={<AdminMarketplace />} />
             <Route path="/admin/servicios" element={<AdminServicios />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/incidencias" element={<AdminIncidencias />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
