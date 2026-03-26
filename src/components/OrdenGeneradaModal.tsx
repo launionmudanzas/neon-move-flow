@@ -5,8 +5,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Download, MessageSquare, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
+import { buildWhatsAppLink } from '@/lib/whatsapp-messages';
 
-const WHATSAPP_NUMBER = '4421270514';
+const WHATSAPP_EMPRESA = '4421270514';
 
 interface OrdenGeneradaModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface OrdenGeneradaModalProps {
   loading?: boolean;
   error?: string | null;
   apartado?: number;
+  metodoPago?: string;
   data: {
     nombre: string;
     origen: string;
@@ -24,11 +26,13 @@ interface OrdenGeneradaModalProps {
     unitLabel: string;
     vol: string;
     precioTotal: number;
+    tipoServicio?: string;
+    whatsapp?: string;
   };
 }
 
 export default function OrdenGeneradaModal({
-  isOpen, onClose, folio, pdfUrl, loading, error, apartado, data,
+  isOpen, onClose, folio, pdfUrl, loading, error, apartado, metodoPago, data,
 }: OrdenGeneradaModalProps) {
   if (!isOpen) return null;
 
@@ -36,19 +40,17 @@ export default function OrdenGeneradaModal({
   const alCargar = Math.ceil(data.precioTotal * 0.5);
   const antesDescargar = data.precioTotal - apartadoPagado - alCargar;
 
-  const waMessage = encodeURIComponent(
-    `¡Hola! Confirmé mi servicio con *La Unión Mudanzas* 🚛\n\n` +
-    `📋 *Folio:* ${folio}\n` +
-    `👤 *Cliente:* ${data.nombre}\n` +
-    `📍 *Ruta:* ${data.origen} → ${data.destino}\n` +
-    `📅 *Fecha:* ${data.fecha}\n` +
-    `🚚 *Unidad:* ${data.unitLabel}\n` +
-    `📐 *Volumen:* ${data.vol} m³\n` +
-    `💰 *Apartado pagado:* $${apartadoPagado.toLocaleString('es-MX')} MXN\n` +
-    `📊 *50% del total al cargar:* $${alCargar.toLocaleString('es-MX')} MXN\n` +
-    `📊 *Resto antes de descargar:* $${antesDescargar.toLocaleString('es-MX')} MXN\n\n` +
-    `Mi orden de servicio fue generada automáticamente. ¡Quedo en contacto!`
-  );
+  const waLink = buildWhatsAppLink('confirmacion_apartado', {
+    folio,
+    nombre: data.nombre,
+    origen: data.origen,
+    destino: data.destino,
+    fecha: data.fecha,
+    unidad: data.unitLabel,
+    vol: data.vol,
+    tipoServicio: data.tipoServicio,
+    total: data.precioTotal,
+  }, data.whatsapp ? data.whatsapp.replace(/\D/g, '') : WHATSAPP_EMPRESA);
 
   return (
     <AnimatePresence>
@@ -115,7 +117,7 @@ export default function OrdenGeneradaModal({
             )}
 
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`}
+              href={waLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-neon-green text-background font-bold text-sm hover:shadow-glow-green hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
@@ -131,9 +133,9 @@ export default function OrdenGeneradaModal({
               </p>
               {[
                 ['Precio total', `$${data.precioTotal.toLocaleString('es-MX')} MXN`],
-                ['Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
-                ['50% del total al cargar', `$${alCargar.toLocaleString('es-MX')} MXN`],
-                ['Resto antes de descargar', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
+                ['✅ Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
+                ['Al cargar (50% del total)', `$${alCargar.toLocaleString('es-MX')} MXN`],
+                ['Antes de descargar (resto)', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0 text-xs">
                   <span className="text-muted-foreground">{label}</span>
