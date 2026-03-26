@@ -117,7 +117,7 @@ export default function OrdenGeneradaModal({
             )}
 
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`}
+              href={waLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-neon-green text-background font-bold text-sm hover:shadow-glow-green hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
