@@ -133,9 +133,9 @@ export default function OrdenGeneradaModal({
               </p>
               {[
                 ['Precio total', `$${data.precioTotal.toLocaleString('es-MX')} MXN`],
-                ['Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
-                ['50% del total al cargar', `$${alCargar.toLocaleString('es-MX')} MXN`],
-                ['Resto antes de descargar', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
+                ['✅ Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
+                ['Al cargar (50% del total)', `$${alCargar.toLocaleString('es-MX')} MXN`],
+                ['Antes de descargar (resto)', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0 text-xs">
                   <span className="text-muted-foreground">{label}</span>
