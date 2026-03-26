@@ -40,19 +40,17 @@ export default function OrdenGeneradaModal({
   const alCargar = Math.ceil(data.precioTotal * 0.5);
   const antesDescargar = data.precioTotal - apartadoPagado - alCargar;
 
-  const waMessage = encodeURIComponent(
-    `¡Hola! Confirmé mi servicio con *La Unión Mudanzas* 🚛\n\n` +
-    `📋 *Folio:* ${folio}\n` +
-    `👤 *Cliente:* ${data.nombre}\n` +
-    `📍 *Ruta:* ${data.origen} → ${data.destino}\n` +
-    `📅 *Fecha:* ${data.fecha}\n` +
-    `🚚 *Unidad:* ${data.unitLabel}\n` +
-    `📐 *Volumen:* ${data.vol} m³\n` +
-    `💰 *Apartado pagado:* $${apartadoPagado.toLocaleString('es-MX')} MXN\n` +
-    `📊 *50% del total al cargar:* $${alCargar.toLocaleString('es-MX')} MXN\n` +
-    `📊 *Resto antes de descargar:* $${antesDescargar.toLocaleString('es-MX')} MXN\n\n` +
-    `Mi orden de servicio fue generada automáticamente. ¡Quedo en contacto!`
-  );
+  const waLink = buildWhatsAppLink('confirmacion_apartado', {
+    folio,
+    nombre: data.nombre,
+    origen: data.origen,
+    destino: data.destino,
+    fecha: data.fecha,
+    unidad: data.unitLabel,
+    vol: data.vol,
+    tipoServicio: data.tipoServicio,
+    total: data.precioTotal,
+  }, data.whatsapp ? data.whatsapp.replace(/\D/g, '') : WHATSAPP_NUMBER);
 
   return (
     <AnimatePresence>
