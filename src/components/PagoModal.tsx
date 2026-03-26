@@ -8,7 +8,7 @@ import { sendServiceEmail } from '@/lib/email-service';
 import { generateAndSaveOrden, type OrdenPDFData } from '@/lib/pdf-orden-service';
 import OrdenGeneradaModal from '@/components/OrdenGeneradaModal';
 
-const stripePromise = loadStripe('pk_live_51SiBhiQ3g3KekYqfcy0gdKzvjqgX8XaPcouSARuyGA1ABjEqJwpZ7Yfxl3zZXZaNBnRycpJTrFaOqVBoY779lNZw00JY4R1b7K');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 const SPEI_DATA = {
   banco: 'BBVA México',
