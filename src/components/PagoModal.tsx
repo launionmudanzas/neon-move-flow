@@ -437,8 +437,6 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
     onPagoExitoso?.(metodo);
   };
 
-  if (!isOpen && !ordenGeneradaOpen) return null;
-
   return (
     <>
       <OrdenGeneradaModal
@@ -449,6 +447,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
         loading={pdfLoading}
         error={pdfError}
         apartado={apartadoNum}
+        metodoPago={metodoConfirmado}
         data={{
           nombre: data.nombre,
           origen: data.origen,
@@ -457,6 +456,8 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
           unitLabel: data.unitLabel || '—',
           vol: data.vol || '—',
           precioTotal: data.monto,
+          tipoServicio: data.serviceLabel || 'Mudanza',
+          whatsapp: data.whatsapp,
         }}
       />
 
