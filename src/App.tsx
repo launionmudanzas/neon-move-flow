@@ -13,6 +13,7 @@ import AdminCRM from "./pages/AdminCRM.tsx";
 import AdminProveedores from "./pages/AdminProveedores.tsx";
 import AdminMarketplace from "./pages/AdminMarketplace.tsx";
 import AdminServicios from "./pages/AdminServicios.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminIncidencias from "./pages/AdminIncidencias.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
