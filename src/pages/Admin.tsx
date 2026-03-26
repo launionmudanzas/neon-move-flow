@@ -317,6 +317,11 @@ export default function Admin() {
                 <AlertTriangle className="w-3.5 h-3.5" />Incidencias
               </Button>
             </Link>
+            <Link to="/admin/seguimientos">
+              <Button variant="outline" size="sm" className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10 gap-1 text-xs h-8 px-2">
+                <CalendarDays className="w-3.5 h-3.5" />Seguimientos
+              </Button>
+            </Link>
             <Link to="/admin/rutas">
               <Button variant="outline" size="sm" className="border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 gap-1 text-xs h-8 px-2">
                 <Route className="w-3.5 h-3.5" />Rutas
