@@ -201,16 +201,15 @@ function PaymentBreakdown({
   total: number;
   apartado: number;
 }) {
-  const saldoRestante = total - apartado;
-  const alCargar = Math.ceil(saldoRestante / 2);
-  const antesDescargar = saldoRestante - alCargar;
+  const alCargar = Math.ceil(total * 0.5);
+  const antesDescargar = total - apartado - alCargar;
 
   return (
     <div className="space-y-2 p-4 rounded-xl bg-surface border border-border">
       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Desglose de pagos</p>
 
       <div className="flex justify-between items-center py-1.5 border-b border-border/40">
-        <span className="text-xs text-muted-foreground">Precio total</span>
+        <span className="text-xs text-muted-foreground">Precio total del servicio</span>
         <span className="text-sm font-black text-foreground">${total.toLocaleString('es-MX')} MXN</span>
       </div>
       <div className="flex justify-between items-center py-1.5 border-b border-border/40">
@@ -218,22 +217,25 @@ function PaymentBreakdown({
         <span className="text-sm font-black text-neon-cyan">${apartado.toLocaleString('es-MX')} MXN</span>
       </div>
       <div className="flex justify-between items-center py-1.5 border-b border-border/40">
-        <span className="text-xs text-muted-foreground">Saldo restante</span>
-        <span className="text-sm font-bold text-foreground">${saldoRestante.toLocaleString('es-MX')} MXN</span>
-      </div>
-      <div className="flex justify-between items-center py-1.5 border-b border-border/40">
-        <span className="text-xs text-neon-orange font-semibold">50% al cargar</span>
+        <span className="text-xs text-neon-orange font-semibold">50% del total al cargar</span>
         <span className="text-sm font-bold text-neon-orange">${alCargar.toLocaleString('es-MX')} MXN</span>
       </div>
       <div className="flex justify-between items-center py-1.5">
-        <span className="text-xs text-neon-blue font-semibold">50% antes de descargar</span>
+        <span className="text-xs text-neon-blue font-semibold">Resto antes de descargar</span>
         <span className="text-sm font-bold text-neon-blue">${antesDescargar.toLocaleString('es-MX')} MXN</span>
       </div>
+
+      {antesDescargar < 0 && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/30 text-xs text-destructive">
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+          El apartado excede el saldo disponible. Reduce el monto del apartado.
+        </div>
+      )}
 
       <div className="mt-3 pt-3 border-t border-border/40 flex items-start gap-2">
         <Info className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
         <p className="text-[10px] text-muted-foreground leading-relaxed">
-          El apartado asegura tu servicio. El saldo restante se liquida: 50% al cargar y 50% antes de la descarga.{' '}
+          El apartado se toma a cuenta del total del servicio. Al cargar se paga el 50% del precio total. Antes de la descarga se liquida el resto.{' '}
           <strong className="text-foreground">No se permiten pagos posteriores a la descarga.</strong>
         </p>
       </div>
@@ -257,7 +259,9 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   // Parse & validate apartado
   const apartadoNum = parseInt(apartadoInput.replace(/\D/g, ''), 10) || 0;
   const total = data.monto;
-  const isApartadoValid = apartadoNum > 0 && apartadoNum <= total && total > 0;
+  const alCargarCalc = Math.ceil(total * 0.5);
+  const antesDescargarCalc = total - apartadoNum - alCargarCalc;
+  const isApartadoValid = apartadoNum > 0 && apartadoNum <= total && total > 0 && antesDescargarCalc >= 0;
   const apartadoError =
     total === 0
       ? 'El precio total no puede ser cero.'
@@ -265,6 +269,8 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
       ? 'El apartado es obligatorio.'
       : apartadoNum > total
       ? 'El apartado no puede superar el precio total.'
+      : antesDescargarCalc < 0
+      ? `El apartado + 50% al cargar ($${alCargarCalc.toLocaleString('es-MX')}) excede el total. Máximo apartado: $${(total - alCargarCalc).toLocaleString('es-MX')}.`
       : null;
 
   const initStripe = async (monto: number) => {
@@ -325,7 +331,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
         evento: 'anticipo_recibido',
         estatus_anterior: 'cotizado',
         estatus_nuevo: nuevoEstatus,
-        descripcion: `Apartado recibido vía ${metodo}. Monto: $${apartadoNum.toLocaleString('es-MX')} MXN. Saldo restante: $${(total - apartadoNum).toLocaleString('es-MX')} MXN (50% al cargar / 50% antes de descargar).`,
+        descripcion: `Apartado recibido vía ${metodo}. Monto: $${apartadoNum.toLocaleString('es-MX')} MXN. 50% al cargar: $${alCargarCalc.toLocaleString('es-MX')} MXN. Resto antes de descargar: $${antesDescargarCalc.toLocaleString('es-MX')} MXN.`,
       });
     }
 

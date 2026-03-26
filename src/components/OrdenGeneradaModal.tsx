@@ -33,9 +33,8 @@ export default function OrdenGeneradaModal({
   if (!isOpen) return null;
 
   const apartadoPagado = apartado ?? Math.ceil(data.precioTotal * 0.3);
-  const saldoRestante = data.precioTotal - apartadoPagado;
-  const alCargar = Math.ceil(saldoRestante / 2);
-  const antesDescargar = saldoRestante - alCargar;
+  const alCargar = Math.ceil(data.precioTotal * 0.5);
+  const antesDescargar = data.precioTotal - apartadoPagado - alCargar;
 
   const waMessage = encodeURIComponent(
     `¡Hola! Confirmé mi servicio con *La Unión Mudanzas* 🚛\n\n` +
@@ -46,9 +45,8 @@ export default function OrdenGeneradaModal({
     `🚚 *Unidad:* ${data.unitLabel}\n` +
     `📐 *Volumen:* ${data.vol} m³\n` +
     `💰 *Apartado pagado:* $${apartadoPagado.toLocaleString('es-MX')} MXN\n` +
-    `📊 *Saldo restante:* $${saldoRestante.toLocaleString('es-MX')} MXN\n` +
-    `  - 50% al cargar: $${alCargar.toLocaleString('es-MX')} MXN\n` +
-    `  - 50% antes de descargar: $${antesDescargar.toLocaleString('es-MX')} MXN\n\n` +
+    `📊 *50% del total al cargar:* $${alCargar.toLocaleString('es-MX')} MXN\n` +
+    `📊 *Resto antes de descargar:* $${antesDescargar.toLocaleString('es-MX')} MXN\n\n` +
     `Mi orden de servicio fue generada automáticamente. ¡Quedo en contacto!`
   );
 
@@ -134,9 +132,8 @@ export default function OrdenGeneradaModal({
               {[
                 ['Precio total', `$${data.precioTotal.toLocaleString('es-MX')} MXN`],
                 ['Apartado pagado', `$${apartadoPagado.toLocaleString('es-MX')} MXN`],
-                ['Saldo restante', `$${saldoRestante.toLocaleString('es-MX')} MXN`],
-                ['50% al cargar', `$${alCargar.toLocaleString('es-MX')} MXN`],
-                ['50% antes de descargar', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
+                ['50% del total al cargar', `$${alCargar.toLocaleString('es-MX')} MXN`],
+                ['Resto antes de descargar', `$${antesDescargar.toLocaleString('es-MX')} MXN`],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-center py-1 border-b border-border/40 last:border-0 text-xs">
                   <span className="text-muted-foreground">{label}</span>
