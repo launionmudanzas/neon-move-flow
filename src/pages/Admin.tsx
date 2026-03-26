@@ -287,6 +287,11 @@ export default function Admin() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <Link to="/admin/dashboard">
+              <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10 gap-1 text-xs h-8 px-2">
+                <BarChart3 className="w-3.5 h-3.5" />Dashboard
+              </Button>
+            </Link>
             <Link to="/admin/crm">
               <Button variant="outline" size="sm" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 gap-1 text-xs h-8 px-2">
                 <Users className="w-3.5 h-3.5" />CRM
