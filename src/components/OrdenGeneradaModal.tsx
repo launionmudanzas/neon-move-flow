@@ -5,6 +5,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Download, MessageSquare, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
+import { buildWhatsAppLink } from '@/lib/whatsapp-messages';
 
 const WHATSAPP_NUMBER = '4421270514';
 
@@ -16,6 +17,7 @@ interface OrdenGeneradaModalProps {
   loading?: boolean;
   error?: string | null;
   apartado?: number;
+  metodoPago?: string;
   data: {
     nombre: string;
     origen: string;
@@ -24,11 +26,13 @@ interface OrdenGeneradaModalProps {
     unitLabel: string;
     vol: string;
     precioTotal: number;
+    tipoServicio?: string;
+    whatsapp?: string;
   };
 }
 
 export default function OrdenGeneradaModal({
-  isOpen, onClose, folio, pdfUrl, loading, error, apartado, data,
+  isOpen, onClose, folio, pdfUrl, loading, error, apartado, metodoPago, data,
 }: OrdenGeneradaModalProps) {
   if (!isOpen) return null;
 

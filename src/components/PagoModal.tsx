@@ -255,6 +255,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [ordenGeneradaOpen, setOrdenGeneradaOpen] = useState(false);
+  const [metodoConfirmado, setMetodoConfirmado] = useState<string>('tarjeta');
 
   // Parse & validate apartado
   const apartadoNum = parseInt(apartadoInput.replace(/\D/g, ''), 10) || 0;
@@ -317,6 +318,7 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
   }
 
   const handlePaymentSuccess = async (metodo: string) => {
+    setMetodoConfirmado(metodo);
     const nuevoEstatus = 'apartado';
 
     if (data.cotizacionId) {
