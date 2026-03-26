@@ -5,7 +5,7 @@ import {
   ArrowLeft, ShieldCheck, Users, ClipboardList, FileText,
   IdCard, RefreshCw, Eye, Search, ChevronDown,
   CheckCircle2, XCircle, Truck, Star, MapPin,
-  ToggleLeft, ToggleRight, AlertTriangle, Route, CalendarDays,
+  ToggleLeft, ToggleRight, AlertTriangle, Route, CalendarDays, BarChart3,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
