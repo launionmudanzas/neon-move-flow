@@ -44,6 +44,9 @@ const EMOJI: Record<WAEvent, string> = {
   incidencia: '⚠️',
   reagendacion: '🔄',
   confirmacion_apartado: '🔐',
+  seguimiento_1: '👋',
+  seguimiento_2: '📌',
+  seguimiento_3: '⏰',
 };
 
 const TITULO: Record<WAEvent, string> = {
@@ -57,6 +60,9 @@ const TITULO: Record<WAEvent, string> = {
   incidencia: 'Reporte de Incidencia',
   reagendacion: 'Reagendación de Servicio',
   confirmacion_apartado: 'Servicio Apartado',
+  seguimiento_1: 'Seguimiento de Cotización',
+  seguimiento_2: 'Seguimiento de Cotización',
+  seguimiento_3: 'Última Oportunidad',
 };
 
 const MENSAJE_EXTRA: Record<WAEvent, string> = {
@@ -70,6 +76,9 @@ const MENSAJE_EXTRA: Record<WAEvent, string> = {
   incidencia: '⚠️ Se registró una incidencia. Nuestro equipo te contactará de inmediato para resolverla.',
   reagendacion: 'Tu servicio ha sido reagendado. Revisa la nueva fecha y confírmanos.',
   confirmacion_apartado: '🔐 Servicio confirmado en agenda.\n\n💳 Recuerda el esquema de pagos:\n  • Apartado: ya pagado ✅\n  • 50% del total: al momento de la carga\n  • Resto: antes de la descarga\n\nGuarda este mensaje como comprobante.',
+  seguimiento_1: 'Te escribimos de La Unión Mudanzas para dar seguimiento a tu cotización. Quedamos atentos para ayudarte a cerrar tu servicio. 🚛',
+  seguimiento_2: 'Seguimos pendientes de tu cotización. Si deseas asegurar espacio o resolver dudas, estamos a tus órdenes. 📦',
+  seguimiento_3: 'Aún tenemos disponibilidad para tu servicio. Si gustas, podemos ayudarte a confirmar tu mudanza hoy mismo. ⏰',
 };
 
 export function buildWhatsAppMessage(event: WAEvent, data: ServiceData): string {
