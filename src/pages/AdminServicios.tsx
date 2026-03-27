@@ -28,6 +28,12 @@ interface Servicio {
   estatus: string | null;
   pdf_url: string | null;
   created_at: string;
+  proveedor_id: string | null;
+  aceptado_proveedor: boolean;
+  origen_asignacion: string | null;
+  evidencias_carga: boolean;
+  evidencias_entrega: boolean;
+  pago_completo: boolean;
   cotizaciones: {
     origen: string | null;
     destino: string | null;
@@ -39,6 +45,7 @@ interface Servicio {
     estatus: string | null;
     urgencia: boolean;
   } | null;
+  proveedores?: { nombre_comercial: string } | null;
 }
 
 interface Expediente {
@@ -51,6 +58,7 @@ interface Expediente {
 const SERVICE_TIMELINE = [
   { key: 'cotizado',         label: 'Cotización',       icon: FileText },
   { key: 'pendiente_pago',   label: 'Pago',             icon: CreditCard },
+  { key: 'asignado',         label: 'Asignado',         icon: FileText },
   { key: 'confirmado',       label: 'Confirmado',       icon: CheckCircle2 },
   { key: 'programado',       label: 'Programado',       icon: Calendar },
   { key: 'cargando',         label: 'Cargando',         icon: Package },
@@ -293,8 +301,11 @@ export default function AdminServicios() {
       .from('ordenes_servicio')
       .select(`
         id, folio, estatus, pdf_url, created_at, cotizacion_id,
+        proveedor_id, aceptado_proveedor, origen_asignacion,
+        evidencias_carga, evidencias_entrega, pago_completo,
         cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia, volumen_cobrable, unidad_sugerida, folio),
-        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo))
+        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo)),
+        proveedores(nombre_comercial)
       `)
       .order('created_at', { ascending: false });
     if (data) setServicios(data as Servicio[]);
