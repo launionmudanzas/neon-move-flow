@@ -163,6 +163,12 @@ export default function CotizadorSection() {
     if (result) {
       setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal, precioBase: result.precioBase });
       setSavedClienteId(result.clienteId);
+
+      // Save selected provider to cotización
+      if (selectedProveedorId) {
+        void supabase.from('cotizaciones').update({ proveedor_id: selectedProveedorId }).eq('id', result.cotizacionId);
+      }
+
       void crearEventoCalendario({
         cotizacionId: result.cotizacionId, clienteId: result.clienteId,
         fechaSalida: s.fecha, origen: s.origen, destino: s.destino, folio: result.folio,
