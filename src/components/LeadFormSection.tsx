@@ -41,16 +41,18 @@ export default function LeadFormSection() {
     setLoading(true);
 
     try {
-      // Save lead as cliente in Supabase
-      const { error: dbErr } = await supabase
-        .from('clientes')
-        .insert({
-          nombre_completo: nombre.trim(),
-          whatsapp: whatsapp.trim(),
-          notas: `Lead express · Origen: ${origen.trim()} · Destino: ${destino.trim()}`,
-        });
+      // Save lead via secure Edge Function
+      const { data, error: fnErr } = await supabase.functions.invoke('submit-public-lead', {
+        body: {
+          nombre: nombre.trim(),
+          telefono: whatsapp.trim(),
+          origen: origen.trim(),
+          destino: destino.trim(),
+        },
+      });
 
-      if (dbErr) console.warn('Lead save warning:', dbErr.message);
+      if (fnErr) console.warn('Lead save warning:', fnErr.message);
+      if (data?.error) console.warn('Lead save warning:', data.error);
 
       setDone(true);
     } catch (err) {
