@@ -38,7 +38,7 @@ export default function ScoringPanel({ proveedores, publicaciones, sanciones, in
 
   const result = useMemo(() => {
     if (!simulated || !origen || !destino) return null;
-    return scoreProveedores(proveedores, publicaciones, sanciones, incidencias, input, 5);
+    return scoreProveedores(proveedores, publicaciones, sanciones, incidencias, input, [], 5);
   }, [simulated, proveedores, publicaciones, sanciones, incidencias, input, origen, destino]);
 
   return (
