@@ -1110,9 +1110,11 @@ export type Database = {
         Row: {
           activa: boolean
           capacidad_m3: number | null
+          capacidad_peso: number | null
           created_at: string
           foto_url: string | null
           id: string
+          observaciones: string | null
           placas: string | null
           proveedor_id: string
           tipo_unidad: string | null
@@ -1120,9 +1122,11 @@ export type Database = {
         Insert: {
           activa?: boolean
           capacidad_m3?: number | null
+          capacidad_peso?: number | null
           created_at?: string
           foto_url?: string | null
           id?: string
+          observaciones?: string | null
           placas?: string | null
           proveedor_id: string
           tipo_unidad?: string | null
@@ -1130,9 +1134,11 @@ export type Database = {
         Update: {
           activa?: boolean
           capacidad_m3?: number | null
+          capacidad_peso?: number | null
           created_at?: string
           foto_url?: string | null
           id?: string
+          observaciones?: string | null
           placas?: string | null
           proveedor_id?: string
           tipo_unidad?: string | null
@@ -1158,15 +1164,20 @@ export type Database = {
         Row: {
           activo: boolean
           adeudo_cliente_pendiente: number
+          anios_experiencia: number | null
           calificacion: number | null
           ciudades_cobertura: string[] | null
           correo: string | null
           created_at: string
           cuota_reingreso_pendiente: number
+          descripcion: string | null
           direccion: string | null
+          direccion_operativa: string | null
+          documentos_urls: string[] | null
           estatus: string | null
           id: string
           logo_url: string | null
+          modalidades: string[] | null
           nombre_comercial: string
           premium_activo: boolean
           razon_social: string | null
@@ -1174,21 +1185,27 @@ export type Database = {
           rutas_frecuentes: string[] | null
           servicios_sin_anticipo_restantes: number
           supervision_especial: boolean
+          tipos_servicio: string[] | null
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
           activo?: boolean
           adeudo_cliente_pendiente?: number
+          anios_experiencia?: number | null
           calificacion?: number | null
           ciudades_cobertura?: string[] | null
           correo?: string | null
           created_at?: string
           cuota_reingreso_pendiente?: number
+          descripcion?: string | null
           direccion?: string | null
+          direccion_operativa?: string | null
+          documentos_urls?: string[] | null
           estatus?: string | null
           id?: string
           logo_url?: string | null
+          modalidades?: string[] | null
           nombre_comercial: string
           premium_activo?: boolean
           razon_social?: string | null
@@ -1196,21 +1213,27 @@ export type Database = {
           rutas_frecuentes?: string[] | null
           servicios_sin_anticipo_restantes?: number
           supervision_especial?: boolean
+          tipos_servicio?: string[] | null
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
           activo?: boolean
           adeudo_cliente_pendiente?: number
+          anios_experiencia?: number | null
           calificacion?: number | null
           ciudades_cobertura?: string[] | null
           correo?: string | null
           created_at?: string
           cuota_reingreso_pendiente?: number
+          descripcion?: string | null
           direccion?: string | null
+          direccion_operativa?: string | null
+          documentos_urls?: string[] | null
           estatus?: string | null
           id?: string
           logo_url?: string | null
+          modalidades?: string[] | null
           nombre_comercial?: string
           premium_activo?: boolean
           razon_social?: string | null
@@ -1218,6 +1241,7 @@ export type Database = {
           rutas_frecuentes?: string[] | null
           servicios_sin_anticipo_restantes?: number
           supervision_especial?: boolean
+          tipos_servicio?: string[] | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -1893,6 +1917,23 @@ export type Database = {
           disponible: boolean
           nombre: string
           proveedor_id: string
+        }[]
+      }
+      obtener_proveedores_priorizados: {
+        Args: {
+          p_destino: string
+          p_fecha: string
+          p_origen: string
+          p_tipo_servicio: string
+          p_volumen: number
+        }
+        Returns: {
+          calificacion: number
+          logo_url: string
+          nombre_comercial: string
+          oportunidad: boolean
+          proveedor_id: string
+          score: number
         }[]
       }
       show_limit: { Args: never; Returns: number }
