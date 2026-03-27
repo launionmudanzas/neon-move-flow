@@ -20,9 +20,12 @@ import {
 } from '@/components/cotizador/constants';
 import { useCotizacion, calcularRuta, getDesvioSurcharge } from '@/hooks/use-cotizacion';
 import { classifyCity, type CityClassification } from '@/lib/routing-data';
+import { supabase } from '@/integrations/supabase/client';
 import { sendServiceEmail } from '@/lib/email-service';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
+import ProveedorSelector from '@/components/ProveedorSelector';
+import AsesorBanner from '@/components/AsesorBanner';
 import type { TramoResult, RutaRow } from '@/hooks/use-cotizacion';
 
 // ─── Calculation result type ─────────────────────────────────────
@@ -60,6 +63,8 @@ export default function CotizadorSection() {
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
   const [savedClienteId, setSavedClienteId] = useState<string | null>(null);
+  const [selectedProveedorId, setSelectedProveedorId] = useState<string | null>(null);
+  const [selectedProveedorNombre, setSelectedProveedorNombre] = useState<string | null>(null);
 
   const { guardarCotizacion, crearEventoCalendario, cargarRutas } = useCotizacion();
 
@@ -159,6 +164,12 @@ export default function CotizadorSection() {
     if (result) {
       setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal, precioBase: result.precioBase });
       setSavedClienteId(result.clienteId);
+
+      // Save selected provider to cotización
+      if (selectedProveedorId) {
+        void supabase.from('cotizaciones').update({ proveedor_id: selectedProveedorId }).eq('id', result.cotizacionId);
+      }
+
       void crearEventoCalendario({
         cotizacionId: result.cotizacionId, clienteId: result.clienteId,
         fechaSalida: s.fecha, origen: s.origen, destino: s.destino, folio: result.folio,
@@ -803,12 +814,49 @@ export default function CotizadorSection() {
                     </div>
                   )}
 
+                  {/* Complex quote: advisor banner */}
+                  {calcResult && (billableVol > 90 || (!s.correo && !s.whatsapp) || (origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida')) && (
+                    <div className="mb-4">
+                      <AsesorBanner
+                        reason={
+                          billableVol > 90
+                            ? `Volumen de ${billableVol} m³ requiere coordinación especial.`
+                            : origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida'
+                            ? 'Una o más ciudades requieren revisión manual.'
+                            : 'Datos de contacto incompletos para generar orden.'
+                        }
+                        nombre={s.nombre}
+                        origen={s.origen}
+                        destino={s.destino}
+                        volumen={billableVol}
+                      />
+                    </div>
+                  )}
+
+                  {/* Provider selection */}
+                  {calcResult && billableVol <= 90 && (
+                    <div className="mb-4">
+                      <ProveedorSelector
+                        origen={s.origen}
+                        destino={s.destino}
+                        fecha={s.fecha}
+                        volumen={billableVol}
+                        modalidad={s.modalidad}
+                        onSelect={(id, nombre) => {
+                          setSelectedProveedorId(id);
+                          setSelectedProveedorNombre(nombre);
+                        }}
+                        selectedId={selectedProveedorId}
+                      />
+                    </div>
+                  )}
+
                   {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
                       onClick={handleApartarServicio}
-                      disabled={guardandoCot}
+                      disabled={guardandoCot || (billableVol <= 90 && !selectedProveedorId)}
                       className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-orange text-background font-black text-lg hover:shadow-glow-orange hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60"
                     >
                       {guardandoCot ? (

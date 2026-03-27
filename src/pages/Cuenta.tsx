@@ -102,6 +102,15 @@ export default function Cuenta() {
               Panel de Administración
             </Link>
           )}
+          {isLinkedProveedor && (
+            <Link
+              to="/portal-proveedor"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 text-primary font-semibold text-sm hover:bg-neon-cyan/20 transition-all"
+            >
+              <Truck className="w-4 h-4" />
+              Portal de Proveedor
+            </Link>
+          )}
           <Link
             to="/#cotizador"
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-primary/10 border border-primary/30 text-primary font-semibold text-sm hover:bg-primary/20 transition-all"
