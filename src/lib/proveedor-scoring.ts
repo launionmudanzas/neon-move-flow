@@ -40,8 +40,15 @@ export interface PublicacionCarga {
   origen: string | null;
   destino: string | null;
   fecha_salida: string | null;
+  fecha_llegada_estimada: string | null;
   volumen_disponible: number | null;
+  peso_disponible: number | null;
+  modalidad_disponible: string | null;
+  tipo_unidad: string | null;
+  tipo_oportunidad: string | null;
+  observaciones: string | null;
   estatus: string | null;
+  expira_at: string | null;
 }
 
 export interface SancionRow {
@@ -82,6 +89,8 @@ export interface ScoredProveedor {
   badges: ProveedorBadge[];
   isOpportunity: boolean;
   opportunityDetail: string | null;
+  opportunityType: TipoOportunidad | null;
+  opportunityPub: PublicacionCarga | null;
   discardReason: string | null;  // null = not discarded
 }
 
@@ -90,9 +99,14 @@ export type ProveedorBadge =
   | 'mas_rapido'
   | 'mejor_calificado'
   | 'oportunidad_ruta'
+  | 'oportunidad_espacio'
+  | 'oportunidad_compartida'
+  | 'oportunidad_paso'
   | 'precio_especial'
   | 'premium'
   | 'red_aprobada';
+
+export type TipoOportunidad = 'espacio_vacio' | 'carga_compartida' | 'proveedor_paso' | 'salida_cercana';
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
@@ -204,10 +218,23 @@ export function scoreProveedores(
   const opportunityPubs = publicaciones.filter(p => {
     if (p.estatus !== 'activa' && p.estatus !== 'publicada') return false;
     if (!p.origen || !p.destino) return false;
+    // Check expiration
+    if (p.expira_at && new Date(p.expira_at) <= now) return false;
     const matchO = norm(p.origen).includes(norm(input.origen)) || norm(input.origen).includes(norm(p.origen));
     const matchD = norm(p.destino).includes(norm(input.destino)) || norm(input.destino).includes(norm(p.destino));
     if (!matchO || !matchD) return false;
     if (p.volumen_disponible != null && p.volumen_disponible < input.volumen) return false;
+    // Check modalidad compatibility if specified
+    if (input.modalidad && p.modalidad_disponible) {
+      const modNorm = norm(input.modalidad);
+      const pubMod = norm(p.modalidad_disponible);
+      if (!pubMod.includes(modNorm) && !modNorm.includes(pubMod)) return false;
+    }
+    // Check date compatibility (within 3 days)
+    if (input.fecha && p.fecha_salida) {
+      const diff = Math.abs(new Date(input.fecha).getTime() - new Date(p.fecha_salida).getTime()) / 86400000;
+      if (diff > 3) return false;
+    }
     return true;
   });
   const oppProvIds = new Set(opportunityPubs.map(p => p.proveedor_id));
@@ -306,12 +333,19 @@ export function scoreProveedores(
 
     // Badges
     const badges: ProveedorBadge[] = [];
-    if (isOpp) badges.push('oportunidad_ruta', 'precio_especial');
     if (prov.premium_activo) badges.push('premium');
     if (rawRating >= 4.5) badges.push('mejor_calificado');
     if (['aprobado', 'activo'].includes(prov.estatus ?? '')) badges.push('red_aprobada');
 
     const oppPub = opportunityPubs.find(p => p.proveedor_id === prov.id);
+    if (isOpp && oppPub) {
+      badges.push('oportunidad_ruta');
+      const tipo: string = oppPub.tipo_oportunidad ?? (oppPub.tipo_unidad ? 'espacio_vacio' : 'proveedor_paso');
+      if (tipo === 'espacio_vacio') badges.push('oportunidad_espacio');
+      else if (tipo === 'carga_compartida') badges.push('oportunidad_compartida');
+      else badges.push('oportunidad_paso');
+      badges.push('precio_especial');
+    }
 
     // Unique unit types
     const unidadesTipos = [...new Set(provUnits.filter(u => u.activa && u.tipo_unidad).map(u => u.tipo_unidad!))];
@@ -332,8 +366,10 @@ export function scoreProveedores(
       badges,
       isOpportunity: isOpp,
       opportunityDetail: isOpp && oppPub
-        ? `Espacio disponible en ruta ${oppPub.origen} → ${oppPub.destino} (${oppPub.volumen_disponible ?? '?'} m³)`
+        ? buildOpportunityDetail(oppPub)
         : null,
+      opportunityType: isOpp && oppPub ? (oppPub.tipo_oportunidad as TipoOportunidad | null) : null,
+      opportunityPub: isOpp ? oppPub ?? null : null,
       discardReason,
     };
   });
@@ -364,12 +400,29 @@ export function scoreProveedores(
 
 // ─── Badge display config ─────────────────────────────────────────
 
+// ─── Opportunity detail builder ───────────────────────────────────
+function buildOpportunityDetail(pub: PublicacionCarga): string {
+  const parts: string[] = [];
+  parts.push(`Ruta ${pub.origen} → ${pub.destino}`);
+  if (pub.volumen_disponible) parts.push(`${pub.volumen_disponible} m³ disponibles`);
+  if (pub.tipo_unidad) parts.push(`Unidad: ${pub.tipo_unidad}`);
+  if (pub.fecha_salida) {
+    const d = new Date(pub.fecha_salida);
+    parts.push(`Sale: ${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}`);
+  }
+  if (pub.modalidad_disponible) parts.push(`Modalidad: ${pub.modalidad_disponible}`);
+  return parts.join(' · ');
+}
+
 export const BADGE_CONFIG: Record<ProveedorBadge, { label: string; emoji: string; color: string }> = {
-  mejor_opcion:     { label: 'Mejor opción',           emoji: '🏆', color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
-  mas_rapido:       { label: 'Más rápido',             emoji: '⚡', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  mejor_calificado: { label: 'Mejor calificado',       emoji: '⭐', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  oportunidad_ruta: { label: 'Oportunidad en ruta',    emoji: '🛣️', color: 'bg-green-500/15 text-green-400 border-green-500/30' },
-  precio_especial:  { label: 'Precio especial',        emoji: '💰', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  premium:          { label: 'Premium',                 emoji: '👑', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
-  red_aprobada:     { label: 'Red verificada',          emoji: '✅', color: 'bg-primary/15 text-primary border-primary/30' },
+  mejor_opcion:          { label: 'Mejor opción',           emoji: '🏆', color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+  mas_rapido:            { label: 'Más rápido',             emoji: '⚡', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  mejor_calificado:      { label: 'Mejor calificado',       emoji: '⭐', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  oportunidad_ruta:      { label: 'Oportunidad en ruta',    emoji: '🛣️', color: 'bg-green-500/15 text-green-400 border-green-500/30' },
+  oportunidad_espacio:   { label: 'Espacio disponible',     emoji: '📦', color: 'bg-teal-500/15 text-teal-400 border-teal-500/30' },
+  oportunidad_compartida:{ label: 'Carga compartida',       emoji: '🤝', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
+  oportunidad_paso:      { label: 'Proveedor de paso',      emoji: '🚛', color: 'bg-lime-500/15 text-lime-400 border-lime-500/30' },
+  precio_especial:       { label: 'Precio especial',        emoji: '💰', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  premium:               { label: 'Premium',                 emoji: '👑', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+  red_aprobada:          { label: 'Red verificada',          emoji: '✅', color: 'bg-primary/15 text-primary border-primary/30' },
 };

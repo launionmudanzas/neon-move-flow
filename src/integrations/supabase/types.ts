@@ -1256,11 +1256,19 @@ export type Database = {
           destino: string | null
           estatus: string | null
           expira_at: string | null
+          fecha_llegada_estimada: string | null
           fecha_salida: string | null
           id: string
+          intereses_count: number
+          modalidad_disponible: string | null
+          observaciones: string | null
           origen: string | null
+          peso_disponible: number | null
           proveedor_id: string
+          tipo_oportunidad: string | null
           tipo_publicacion: string | null
+          tipo_unidad: string | null
+          vistas_cotizaciones: number
           volumen_disponible: number | null
         }
         Insert: {
@@ -1271,11 +1279,19 @@ export type Database = {
           destino?: string | null
           estatus?: string | null
           expira_at?: string | null
+          fecha_llegada_estimada?: string | null
           fecha_salida?: string | null
           id?: string
+          intereses_count?: number
+          modalidad_disponible?: string | null
+          observaciones?: string | null
           origen?: string | null
+          peso_disponible?: number | null
           proveedor_id: string
+          tipo_oportunidad?: string | null
           tipo_publicacion?: string | null
+          tipo_unidad?: string | null
+          vistas_cotizaciones?: number
           volumen_disponible?: number | null
         }
         Update: {
@@ -1286,11 +1302,19 @@ export type Database = {
           destino?: string | null
           estatus?: string | null
           expira_at?: string | null
+          fecha_llegada_estimada?: string | null
           fecha_salida?: string | null
           id?: string
+          intereses_count?: number
+          modalidad_disponible?: string | null
+          observaciones?: string | null
           origen?: string | null
+          peso_disponible?: number | null
           proveedor_id?: string
+          tipo_oportunidad?: string | null
           tipo_publicacion?: string | null
+          tipo_unidad?: string | null
+          vistas_cotizaciones?: number
           volumen_disponible?: number | null
         }
         Relationships: [

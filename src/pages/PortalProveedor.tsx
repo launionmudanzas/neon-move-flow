@@ -64,10 +64,18 @@ interface Publicacion {
   origen: string | null;
   destino: string | null;
   fecha_salida: string | null;
+  fecha_llegada_estimada: string | null;
   volumen_disponible: number | null;
+  peso_disponible: number | null;
+  modalidad_disponible: string | null;
+  tipo_unidad: string | null;
+  tipo_oportunidad: string | null;
+  observaciones: string | null;
   costo_ofrecido: number | null;
   estatus: string | null;
   expira_at: string | null;
+  vistas_cotizaciones: number;
+  intereses_count: number;
 }
 
 interface HorarioVisita {
@@ -138,7 +146,7 @@ export default function PortalProveedor() {
   const [addingUnidad, setAddingUnidad] = useState(false);
   const [newUnidad, setNewUnidad] = useState({ tipo: '', capacidad: '', capacidadPeso: '', placas: '', observaciones: '' });
   const [addingPub, setAddingPub] = useState(false);
-  const [newPub, setNewPub] = useState({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', volumen: '', costo: '', observaciones: '' });
+  const [newPub, setNewPub] = useState({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', fechaLlegada: '', volumen: '', peso: '', modalidad: '', tipoUnidad: '', tipoOportunidad: 'espacio_vacio', costo: '', observaciones: '' });
   const [newCiudad, setNewCiudad] = useState('');
   const [newRuta, setNewRuta] = useState('');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -300,14 +308,20 @@ export default function PortalProveedor() {
       origen: newPub.origen || null,
       destino: newPub.destino || null,
       fecha_salida: newPub.fecha || null,
+      fecha_llegada_estimada: newPub.fechaLlegada || null,
       volumen_disponible: newPub.volumen ? Number(newPub.volumen) : null,
+      peso_disponible: newPub.peso ? Number(newPub.peso) : null,
+      modalidad_disponible: newPub.modalidad || null,
+      tipo_unidad: newPub.tipoUnidad || null,
+      tipo_oportunidad: newPub.tipoOportunidad || null,
       costo_ofrecido: newPub.costo ? Number(newPub.costo) : null,
+      observaciones: newPub.observaciones || null,
       estatus: 'activa',
       comision_app_publicador: 10,
       comision_app_tomador: 10,
     }).select('*').single();
     if (data) setPublicaciones(prev => [data as unknown as Publicacion, ...prev]);
-    setNewPub({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', volumen: '', costo: '', observaciones: '' });
+    setNewPub({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', fechaLlegada: '', volumen: '', peso: '', modalidad: '', tipoUnidad: '', tipoOportunidad: 'espacio_vacio', costo: '', observaciones: '' });
     setAddingPub(false);
   };
 
@@ -844,6 +858,12 @@ export default function PortalProveedor() {
 
   // ── Helpers for pub form/card ──
   function renderPubForm() {
+    const TIPO_OPORTUNIDADES = [
+      { value: 'espacio_vacio', label: 'Espacio vacío en unidad' },
+      { value: 'carga_compartida', label: 'Carga compartida compatible' },
+      { value: 'proveedor_paso', label: 'Proveedor de paso' },
+      { value: 'salida_cercana', label: 'Salida cercana en fecha' },
+    ];
     return (
       <div className="bg-card border border-primary/30 rounded-2xl p-5 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -851,11 +871,35 @@ export default function PortalProveedor() {
             className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
             {TIPO_PUBLICACIONES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
           </select>
+          <select value={newPub.tipoOportunidad} onChange={e => setNewPub(p => ({ ...p, tipoOportunidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Tipo de oportunidad</option>
+            {TIPO_OPORTUNIDADES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
           <Input value={newPub.origen} onChange={e => setNewPub(p => ({ ...p, origen: e.target.value }))} placeholder="Origen" className="bg-background border-border" />
           <Input value={newPub.destino} onChange={e => setNewPub(p => ({ ...p, destino: e.target.value }))} placeholder="Destino" className="bg-background border-border" />
-          <Input value={newPub.fecha} onChange={e => setNewPub(p => ({ ...p, fecha: e.target.value }))} type="date" className="bg-background border-border" />
-          <Input value={newPub.volumen} onChange={e => setNewPub(p => ({ ...p, volumen: e.target.value }))} placeholder="Volumen m³" type="number" className="bg-background border-border" />
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Fecha salida</label>
+            <Input value={newPub.fecha} onChange={e => setNewPub(p => ({ ...p, fecha: e.target.value }))} type="date" className="bg-background border-border" />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Fecha llegada estimada</label>
+            <Input value={newPub.fechaLlegada} onChange={e => setNewPub(p => ({ ...p, fechaLlegada: e.target.value }))} type="date" className="bg-background border-border" />
+          </div>
+          <Input value={newPub.volumen} onChange={e => setNewPub(p => ({ ...p, volumen: e.target.value }))} placeholder="Volumen disponible m³" type="number" className="bg-background border-border" />
+          <Input value={newPub.peso} onChange={e => setNewPub(p => ({ ...p, peso: e.target.value }))} placeholder="Peso disponible kg" type="number" className="bg-background border-border" />
+          <select value={newPub.modalidad} onChange={e => setNewPub(p => ({ ...p, modalidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Modalidad disponible</option>
+            {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <select value={newPub.tipoUnidad} onChange={e => setNewPub(p => ({ ...p, tipoUnidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Unidad</option>
+            {TIPO_UNIDADES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
           <Input value={newPub.costo} onChange={e => setNewPub(p => ({ ...p, costo: e.target.value }))} placeholder="Costo ofrecido $" type="number" className="bg-background border-border" />
+          <Input value={newPub.observaciones} onChange={e => setNewPub(p => ({ ...p, observaciones: e.target.value }))} placeholder="Observaciones" className="bg-background border-border" />
         </div>
         <p className="text-[10px] text-muted-foreground">Comisión: 10% publicador · 10% tomador · Expira en 48h</p>
         <div className="flex gap-2">
@@ -870,16 +914,35 @@ export default function PortalProveedor() {
     return (
       <div key={p.id} className={`p-4 bg-card border rounded-xl ${p.estatus === 'activa' ? 'border-green-500/20' : 'border-border'}`}>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-bold text-foreground text-sm">{p.tipo_publicacion?.replace(/_/g, ' ') ?? 'Publicación'}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-bold text-foreground text-sm">{p.tipo_publicacion?.replace(/_/g, ' ') ?? 'Publicación'}</p>
+              {p.tipo_oportunidad && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 font-semibold">
+                  {p.tipo_oportunidad.replace(/_/g, ' ')}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
               {p.origen} → {p.destino} · {p.volumen_disponible ? `${p.volumen_disponible} m³` : '—'}
+              {p.peso_disponible ? ` · ${p.peso_disponible} kg` : ''}
               {p.costo_ofrecido ? ` · ${fmt(p.costo_ofrecido)}` : ''}
             </p>
-            {p.fecha_salida && <p className="text-[10px] text-muted-foreground mt-0.5">Salida: {fmtDate(p.fecha_salida)}</p>}
+            {p.modalidad_disponible && <p className="text-[10px] text-muted-foreground mt-0.5">Modalidad: {p.modalidad_disponible} {p.tipo_unidad ? `· Unidad: ${p.tipo_unidad}` : ''}</p>}
+            {p.fecha_salida && <p className="text-[10px] text-muted-foreground mt-0.5">Salida: {fmtDate(p.fecha_salida)}{p.fecha_llegada_estimada ? ` → Llegada: ${fmtDate(p.fecha_llegada_estimada)}` : ''}</p>}
+            {p.observaciones && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">"{p.observaciones}"</p>}
             {p.expira_at && <p className="text-[10px] text-muted-foreground/60">Expira: {fmtDate(p.expira_at)}</p>}
+            {/* Visibility stats */}
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
+                <Eye className="w-3 h-3" /> {p.vistas_cotizaciones} vistas
+              </span>
+              <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
+                <Users className="w-3 h-3" /> {p.intereses_count} interesados
+              </span>
+            </div>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
+          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${
             p.estatus === 'activa' ? 'bg-green-500/15 text-green-400 border-green-500/30' :
             p.estatus === 'expirada' ? 'bg-muted/30 text-muted-foreground border-border' :
             'bg-primary/15 text-primary border-primary/30'

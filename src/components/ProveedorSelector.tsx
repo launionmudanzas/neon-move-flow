@@ -64,7 +64,7 @@ export default function ProveedorSelector({
           .eq('activa', true),
         supabase
           .from('publicaciones_carga')
-          .select('id,proveedor_id,origen,destino,fecha_salida,volumen_disponible,estatus')
+          .select('id,proveedor_id,origen,destino,fecha_salida,fecha_llegada_estimada,volumen_disponible,peso_disponible,modalidad_disponible,tipo_unidad,tipo_oportunidad,observaciones,estatus,expira_at')
           .in('estatus', ['activa', 'publicada']),
       ]);
 
@@ -295,18 +295,26 @@ function ProveedorCard({ prov, index, isSelected, pagado, modalidad, onSelect }:
           </div>
         </div>
 
-        {/* Opportunity indicator */}
+        {/* Opportunity indicator — enhanced */}
         {prov.isOpportunity && prov.opportunityDetail && (
-          <div className="mt-3 p-2.5 rounded-xl bg-green-500/5 border border-green-500/20">
-            <p className="text-[11px] text-green-400 font-bold">
-              🛣️ Servicio de oportunidad
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+          <div className="mt-3 p-3 rounded-xl bg-green-500/5 border border-green-500/20">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm">🛣️</span>
+              <p className="text-[11px] text-green-400 font-bold">Servicio de oportunidad</p>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
               {prov.opportunityDetail}
             </p>
-            <p className="text-[10px] text-green-400/70 mt-0.5">
-              Posible precio especial por espacio disponible en ruta
+            <p className="text-[10px] text-green-400/80 mt-1.5 leading-relaxed">
+              Este proveedor ya cuenta con espacio disponible en ruta y puede ofrecer una solución más ágil o conveniente.
             </p>
+            {prov.opportunityPub?.fecha_salida && (
+              <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground/80">
+                <span>📅 Sale: {new Date(prov.opportunityPub.fecha_salida).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</span>
+                {prov.opportunityPub.volumen_disponible && <span>📦 {prov.opportunityPub.volumen_disponible} m³ libres</span>}
+                {prov.opportunityPub.modalidad_disponible && <span>🏷️ {prov.opportunityPub.modalidad_disponible}</span>}
+              </div>
+            )}
           </div>
         )}
 
