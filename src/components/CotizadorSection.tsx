@@ -160,6 +160,13 @@ export default function CotizadorSection() {
       unidadSugerida: unit.label,
       seguro: s.seguro, montoSeguro: s.montoSeguro,
       costoPisos, costoAcarreo, urgente: false,
+      horarioCarga: s.horarioCarga || undefined,
+      horarioEntrega: s.horarioEntrega || undefined,
+      peso: s.peso ? Number(s.peso) : undefined,
+      presupuestoCliente: s.presupuestoCliente ? Number(s.presupuestoCliente) : undefined,
+      comentariosEspeciales: s.comentariosEspeciales || undefined,
+      visitaOcular: s.visitaOcular,
+      cotizacionEspecial: COMPLEX_SERVICE_TYPES.includes(s.tipoServicio),
     });
     setGuardandoCot(false);
     if (result) {
