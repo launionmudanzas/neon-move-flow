@@ -306,7 +306,7 @@ export function classifyCity(cityInput: string): CityClassification {
   const resolved = resolveAlias(cityInput) || cityInput;
 
   // 1. Check restricted zones first
-  if (RESTRICTED_ZONES.some(r => cityMatch(cityInput, r))) {
+  if (RESTRICTED_ZONES.some(r => cityMatch(resolved, r))) {
     return {
       status: 'exclusivo',
       routeNames: [],
@@ -318,7 +318,7 @@ export function classifyCity(cityInput: string): CityClassification {
   // 2. Check main route cities
   const inRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.cities.some(c => cityMatch(cityInput, c))) {
+    if (route.cities.some(c => cityMatch(resolved, c))) {
       inRoutes.push(route.name);
     }
   }
@@ -334,7 +334,7 @@ export function classifyCity(cityInput: string): CityClassification {
   // 3. Check extension cities
   const inExtRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.extensions.some(c => cityMatch(cityInput, c))) {
+    if (route.extensions.some(c => cityMatch(resolved, c))) {
       inExtRoutes.push(route.name);
     }
   }
@@ -350,12 +350,12 @@ export function classifyCity(cityInput: string): CityClassification {
   // 4. Check detour cities
   const inDesvioRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.detours.some(c => cityMatch(cityInput, c))) {
+    if (route.detours.some(c => cityMatch(resolved, c))) {
       inDesvioRoutes.push(route.name);
     }
   }
   // Also check flat detour list
-  const inFlatDesvio = ALL_DETOUR_CITIES.some(c => cityMatch(cityInput, c));
+  const inFlatDesvio = ALL_DETOUR_CITIES.some(c => cityMatch(resolved, c));
 
   if (inDesvioRoutes.length > 0 || inFlatDesvio) {
     const routes = inDesvioRoutes.length > 0 ? inDesvioRoutes : [];
