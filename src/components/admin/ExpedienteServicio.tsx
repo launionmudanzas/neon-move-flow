@@ -41,6 +41,7 @@ interface BitacoraEntry {
 const TIMELINE_STEPS = [
   { key: 'cotizado',       label: 'Cotización',  icon: FileText },
   { key: 'pendiente_pago', label: 'Pago',         icon: CreditCard },
+  { key: 'asignado',       label: 'Asignado',     icon: FileText },
   { key: 'confirmado',     label: 'Confirmado',   icon: CheckCircle2 },
   { key: 'programado',     label: 'Programado',   icon: Calendar },
   { key: 'cargando',       label: 'Cargando',     icon: Package },
@@ -53,6 +54,7 @@ const ESTATUS_ORDER = TIMELINE_STEPS.map(s => s.key);
 const ESTATUS_COLORS: Record<string, string> = {
   cotizado: 'bg-muted/40 text-muted-foreground border-border',
   pendiente_pago: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  asignado: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
   confirmado: 'bg-green-500/15 text-green-400 border-green-500/30',
   programado: 'bg-blue-400/15 text-blue-400 border-blue-400/30',
   cargando: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
