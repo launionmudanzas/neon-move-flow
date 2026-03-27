@@ -22,9 +22,11 @@ import {
 } from '@/components/ui/dialog';
 import logoOficial from '@/assets/logo-oficial.png';
 import CalendarioOperativo from '@/components/admin/CalendarioOperativo';
+import ScoringPanel from '@/components/admin/ScoringPanel';
+import type { ProveedorRaw, PublicacionCarga, SancionRow, IncidenciaCount } from '@/lib/proveedor-scoring';
 
 /* ─── types ─────────────────────────────────────────────────────────────── */
-type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores' | 'calendario';
+type Tab = 'cotizaciones' | 'clientes' | 'ordenes' | 'ines' | 'proveedores' | 'calendario' | 'scoring';
 
 interface EventoCalendario {
   id: string;
@@ -248,6 +250,7 @@ export default function Admin() {
     { id: 'proveedores',  label: 'Proveedores',   icon: Truck },
     { id: 'ines',         label: 'INEs',           icon: IdCard },
     { id: 'calendario',   label: 'Calendario',     icon: CalendarDays },
+    { id: 'scoring',      label: 'Scoring',        icon: BarChart3 },
   ];
 
   if (isLoading) return (
