@@ -1,4 +1,5 @@
 import { Facebook, Instagram, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import logoOficial from '@/assets/logo-oficial.png';
 
 const WHATSAPP_NUMBER = '4421270514';
@@ -132,8 +133,8 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} La Unión Mudanzas · <span className="text-neon-cyan">#LaUnionMudanzas 🚛❤️</span></span>
           <div className="flex gap-5">
-            <a href="#" className="hover:text-neon-cyan transition-colors">Aviso de privacidad</a>
-            <a href="#" className="hover:text-neon-cyan transition-colors">Términos y condiciones</a>
+            <Link to="/aviso-de-privacidad" className="hover:text-neon-cyan transition-colors">Aviso de privacidad</Link>
+            <Link to="/terminos-y-condiciones" className="hover:text-neon-cyan transition-colors">Términos y condiciones</Link>
           </div>
         </div>
       </div>

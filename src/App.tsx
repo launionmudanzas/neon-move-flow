@@ -18,6 +18,8 @@ import AdminIncidencias from "./pages/AdminIncidencias.tsx";
 import AdminSeguimientos from "./pages/AdminSeguimientos.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import PortalProveedor from "./pages/PortalProveedor.tsx";
+import TerminosCondiciones from "./pages/TerminosCondiciones.tsx";
+import AvisoPrivacidad from "./pages/AvisoPrivacidad.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
             <Route path="/admin/incidencias" element={<AdminIncidencias />} />
             <Route path="/admin/seguimientos" element={<AdminSeguimientos />} />
             <Route path="/portal-proveedor" element={<PortalProveedor />} />
+            <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
+            <Route path="/aviso-de-privacidad" element={<AvisoPrivacidad />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

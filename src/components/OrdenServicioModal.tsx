@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, FileText, CheckCircle2, MessageSquare, AlertTriangle,
-  CheckSquare, Square, CreditCard,
+  CreditCard,
 } from 'lucide-react';
 import { sendServiceEmail } from '@/lib/email-service';
+import LegalAcceptanceBlock from '@/components/LegalAcceptanceBlock';
 
 const WHATSAPP_NUMBER = '4421270514';
 
@@ -58,9 +59,6 @@ function formatDate(fecha: string): string {
   }
 }
 
-const LEGAL_TEXT =
-  'CONFIRMO DE RECIBIDO Y ESTOY DE ACUERDO CON EL TÉRMINO ESTABLECIDO EN EL DOCUMENTO DE ADHESIÓN ACEPTANDO EL CIERRE DE MI SERVICIO CON LA UNIÓN MUDANZAS';
-
 const INCLUDES = [
   'Carga y descarga de artículos (a criterio del equipo)',
   'Embalaje básico de protección',
@@ -82,10 +80,7 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
   const [folio] = useState(() => data.folio || generateFolio());
   const emisionDate = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  // Reset accepted when modal opens
-  useEffect(() => {
-    if (isOpen) setAccepted(false);
-  }, [isOpen]);
+  const handleAcceptedChange = useCallback((val: boolean) => setAccepted(val), []);
 
   const waMessage = encodeURIComponent(
     `¡Hola! Confirmo mi servicio con *La Unión Mudanzas* 🚛\n\n` +
@@ -220,31 +215,10 @@ export default function OrdenServicioModal({ isOpen, onClose, onPagar, data }: O
               </p>
             </div>
 
-            {/* Legal acceptance */}
-            <div className="p-4 rounded-xl bg-surface border border-neon-cyan/20 mb-6">
-              <p className="text-xs text-muted-foreground leading-relaxed mb-4 italic">
-                "{LEGAL_TEXT}"
-              </p>
-              <button
-                onClick={() => setAccepted(!accepted)}
-                className={`flex items-start gap-3 w-full text-left transition-all duration-200 ${accepted ? 'text-neon-green' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                {accepted
-                  ? <CheckSquare className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  : <Square className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                }
-                <span className="text-sm font-semibold">
-                  Acepto los términos y condiciones del servicio de La Unión Mudanzas
-                </span>
-              </button>
+            {/* Legal acceptance block */}
+            <div className="mb-6">
+              <LegalAcceptanceBlock accepted={accepted} onAcceptedChange={handleAcceptedChange} />
             </div>
-
-            {!accepted && (
-              <p className="text-xs text-neon-orange text-center mb-4 flex items-center justify-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Debes aceptar los términos para continuar
-              </p>
-            )}
 
             {/* Action buttons */}
             <div className="flex flex-col gap-3">
