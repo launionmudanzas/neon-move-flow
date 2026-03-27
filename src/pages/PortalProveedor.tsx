@@ -914,16 +914,35 @@ export default function PortalProveedor() {
     return (
       <div key={p.id} className={`p-4 bg-card border rounded-xl ${p.estatus === 'activa' ? 'border-green-500/20' : 'border-border'}`}>
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-bold text-foreground text-sm">{p.tipo_publicacion?.replace(/_/g, ' ') ?? 'Publicación'}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-bold text-foreground text-sm">{p.tipo_publicacion?.replace(/_/g, ' ') ?? 'Publicación'}</p>
+              {p.tipo_oportunidad && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 font-semibold">
+                  {p.tipo_oportunidad.replace(/_/g, ' ')}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
               {p.origen} → {p.destino} · {p.volumen_disponible ? `${p.volumen_disponible} m³` : '—'}
+              {p.peso_disponible ? ` · ${p.peso_disponible} kg` : ''}
               {p.costo_ofrecido ? ` · ${fmt(p.costo_ofrecido)}` : ''}
             </p>
-            {p.fecha_salida && <p className="text-[10px] text-muted-foreground mt-0.5">Salida: {fmtDate(p.fecha_salida)}</p>}
+            {p.modalidad_disponible && <p className="text-[10px] text-muted-foreground mt-0.5">Modalidad: {p.modalidad_disponible} {p.tipo_unidad ? `· Unidad: ${p.tipo_unidad}` : ''}</p>}
+            {p.fecha_salida && <p className="text-[10px] text-muted-foreground mt-0.5">Salida: {fmtDate(p.fecha_salida)}{p.fecha_llegada_estimada ? ` → Llegada: ${fmtDate(p.fecha_llegada_estimada)}` : ''}</p>}
+            {p.observaciones && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">"{p.observaciones}"</p>}
             {p.expira_at && <p className="text-[10px] text-muted-foreground/60">Expira: {fmtDate(p.expira_at)}</p>}
+            {/* Visibility stats */}
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
+                <Eye className="w-3 h-3" /> {p.vistas_cotizaciones} vistas
+              </span>
+              <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
+                <Users className="w-3 h-3" /> {p.intereses_count} interesados
+              </span>
+            </div>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
+          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${
             p.estatus === 'activa' ? 'bg-green-500/15 text-green-400 border-green-500/30' :
             p.estatus === 'expirada' ? 'bg-muted/30 text-muted-foreground border-border' :
             'bg-primary/15 text-primary border-primary/30'

@@ -27,13 +27,21 @@ interface Publicacion {
   origen: string | null;
   destino: string | null;
   fecha_salida: string | null;
+  fecha_llegada_estimada: string | null;
   volumen_disponible: number | null;
+  peso_disponible: number | null;
+  modalidad_disponible: string | null;
+  tipo_unidad: string | null;
+  tipo_oportunidad: string | null;
+  observaciones: string | null;
   costo_ofrecido: number | null;
   estatus: string | null;
   expira_at: string | null;
   comision_app_publicador: number | null;
   comision_app_tomador: number | null;
   created_at: string;
+  vistas_cotizaciones: number;
+  intereses_count: number;
   proveedores?: { nombre_comercial: string; premium_activo: boolean; logo_url: string | null };
 }
 
@@ -262,11 +270,18 @@ export default function AdminMarketplace() {
     return matchSearch && matchEstatus && matchTipo;
   });
 
+  const totalVistas = publicaciones.reduce((s, p) => s + (p.vistas_cotizaciones ?? 0), 0);
+  const totalIntereses = publicaciones.reduce((s, p) => s + (p.intereses_count ?? 0), 0);
+  const oportunidades = publicaciones.filter(p => p.tipo_oportunidad);
+
   const stats = [
-    { label: 'Total',     value: publicaciones.length,                                    color: 'text-foreground' },
-    { label: 'Activas',   value: publicaciones.filter(p => p.estatus === 'activa').length, color: 'text-green-400' },
-    { label: 'Expiradas', value: publicaciones.filter(p => p.estatus === 'expirada').length, color: 'text-muted-foreground' },
-    { label: 'Asignadas', value: publicaciones.filter(p => p.estatus === 'asignada').length, color: 'text-primary' },
+    { label: 'Total',         value: publicaciones.length,                                    color: 'text-foreground' },
+    { label: 'Activas',       value: publicaciones.filter(p => p.estatus === 'activa').length, color: 'text-green-400' },
+    { label: 'Oportunidades', value: oportunidades.filter(p => p.estatus === 'activa').length, color: 'text-teal-400' },
+    { label: 'Expiradas',     value: publicaciones.filter(p => p.estatus === 'expirada').length, color: 'text-muted-foreground' },
+    { label: 'Asignadas',     value: publicaciones.filter(p => p.estatus === 'asignada').length, color: 'text-primary' },
+    { label: 'Vistas totales',value: totalVistas,                                              color: 'text-blue-400' },
+    { label: 'Intereses',     value: totalIntereses,                                           color: 'text-amber-400' },
   ];
 
   if (isLoading) return (
