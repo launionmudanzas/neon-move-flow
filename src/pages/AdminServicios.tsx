@@ -329,6 +329,7 @@ export default function AdminServicios() {
 
   const stats = [
     { label: 'Total',         value: servicios.length,                                              color: 'text-foreground' },
+    { label: 'Asignados',     value: servicios.filter(s => s.estatus === 'asignado').length,        color: 'text-blue-400' },
     { label: 'En ruta',       value: servicios.filter(s => s.estatus === 'en_ruta').length,         color: 'text-cyan-400' },
     { label: 'Confirmados',   value: servicios.filter(s => s.estatus === 'confirmado').length,      color: 'text-green-400' },
     { label: 'Pendiente pago',value: servicios.filter(s => s.estatus === 'pendiente_pago').length,  color: 'text-orange-400' },
@@ -378,7 +379,7 @@ export default function AdminServicios() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mb-6">
           {stats.map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
               <p className={`text-2xl font-black ${s.color}`}>{loading ? '…' : s.value}</p>
