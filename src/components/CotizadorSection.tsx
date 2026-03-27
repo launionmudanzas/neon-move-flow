@@ -20,6 +20,7 @@ import {
 } from '@/components/cotizador/constants';
 import { useCotizacion, calcularRuta, getDesvioSurcharge } from '@/hooks/use-cotizacion';
 import { classifyCity, type CityClassification } from '@/lib/routing-data';
+import { supabase } from '@/integrations/supabase/client';
 import { sendServiceEmail } from '@/lib/email-service';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
