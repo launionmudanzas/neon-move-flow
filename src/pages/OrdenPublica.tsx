@@ -10,6 +10,7 @@ import {
   AlertTriangle, ExternalLink, Loader2, ArrowLeft,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import CalificacionServicio from '@/components/CalificacionServicio';
 
 interface OrdenData {
   folio: string;
@@ -34,9 +35,11 @@ interface OrdenData {
 }
 
 interface OrdenServicio {
+  id: string;
   folio: string | null;
   pdf_url: string | null;
   estatus: string | null;
+  proveedor_id: string | null;
 }
 
 interface Evidencia {
@@ -84,11 +87,11 @@ export default function OrdenPublica() {
         const { data: cot, error: cotErr } = await supabase
           .from('cotizaciones')
           .select(`
-            folio, origen, destino, fecha_salida, fecha_llegada,
+            id, folio, origen, destino, fecha_salida, fecha_llegada,
             tipo_servicio, modalidad, unidad_sugerida, volumen_total,
             volumen_cobrable, precio_total, precio_base, estatus,
             cliente_acepto, horario_carga, horario_entrega, peso,
-            comentarios_especiales,
+            comentarios_especiales, cliente_id, proveedor_id,
             clientes!cotizaciones_cliente_id_fkey(nombre_completo)
           `)
           .eq('folio', folio)
@@ -105,7 +108,7 @@ export default function OrdenPublica() {
         // Fetch orden_servicio
         const { data: os } = await supabase
           .from('ordenes_servicio')
-          .select('folio, pdf_url, estatus')
+          .select('id, folio, pdf_url, estatus, proveedor_id')
           .eq('cotizacion_id', (cot as any).id || '')
           .maybeSingle();
         if (os) setOrdenServicio(os as OrdenServicio);
@@ -286,6 +289,16 @@ export default function OrdenPublica() {
               ))}
             </div>
           </motion.div>
+        )}
+
+        {/* Rating section — show when service is finalized */}
+        {ordenServicio?.estatus === 'finalizado' && ordenServicio.proveedor_id && (
+          <CalificacionServicio
+            ordenId={ordenServicio.id}
+            proveedorId={ordenServicio.proveedor_id}
+            cotizacionId={(orden as any).id}
+            clienteId={(orden as any).cliente_id}
+          />
         )}
 
         {/* Institutional footer */}
