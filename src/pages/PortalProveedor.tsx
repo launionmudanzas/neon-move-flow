@@ -11,8 +11,9 @@ import {
   Image, Route as RouteIcon, CheckCircle2, RefreshCw,
   FileText, Shield, AlertTriangle, Loader2, Building2,
   Weight, Hash, Camera, ToggleLeft, ToggleRight, Briefcase,
-  History, Activity, ChevronRight,
+  History, Activity, ChevronRight, ClipboardList,
 } from 'lucide-react';
+import ServiciosOperativos from '@/components/proveedor/ServiciosOperativos';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -124,7 +125,7 @@ const TIPOS_SERVICIO = ['mudanza_casa', 'flete', 'traslado_auto', 'traslado_moto
 const fmt = (n: number | null) => n != null ? `$${n.toLocaleString('es-MX')}` : '—';
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 
-type TabId = 'perfil' | 'unidades' | 'rutas' | 'espacios' | 'cargas' | 'visitas' | 'historial' | 'estatus';
+type TabId = 'perfil' | 'servicios' | 'unidades' | 'rutas' | 'espacios' | 'cargas' | 'visitas' | 'historial' | 'estatus';
 
 export default function PortalProveedor() {
   const { user, identity, isLoading } = useAuth();
@@ -358,6 +359,7 @@ export default function PortalProveedor() {
 
   const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'perfil', label: 'Datos generales', icon: <Building2 className="w-3.5 h-3.5" /> },
+    { id: 'servicios', label: 'Servicios', icon: <ClipboardList className="w-3.5 h-3.5" /> },
     { id: 'unidades', label: `Unidades (${unidades.length})`, icon: <Truck className="w-3.5 h-3.5" /> },
     { id: 'rutas', label: 'Rutas', icon: <RouteIcon className="w-3.5 h-3.5" /> },
     { id: 'espacios', label: `Espacios (${espacios.length})`, icon: <Package className="w-3.5 h-3.5" /> },
