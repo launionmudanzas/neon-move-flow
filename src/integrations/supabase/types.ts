@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      aceptaciones_legales: {
+        Row: {
+          acepta_cancelaciones: boolean | null
+          acepta_condiciones: boolean | null
+          acepta_pago_total: boolean | null
+          acepta_privacidad: boolean | null
+          acepta_terminos: boolean | null
+          cliente_id: string | null
+          cotizacion_id: string | null
+          created_at: string | null
+          fecha_aceptacion: string | null
+          id: string
+          ip: string | null
+          texto_aceptacion: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          acepta_cancelaciones?: boolean | null
+          acepta_condiciones?: boolean | null
+          acepta_pago_total?: boolean | null
+          acepta_privacidad?: boolean | null
+          acepta_terminos?: boolean | null
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string | null
+          fecha_aceptacion?: string | null
+          id?: string
+          ip?: string | null
+          texto_aceptacion?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          acepta_cancelaciones?: boolean | null
+          acepta_condiciones?: boolean | null
+          acepta_pago_total?: boolean | null
+          acepta_privacidad?: boolean | null
+          acepta_terminos?: boolean | null
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string | null
+          fecha_aceptacion?: string | null
+          id?: string
+          ip?: string | null
+          texto_aceptacion?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_cotizacion"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bitacora_servicio: {
         Row: {
           cotizacion_id: string | null
@@ -1813,6 +1869,15 @@ export type Database = {
     Functions: {
       desbloquear_chat: { Args: { p_chat_id: string }; Returns: undefined }
       expire_publicaciones_now: { Args: never; Returns: number }
+      guardar_aceptacion: {
+        Args: {
+          p_cliente_id: string
+          p_cotizacion_id: string
+          p_ip: string
+          p_user_agent: string
+        }
+        Returns: undefined
+      }
       init_user_identity: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       link_user_identity: {
