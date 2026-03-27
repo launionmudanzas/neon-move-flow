@@ -519,7 +519,9 @@ export default function CotizadorSection() {
                         ))}
                       </div>
                       {COMPLEX_SERVICE_TYPES.includes(s.tipoServicio) && (
-                        <AsesorBanner className="mt-3" message="Este tipo de servicio puede requerir asesor especializado" />
+                        <div className="mt-3">
+                          <AsesorBanner reason="Servicio especial" nombre={s.nombre} origen={s.origen} destino={s.destino} volumen={billableVol} />
+                        </div>
                       )}
                     </div>
 
