@@ -28,6 +28,12 @@ interface Servicio {
   estatus: string | null;
   pdf_url: string | null;
   created_at: string;
+  proveedor_id: string | null;
+  aceptado_proveedor: boolean;
+  origen_asignacion: string | null;
+  evidencias_carga: boolean;
+  evidencias_entrega: boolean;
+  pago_completo: boolean;
   cotizaciones: {
     origen: string | null;
     destino: string | null;
@@ -39,6 +45,7 @@ interface Servicio {
     estatus: string | null;
     urgencia: boolean;
   } | null;
+  proveedores?: { nombre_comercial: string } | null;
 }
 
 interface Expediente {
@@ -51,6 +58,7 @@ interface Expediente {
 const SERVICE_TIMELINE = [
   { key: 'cotizado',         label: 'Cotización',       icon: FileText },
   { key: 'pendiente_pago',   label: 'Pago',             icon: CreditCard },
+  { key: 'asignado',         label: 'Asignado',         icon: FileText },
   { key: 'confirmado',       label: 'Confirmado',       icon: CheckCircle2 },
   { key: 'programado',       label: 'Programado',       icon: Calendar },
   { key: 'cargando',         label: 'Cargando',         icon: Package },
@@ -293,8 +301,11 @@ export default function AdminServicios() {
       .from('ordenes_servicio')
       .select(`
         id, folio, estatus, pdf_url, created_at, cotizacion_id,
+        proveedor_id, aceptado_proveedor, origen_asignacion,
+        evidencias_carga, evidencias_entrega, pago_completo,
         cotizaciones(origen, destino, precio_total, modalidad, fecha_salida, fecha_llegada, cliente_id, estatus, urgencia, volumen_cobrable, unidad_sugerida, folio),
-        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo))
+        clientes:cotizaciones(clientes(nombre_completo, whatsapp, correo)),
+        proveedores(nombre_comercial)
       `)
       .order('created_at', { ascending: false });
     if (data) setServicios(data as Servicio[]);
@@ -318,6 +329,7 @@ export default function AdminServicios() {
 
   const stats = [
     { label: 'Total',         value: servicios.length,                                              color: 'text-foreground' },
+    { label: 'Asignados',     value: servicios.filter(s => s.estatus === 'asignado').length,        color: 'text-blue-400' },
     { label: 'En ruta',       value: servicios.filter(s => s.estatus === 'en_ruta').length,         color: 'text-cyan-400' },
     { label: 'Confirmados',   value: servicios.filter(s => s.estatus === 'confirmado').length,      color: 'text-green-400' },
     { label: 'Pendiente pago',value: servicios.filter(s => s.estatus === 'pendiente_pago').length,  color: 'text-orange-400' },
@@ -367,7 +379,7 @@ export default function AdminServicios() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 mb-6">
           {stats.map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
               <p className={`text-2xl font-black ${s.color}`}>{loading ? '…' : s.value}</p>
@@ -444,7 +456,7 @@ export default function AdminServicios() {
 
                   {/* Footer */}
                   {cot && (
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-border/50">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-border/50 flex-wrap">
                       <span className="flex items-center gap-1">
                         <CreditCard className="w-3 h-3" />
                         {fmt(cot.precio_total)}
@@ -456,6 +468,15 @@ export default function AdminServicios() {
                       {cot.modalidad && <span>{cot.modalidad}</span>}
                       {cot.urgencia && (
                         <span className="text-orange-400 font-semibold">⚡ Urgente</span>
+                      )}
+                      {(s as any).proveedores?.nombre_comercial && (
+                        <span className="flex items-center gap-1 text-primary">
+                          <Truck className="w-3 h-3" />
+                          {(s as any).proveedores.nombre_comercial}
+                        </span>
+                      )}
+                      {!s.aceptado_proveedor && s.estatus === 'asignado' && (
+                        <span className="text-orange-400 font-semibold animate-pulse">⏳ Pendiente aceptación</span>
                       )}
                     </div>
                   )}

@@ -39,5 +39,7 @@ export const EVENTOS = {
   INCIDENCIA_REPORTADA: 'incidencia_reportada',
   REAGENDACION: 'reagendacion',
   PROVEEDOR_ASIGNADO: 'proveedor_asignado',
+  PROVEEDOR_ACEPTO: 'proveedor_acepto',
+  PROVEEDOR_RECHAZO: 'proveedor_rechazo',
   SERVICIO_FINALIZADO: 'servicio_finalizado',
 } as const;
