@@ -64,7 +64,7 @@ export default function ProveedorSelector({
           .eq('activa', true),
         supabase
           .from('publicaciones_carga')
-          .select('id,proveedor_id,origen,destino,fecha_salida,volumen_disponible,estatus')
+          .select('id,proveedor_id,origen,destino,fecha_salida,fecha_llegada_estimada,volumen_disponible,peso_disponible,modalidad_disponible,tipo_unidad,tipo_oportunidad,observaciones,estatus,expira_at')
           .in('estatus', ['activa', 'publicada']),
       ]);
 
