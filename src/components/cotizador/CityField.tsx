@@ -4,7 +4,7 @@ import {
   MapPin, BadgeCheck, Navigation, ShieldAlert, HelpCircle,
   Route as RouteIcon,
 } from 'lucide-react';
-import { classifyCity, ALL_CITIES, CityStatus, CityClassification } from '@/lib/routing-data';
+import { classifyCity, searchCities, CityStatus, CityClassification } from '@/lib/routing-data';
 import { getDesvioSurcharge } from '@/hooks/use-cotizacion';
 
 const STATUS_CFG: Record<CityStatus, { icon: React.ReactNode; color: string; label: string }> = {

@@ -361,6 +361,64 @@ export function classifyCity(cityInput: string): CityClassification {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CITY ALIASES (for autocomplete search)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CITY_ALIASES: Record<string, string[]> = {
+  'Ciudad de México': ['cdmx', 'ciudad de mexico', 'df', 'distrito federal', 'mexico city'],
+  'Guadalajara': ['gdl', 'guadalajara', 'perla tapatio'],
+  'Monterrey': ['mty', 'monterrey', 'regio'],
+  'León': ['leon', 'leon guanajuato', 'bajio'],
+  'San Luis Potosí': ['san luis potosi', 'slp'],
+  'San Miguel de Allende': ['san miguel', 'san miguel de allende'],
+  'Cd. Juárez': ['cd juarez', 'ciudad juarez', 'juarez'],
+  'Lázaro Cárdenas': ['lazaro cardenas', 'lcardenasport'],
+  'Los Cabos': ['los cabos', 'cabo san lucas', 'san jose del cabo'],
+  'La Paz': ['la paz', 'la paz bcs'],
+  'Nuevo Laredo': ['nuevo laredo'],
+  'Villahermosa': ['villahermosa', 'tabasco'],
+  'Tijuana': ['tj', 'tijuana'],
+  'Querétaro': ['queretaro', 'qro'],
+  'Aguascalientes': ['ags', 'aguascalientes'],
+  'Mérida': ['merida'],
+  'Cancún': ['cancun'],
+  'Puebla': ['puebla', 'pue'],
+  'Veracruz': ['veracruz', 'ver'],
+  'Oaxaca': ['oaxaca', 'oax'],
+  'Tuxtla Gutiérrez': ['tuxtla', 'tuxtla gutierrez'],
+  'Hermosillo': ['hermosillo', 'hmo'],
+  'Chihuahua': ['chihuahua', 'chih'],
+  'Culiacán': ['culiacan'],
+  'Mazatlán': ['mazatlan'],
+  'Morelia': ['morelia'],
+  'Toluca': ['toluca'],
+  'Tampico': ['tampico'],
+  'Coatzacoalcos': ['coatza', 'coatzacoalcos'],
+  'Playa del Carmen': ['playa del carmen', 'playa'],
+};
+
+/** Given a search term, find canonical cities matching by name OR alias */
+export function searchCities(query: string): string[] {
+  if (query.length < 2) return [];
+  const q = norm(query);
+  const results = new Set<string>();
+
+  // 1. Match against ALL_CITIES by substring
+  for (const city of ALL_CITIES) {
+    if (norm(city).includes(q)) results.add(city);
+  }
+
+  // 2. Match against aliases → return canonical name
+  for (const [canonical, aliases] of Object.entries(CITY_ALIASES)) {
+    if (aliases.some(a => a.includes(q) || q.includes(a))) {
+      results.add(canonical);
+    }
+  }
+
+  return Array.from(results).sort().slice(0, 8);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FULL CITY LIST for autocomplete
 // ─────────────────────────────────────────────────────────────────────────────
 
