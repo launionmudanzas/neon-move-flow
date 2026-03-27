@@ -64,10 +64,18 @@ interface Publicacion {
   origen: string | null;
   destino: string | null;
   fecha_salida: string | null;
+  fecha_llegada_estimada: string | null;
   volumen_disponible: number | null;
+  peso_disponible: number | null;
+  modalidad_disponible: string | null;
+  tipo_unidad: string | null;
+  tipo_oportunidad: string | null;
+  observaciones: string | null;
   costo_ofrecido: number | null;
   estatus: string | null;
   expira_at: string | null;
+  vistas_cotizaciones: number;
+  intereses_count: number;
 }
 
 interface HorarioVisita {
@@ -138,7 +146,7 @@ export default function PortalProveedor() {
   const [addingUnidad, setAddingUnidad] = useState(false);
   const [newUnidad, setNewUnidad] = useState({ tipo: '', capacidad: '', capacidadPeso: '', placas: '', observaciones: '' });
   const [addingPub, setAddingPub] = useState(false);
-  const [newPub, setNewPub] = useState({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', volumen: '', costo: '', observaciones: '' });
+  const [newPub, setNewPub] = useState({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', fechaLlegada: '', volumen: '', peso: '', modalidad: '', tipoUnidad: '', tipoOportunidad: 'espacio_vacio', costo: '', observaciones: '' });
   const [newCiudad, setNewCiudad] = useState('');
   const [newRuta, setNewRuta] = useState('');
   const [editingProfile, setEditingProfile] = useState(false);
@@ -300,14 +308,20 @@ export default function PortalProveedor() {
       origen: newPub.origen || null,
       destino: newPub.destino || null,
       fecha_salida: newPub.fecha || null,
+      fecha_llegada_estimada: newPub.fechaLlegada || null,
       volumen_disponible: newPub.volumen ? Number(newPub.volumen) : null,
+      peso_disponible: newPub.peso ? Number(newPub.peso) : null,
+      modalidad_disponible: newPub.modalidad || null,
+      tipo_unidad: newPub.tipoUnidad || null,
+      tipo_oportunidad: newPub.tipoOportunidad || null,
       costo_ofrecido: newPub.costo ? Number(newPub.costo) : null,
+      observaciones: newPub.observaciones || null,
       estatus: 'activa',
       comision_app_publicador: 10,
       comision_app_tomador: 10,
     }).select('*').single();
     if (data) setPublicaciones(prev => [data as unknown as Publicacion, ...prev]);
-    setNewPub({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', volumen: '', costo: '', observaciones: '' });
+    setNewPub({ tipo: 'espacio_vacio', origen: '', destino: '', fecha: '', fechaLlegada: '', volumen: '', peso: '', modalidad: '', tipoUnidad: '', tipoOportunidad: 'espacio_vacio', costo: '', observaciones: '' });
     setAddingPub(false);
   };
 
