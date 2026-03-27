@@ -897,6 +897,7 @@ export default function CotizadorSection() {
                         fecha={s.fecha}
                         volumen={billableVol}
                         modalidad={s.modalidad}
+                        tipoServicio={s.tipoServicio}
                         onSelect={(id, nombre) => {
                           setSelectedProveedorId(id);
                           setSelectedProveedorNombre(nombre);

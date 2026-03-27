@@ -745,6 +745,18 @@ export default function Admin() {
               <CalendarioOperativo eventos={eventos as any} onRefresh={fetchData} />
             </div>
           )}
+
+          {/* ── SCORING PANEL ── */}
+          {tab === 'scoring' && (
+            <div className="p-5">
+              <ScoringPanel
+                proveedores={proveedores as unknown as ProveedorRaw[]}
+                publicaciones={[]}
+                sanciones={[]}
+                incidencias={[]}
+              />
+            </div>
+          )}
         </div>
       </div>
 
