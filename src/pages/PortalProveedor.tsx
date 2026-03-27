@@ -559,6 +559,13 @@ export default function PortalProveedor() {
           </motion.div>
         )}
 
+        {/* ═══ TAB: REPUTACIÓN ═══ */}
+        {tab === 'reputacion' && proveedorId && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <ReputacionCard proveedorId={proveedorId} />
+          </motion.div>
+        )}
+
         {/* ═══ TAB: SERVICIOS OPERATIVOS ═══ */}
         {tab === 'servicios' && proveedorId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
