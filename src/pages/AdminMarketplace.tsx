@@ -338,11 +338,11 @@ export default function AdminMarketplace() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
           {stats.map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
               <p className={`text-2xl font-black ${s.color}`}>{loading ? '…' : s.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
