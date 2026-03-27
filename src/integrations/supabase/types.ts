@@ -121,6 +121,90 @@ export type Database = {
           },
         ]
       }
+      calificaciones_servicio: {
+        Row: {
+          cliente_id: string | null
+          comentario: string | null
+          cotizacion_id: string | null
+          created_at: string
+          cuidado_carga: number
+          cumplimiento: number
+          experiencia_general: number
+          id: string
+          orden_id: string
+          promedio: number | null
+          proveedor_id: string
+          puntualidad: number
+          trato: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          comentario?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          cuidado_carga: number
+          cumplimiento: number
+          experiencia_general: number
+          id?: string
+          orden_id: string
+          promedio?: number | null
+          proveedor_id: string
+          puntualidad: number
+          trato: number
+        }
+        Update: {
+          cliente_id?: string | null
+          comentario?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          cuidado_carga?: number
+          cumplimiento?: number
+          experiencia_general?: number
+          id?: string
+          orden_id?: string
+          promedio?: number | null
+          proveedor_id?: string
+          puntualidad?: number
+          trato?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calificaciones_servicio_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_servicio_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_servicio_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: true
+            referencedRelation: "ordenes_servicio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats_publicaciones: {
         Row: {
           contacto_desbloqueado: boolean
@@ -1969,6 +2053,10 @@ export type Database = {
       }
     }
     Functions: {
+      compute_reputation_level: {
+        Args: { p_proveedor_id: string }
+        Returns: string
+      }
       desbloquear_chat: { Args: { p_chat_id: string }; Returns: undefined }
       expire_publicaciones_now: { Args: never; Returns: number }
       guardar_aceptacion: {
