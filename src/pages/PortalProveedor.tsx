@@ -11,7 +11,7 @@ import {
   Image, Route as RouteIcon, CheckCircle2, RefreshCw,
   FileText, Shield, AlertTriangle, Loader2, Building2,
   Weight, Hash, Camera, ToggleLeft, ToggleRight, Briefcase,
-  History, Activity, ChevronRight, ClipboardList,
+  History, Activity, ChevronRight, ClipboardList, Award,
 } from 'lucide-react';
 import ServiciosOperativos from '@/components/proveedor/ServiciosOperativos';
 import ReputacionCard from '@/components/proveedor/ReputacionCard';
