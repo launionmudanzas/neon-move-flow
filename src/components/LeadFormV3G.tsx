@@ -49,10 +49,8 @@ export default function LeadFormV3G() {
     setLoading(true);
 
     try {
-      const { data, error: dbErr } = await supabase
-        .from('leads_v3g')
-        .insert({
-          folio: 'TEMP', // trigger will replace
+      const { data, error: fnErr } = await supabase.functions.invoke('submit-public-lead', {
+        body: {
           nombre: nombre.trim(),
           telefono: telefono.trim(),
           origen: origen.trim(),
@@ -62,11 +60,11 @@ export default function LeadFormV3G() {
           tipo_inmueble: tipoInmueble || null,
           piso_elevador: pisoElevador || null,
           mensaje_adicional: mensajeAdicional.trim() || null,
-        })
-        .select('folio')
-        .single();
+        },
+      });
 
-      if (dbErr) throw dbErr;
+      if (fnErr) throw fnErr;
+      if (data?.error) throw new Error(data.error);
       setFolio(data.folio);
       setDone(true);
     } catch {
