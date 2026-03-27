@@ -289,6 +289,9 @@ export function classifyCity(cityInput: string): CityClassification {
     };
   }
 
+  // Resolve alias to canonical name first
+  const resolved = resolveAlias(cityInput) || cityInput;
+
   // 1. Check restricted zones first
   if (RESTRICTED_ZONES.some(r => cityMatch(cityInput, r))) {
     return {
