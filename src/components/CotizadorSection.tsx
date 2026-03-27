@@ -870,15 +870,13 @@ export default function CotizadorSection() {
                   )}
 
                   {/* Complex quote: advisor banner */}
-                  {calcResult && (billableVol > 90 || (!s.correo && !s.whatsapp) || (origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida')) && (
+                  {calcResult && (billableVol > 90 || (origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida')) && (
                     <div className="mb-4">
                       <AsesorBanner
                         reason={
                           billableVol > 90
                             ? `Volumen de ${billableVol} m³ requiere coordinación especial.`
-                            : origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida'
-                            ? 'Una o más ciudades requieren revisión manual.'
-                            : 'Datos de contacto incompletos para generar orden.'
+                            : 'Una o más ciudades requieren revisión manual.'
                         }
                         nombre={s.nombre}
                         origen={s.origen}
@@ -888,9 +886,18 @@ export default function CotizadorSection() {
                     </div>
                   )}
 
-                  {/* Provider selection */}
-                  {calcResult && billableVol <= 90 && (
+                  {/* Intelligent provider funnel */}
+                  {calcResult && billableVol <= 90 && origenCls?.status !== 'desconocida' && destinoCls?.status !== 'desconocida' && (
                     <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground text-sm">Selecciona tu proveedor</p>
+                          <p className="text-[10px] text-muted-foreground">Opciones filtradas y verificadas para tu servicio</p>
+                        </div>
+                      </div>
                       <ProveedorSelector
                         origen={s.origen}
                         destino={s.destino}

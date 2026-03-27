@@ -1,7 +1,8 @@
 /**
  * Proveedor Scoring Engine — "Modo Uber de Mudanzas"
  * Evaluates and ranks providers based on route match, unit capacity,
- * rating, sanctions, availability, and route opportunities.
+ * rating, sanctions, availability, modalidad/service compatibility,
+ * and route opportunities.
  */
 
 export interface ProveedorRaw {
@@ -17,6 +18,20 @@ export interface ProveedorRaw {
   supervision_especial: boolean;
   adeudo_cliente_pendiente: number;
   servicios_sin_anticipo_restantes: number;
+  // Extended profile fields
+  anios_experiencia: number | null;
+  modalidades: string[] | null;
+  tipos_servicio: string[] | null;
+  descripcion: string | null;
+}
+
+export interface ProveedorUnidad {
+  id: string;
+  proveedor_id: string;
+  tipo_unidad: string | null;
+  capacidad_m3: number | null;
+  capacidad_peso: number | null;
+  activa: boolean;
 }
 
 export interface PublicacionCarga {
@@ -57,6 +72,12 @@ export interface ScoredProveedor {
   logo_url: string | null;
   calificacion: number | null;
   premium_activo: boolean;
+  anios_experiencia: number | null;
+  modalidades: string[] | null;
+  tipos_servicio: string[] | null;
+  descripcion: string | null;
+  ciudades_cobertura: string[] | null;
+  unidades_tipos: string[];          // unique unit types from their fleet
   score: ScoreBreakdown;
   badges: ProveedorBadge[];
   isOpportunity: boolean;
@@ -70,7 +91,8 @@ export type ProveedorBadge =
   | 'mejor_calificado'
   | 'oportunidad_ruta'
   | 'precio_especial'
-  | 'premium';
+  | 'premium'
+  | 'red_aprobada';
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
@@ -107,6 +129,39 @@ function routeCovers(prov: ProveedorRaw, origen: string, destino: string): { cov
   return { covers: false, strength: 0 };
 }
 
+/** Map volume to expected unit type keywords */
+function getExpectedUnitKeywords(volumen: number): string[] {
+  if (volumen <= 10) return ['nissan', 'camioneta'];
+  if (volumen <= 20) return ['nissan', '3.5', 'camioneta'];
+  if (volumen <= 50) return ['3.5', 'rabon'];
+  if (volumen <= 60) return ['rabon', 'torton'];
+  if (volumen <= 90) return ['torton', 'camion', 'grande'];
+  return ['trailer', 'camion', 'grande'];
+}
+
+function providerHasFittingUnit(unidades: ProveedorUnidad[], volumen: number): { fits: boolean; strength: number } {
+  if (unidades.length === 0) return { fits: false, strength: 0 };
+  
+  const activeUnits = unidades.filter(u => u.activa);
+  if (activeUnits.length === 0) return { fits: false, strength: 0 };
+
+  // Check capacity
+  const hasCapacity = activeUnits.some(u => u.capacidad_m3 != null && u.capacidad_m3 >= volumen);
+  
+  // Check type match
+  const keywords = getExpectedUnitKeywords(volumen);
+  const hasType = activeUnits.some(u => {
+    if (!u.tipo_unidad) return false;
+    const t = norm(u.tipo_unidad);
+    return keywords.some(k => t.includes(k));
+  });
+
+  if (hasCapacity && hasType) return { fits: true, strength: 1.0 };
+  if (hasCapacity || hasType) return { fits: true, strength: 0.6 };
+  // Has active units but no clear match — partial credit
+  return { fits: true, strength: 0.3 };
+}
+
 // ─── Main scoring function ────────────────────────────────────────
 
 export interface ScoringInput {
@@ -124,6 +179,7 @@ export function scoreProveedores(
   sanciones: SancionRow[],
   incidenciaCounts: IncidenciaCount[],
   input: ScoringInput,
+  unidades: ProveedorUnidad[] = [],
   maxResults: number = 3,
 ): { selected: ScoredProveedor[]; discarded: ScoredProveedor[] } {
   const now = new Date();
@@ -135,6 +191,14 @@ export function scoreProveedores(
   });
   const incMap = new Map<string, number>();
   incidenciaCounts.forEach(i => incMap.set(i.proveedor_id, i.count));
+
+  // Group units by provider
+  const unitMap = new Map<string, ProveedorUnidad[]>();
+  unidades.forEach(u => {
+    const arr = unitMap.get(u.proveedor_id) || [];
+    arr.push(u);
+    unitMap.set(u.proveedor_id, arr);
+  });
 
   // Find opportunity publications matching this route
   const opportunityPubs = publicaciones.filter(p => {
@@ -166,6 +230,24 @@ export function scoreProveedores(
       discardReason = discardReason || 'Proveedor bloqueado por sanción';
     }
 
+    // Modalidad compatibility
+    if (input.modalidad && prov.modalidades && prov.modalidades.length > 0) {
+      const modalidadNorm = norm(input.modalidad);
+      const supportsModalidad = prov.modalidades.some(m => norm(m).includes(modalidadNorm) || modalidadNorm.includes(norm(m)));
+      if (!supportsModalidad && !discardReason) {
+        discardReason = `No maneja modalidad: ${input.modalidad}`;
+      }
+    }
+
+    // Service type compatibility
+    if (input.tipoServicio && prov.tipos_servicio && prov.tipos_servicio.length > 0) {
+      const tipoNorm = norm(input.tipoServicio);
+      const supportsType = prov.tipos_servicio.some(t => norm(t).includes(tipoNorm) || tipoNorm.includes(norm(t)));
+      if (!supportsType && !discardReason) {
+        discardReason = `No presta servicio: ${input.tipoServicio}`;
+      }
+    }
+
     // Route match
     const rm = routeCovers(prov, input.origen, input.destino);
     if (!rm.covers && !discardReason) {
@@ -174,8 +256,19 @@ export function scoreProveedores(
 
     const routeMatch = Math.round(rm.strength * 30);
 
-    // Unit fit (simplified — based on whether they likely have a fitting unit)
-    const unitFit = rm.covers ? 15 : 0;
+    // Unit fit (use real units if available)
+    const provUnits = unitMap.get(prov.id) || [];
+    let unitFit = 0;
+    if (provUnits.length > 0) {
+      const fit = providerHasFittingUnit(provUnits, input.volumen);
+      unitFit = Math.round(fit.strength * 15);
+      if (!fit.fits && !discardReason) {
+        discardReason = 'Sin unidad adecuada para el volumen';
+      }
+    } else {
+      // No units data — give base credit if route matches
+      unitFit = rm.covers ? 8 : 0;
+    }
 
     // Rating (0-20)
     const rawRating = prov.calificacion ?? 3.0;
@@ -204,6 +297,9 @@ export function scoreProveedores(
     // Premium bonus
     if (prov.premium_activo) penalties += 5; // positive bonus for premium
 
+    // Experience bonus
+    if (prov.anios_experiencia && prov.anios_experiencia >= 5) penalties += 3;
+
     const total = Math.max(0, routeMatch + unitFit + rating + availability + opportunity + penalties);
 
     const score: ScoreBreakdown = { routeMatch, unitFit, rating, availability, opportunity, penalties, total };
@@ -213,8 +309,12 @@ export function scoreProveedores(
     if (isOpp) badges.push('oportunidad_ruta', 'precio_especial');
     if (prov.premium_activo) badges.push('premium');
     if (rawRating >= 4.5) badges.push('mejor_calificado');
+    if (['aprobado', 'activo'].includes(prov.estatus ?? '')) badges.push('red_aprobada');
 
     const oppPub = opportunityPubs.find(p => p.proveedor_id === prov.id);
+
+    // Unique unit types
+    const unidadesTipos = [...new Set(provUnits.filter(u => u.activa && u.tipo_unidad).map(u => u.tipo_unidad!))];
 
     return {
       id: prov.id,
@@ -222,6 +322,12 @@ export function scoreProveedores(
       logo_url: prov.logo_url,
       calificacion: prov.calificacion,
       premium_activo: prov.premium_activo,
+      anios_experiencia: prov.anios_experiencia,
+      modalidades: prov.modalidades,
+      tipos_servicio: prov.tipos_servicio,
+      descripcion: prov.descripcion,
+      ciudades_cobertura: prov.ciudades_cobertura,
+      unidades_tipos: unidadesTipos,
       score,
       badges,
       isOpportunity: isOpp,
@@ -265,4 +371,5 @@ export const BADGE_CONFIG: Record<ProveedorBadge, { label: string; emoji: string
   oportunidad_ruta: { label: 'Oportunidad en ruta',    emoji: '🛣️', color: 'bg-green-500/15 text-green-400 border-green-500/30' },
   precio_especial:  { label: 'Precio especial',        emoji: '💰', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
   premium:          { label: 'Premium',                 emoji: '👑', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+  red_aprobada:     { label: 'Red verificada',          emoji: '✅', color: 'bg-primary/15 text-primary border-primary/30' },
 };
