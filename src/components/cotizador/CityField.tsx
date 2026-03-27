@@ -43,9 +43,7 @@ interface CityFieldProps {
 export default function CityField({ label, value, onChange, placeholder, billableVol = 0, showWarnings = true }: CityFieldProps) {
   const [open, setOpen] = useState(false);
   const cls: CityClassification | null = value.trim().length >= 2 ? classifyCity(value) : null;
-  const suggestions = value.length >= 2
-    ? ALL_CITIES.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
-    : [];
+  const suggestions = searchCities(value);
   const desvioCharge = cls?.status === 'desvio' ? getDesvioSurcharge(Math.max(5, billableVol)) : 0;
 
   return (
