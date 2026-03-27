@@ -89,6 +89,8 @@ export interface ScoredProveedor {
   badges: ProveedorBadge[];
   isOpportunity: boolean;
   opportunityDetail: string | null;
+  opportunityType: TipoOportunidad | null;
+  opportunityPub: PublicacionCarga | null;
   discardReason: string | null;  // null = not discarded
 }
 
