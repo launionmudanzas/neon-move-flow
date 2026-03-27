@@ -1,6 +1,6 @@
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
-import LeadFormSection from '@/components/LeadFormSection';
+import LeadFormV3G from '@/components/LeadFormV3G';
 import BenefitsSection from '@/components/BenefitsSection';
 import CotizadorSection from '@/components/CotizadorSection';
 
@@ -25,7 +25,7 @@ export default function Index() {
       <PixelScript />
       <Navbar />
       <HeroSection />
-      <LeadFormSection />
+      <LeadFormV3G />
       <BenefitsSection />
       <CotizadorSection />
       
