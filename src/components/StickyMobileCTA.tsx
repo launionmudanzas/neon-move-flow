@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
 
 export default function StickyMobileCTA() {
   const [visible, setVisible] = useState(false);
@@ -37,7 +36,7 @@ export default function StickyMobileCTA() {
               <ArrowRight className="w-4 h-4" />
             </button>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola,%20quiero%20cotizar%20mi%20mudanza`}
+              href={`https://wa.me/${siteConfig.whatsApp}?text=Hola,%20quiero%20cotizar%20mi%20mudanza`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-4 bg-neon-green text-background font-bold text-sm active:opacity-80 transition-opacity"

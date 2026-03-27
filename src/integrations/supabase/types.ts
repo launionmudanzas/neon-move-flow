@@ -519,6 +519,24 @@ export type Database = {
         }
         Relationships: []
       }
+      folio_counters_v3g: {
+        Row: {
+          id: number
+          seq: number
+          yyyymmdd: string
+        }
+        Insert: {
+          id?: never
+          seq?: number
+          yyyymmdd: string
+        }
+        Update: {
+          id?: never
+          seq?: number
+          yyyymmdd?: string
+        }
+        Relationships: []
+      }
       horarios_visita_proveedor: {
         Row: {
           activo: boolean
@@ -762,6 +780,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leads_v3g: {
+        Row: {
+          created_at: string
+          destino: string
+          fecha_tentativa: string | null
+          folio: string
+          id: string
+          mensaje_adicional: string | null
+          nombre: string
+          origen: string
+          piso_elevador: string | null
+          telefono: string
+          tipo_inmueble: string | null
+          tipo_servicio: string | null
+        }
+        Insert: {
+          created_at?: string
+          destino: string
+          fecha_tentativa?: string | null
+          folio: string
+          id?: string
+          mensaje_adicional?: string | null
+          nombre: string
+          origen: string
+          piso_elevador?: string | null
+          telefono: string
+          tipo_inmueble?: string | null
+          tipo_servicio?: string | null
+        }
+        Update: {
+          created_at?: string
+          destino?: string
+          fecha_tentativa?: string | null
+          folio?: string
+          id?: string
+          mensaje_adicional?: string | null
+          nombre?: string
+          origen?: string
+          piso_elevador?: string | null
+          telefono?: string
+          tipo_inmueble?: string | null
+          tipo_servicio?: string | null
+        }
+        Relationships: []
       }
       mensajes_chat_publicacion: {
         Row: {
@@ -1536,6 +1599,44 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contacts: {
+        Row: {
+          bsuid: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          lead_id: string | null
+          nombre: string | null
+          telefono_whatsapp: string | null
+        }
+        Insert: {
+          bsuid: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          lead_id?: string | null
+          nombre?: string | null
+          telefono_whatsapp?: string | null
+        }
+        Update: {
+          bsuid?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          lead_id?: string | null
+          nombre?: string | null
+          telefono_whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_v3g"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_inbox: {
         Row: {
           id: string
@@ -1580,6 +1681,44 @@ export type Database = {
           wa_user_id?: string | null
         }
         Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          contact_id: string
+          created_at: string
+          direction: string
+          id: string
+          message_id: string | null
+          raw_payload: Json | null
+        }
+        Insert: {
+          body?: string | null
+          contact_id: string
+          created_at?: string
+          direction: string
+          id?: string
+          message_id?: string | null
+          raw_payload?: Json | null
+        }
+        Update: {
+          body?: string | null
+          contact_id?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          message_id?: string | null
+          raw_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zonas_restringidas: {
         Row: {
@@ -1660,6 +1799,7 @@ export type Database = {
         Returns: Json
       }
       next_folio: { Args: never; Returns: string }
+      next_folio_v3g: { Args: never; Returns: string }
       obtener_proveedores_disponibles: {
         Args: { p_destino: string; p_fecha: string; p_origen: string }
         Returns: {
