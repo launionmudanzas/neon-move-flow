@@ -340,7 +340,7 @@ export function scoreProveedores(
     const oppPub = opportunityPubs.find(p => p.proveedor_id === prov.id);
     if (isOpp && oppPub) {
       badges.push('oportunidad_ruta');
-      const tipo = oppPub.tipo_oportunidad ?? oppPub.tipo_unidad ? 'espacio_vacio' : 'proveedor_paso';
+      const tipo: string = oppPub.tipo_oportunidad ?? (oppPub.tipo_unidad ? 'espacio_vacio' : 'proveedor_paso');
       if (tipo === 'espacio_vacio') badges.push('oportunidad_espacio');
       else if (tipo === 'carga_compartida') badges.push('oportunidad_compartida');
       else badges.push('oportunidad_paso');
