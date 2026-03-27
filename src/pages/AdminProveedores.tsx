@@ -688,11 +688,10 @@ export default function AdminProveedores() {
             </table>
           </div>
         </div>
-      </div>
-
-      <ProveedorDetailModal proveedorId={selectedId} onClose={() => setSelectedId(null)} onUpdate={fetchData} />
-        </div>
+        <ProveedorDetailModal proveedorId={selectedId} onClose={() => setSelectedId(null)} onUpdate={fetchData} />
         </>
         )}
+      </div>
+    </div>
   );
 }
