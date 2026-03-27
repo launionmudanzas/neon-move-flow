@@ -1,610 +1,238 @@
-import { useState, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from 'framer-motion';
+/**
+ * CotizadorSection — 5-step wizard for La Unión Mudanzas
+ * Flow: Datos → Validación Ruta → Tipo Servicio → Cálculo → Resultado
+ */
+import { useState, useMemo, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
-  Truck, Home, Building2, Package,
-  ChevronRight, ChevronLeft, Plus, Minus, MapPin, Calendar,
-  Clock, Shield, AlertTriangle, CheckCircle2, FileText, Phone,
-  Star, Zap, Upload, CreditCard, Loader2,
-  BadgeCheck, Navigation, Route as RouteIcon, ShieldAlert, HelpCircle,
+  MapPin, Zap, Package, Truck, Star, Phone,
+  AlertTriangle, CheckCircle2, Loader2, Clock, Shield,
+  ChevronRight, Upload, CreditCard, FileText,
+  BadgeCheck, Navigation, ShieldAlert, HelpCircle, Route as RouteIcon, Info,
 } from 'lucide-react';
+import CityField, { CityBadge, STATUS_CFG } from '@/components/cotizador/CityField';
+import { ProgressBar, OptionButton, CounterRow, TruckVisualizer, NavButton } from '@/components/cotizador/shared';
+import {
+  WHATSAPP_NUMBER, MIN_VOL, VOLUMES, INVENTORY_LABELS, INVENTORY_ROOMS,
+  getUnit, formatMXN, getInsuranceRate, getAvailableModalidades,
+  INITIAL_STATE, MARGEN_APP, COSTO_RECOLECCION, COSTO_ENTREGA,
+  type WizardState,
+} from '@/components/cotizador/constants';
+import { useCotizacion, calcularRuta, getDesvioSurcharge } from '@/hooks/use-cotizacion';
+import { classifyCity, type CityClassification } from '@/lib/routing-data';
+import { sendServiceEmail } from '@/lib/email-service';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
-import { useCotizacion, getDesvioSurcharge } from '@/hooks/use-cotizacion';
-import { classifyCity, ALL_CITIES, CityStatus, CityClassification } from '@/lib/routing-data';
-import { sendServiceEmail } from '@/lib/email-service';
+import type { TramoResult, RutaRow } from '@/hooks/use-cotizacion';
 
-const WHATSAPP_NUMBER = '4421270514';
-const TOTAL_STEPS = 6;
-const MIN_VOL = 5; // Volumen mínimo cobrable
-
-// ─── Volume table ────────────────────────────────────────────────
-const VOLUMES: Record<string, number> = {
-  cama_king: 2.5, cama_matrimonial: 2, cama_individual: 1.5,
-  sofa_3_plazas: 2, sofa_2_plazas: 1.5, sofa_individual: 0.8, sofa_cama: 2.5,
-  comedor_6: 1.5, comedor_4: 1, mesa_centro: 0.3,
-  ropero_3p: 2, ropero_2p: 1.5, cajones_3: 0.8,
-  buros: 0.3, tocador: 0.8, librero: 0.8,
-  refrigerador_duplex: 2, refrigerador_14: 1.2, estufa: 0.6,
-  lavadora: 0.5, secadora: 0.5,
-  tv_55: 0.3, tv_65: 0.5, tv_75: 0.6,
-  escritorio: 0.8, silla_oficina: 0.4, archivero: 0.5,
-  computadora: 0.2, impresora: 0.2,
-  bicicleta: 0.5,
-  caja_estandar: 0.15,
-};
-
-// ─── Unit suggestion (based on BILLABLE volume) ───────────────────
-function getUnit(vol: number) {
-  if (vol <= 10) return { label: 'Nissan / Camioneta', range: '0–10 m³', icon: '🚐', emoji: '🚐', fill: Math.min(100, (vol / 10) * 100), prev: null };
-  if (vol <= 20) return { label: 'Camioneta 3.5 ton', range: '10–20 m³', icon: '🚚', emoji: '🚚', fill: Math.min(100, ((vol - 10) / 10) * 100), prev: 'Nissan / Camioneta' };
-  if (vol <= 35) return { label: 'Rabón', range: '20–35 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 20) / 15) * 100), prev: 'Camioneta 3.5 ton' };
-  if (vol <= 60) return { label: 'Tórtón', range: '35–60 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 35) / 25) * 100), prev: 'Rabón' };
-  if (vol <= 90) return { label: 'Camión Grande', range: '60–90 m³', icon: '🚛', emoji: '🚛', fill: Math.min(100, ((vol - 60) / 30) * 100), prev: 'Tórtón' };
-  return { label: 'Tráiler', range: '+90 m³', icon: '🚛🚛', emoji: '🚛🚛', fill: 100, prev: 'Camión Grande' };
+// ─── Calculation result type ─────────────────────────────────────
+interface CalcResult {
+  tipo: 'directa' | 'espejo' | 'tramos' | 'no_disponible';
+  costoM3: number;
+  tramos: { desde: string; hasta: string; costo: number }[];
+  observaciones: string[];
+  advertencias: string[];
+  costoDesvio: number;
+  precioBase: number;
+  subtotal: number;
+  conMargen: number;
+  precioTotal: number;
+  volumenCobrable: number;
+  unit: ReturnType<typeof getUnit>;
+  origenCls: CityClassification;
+  destinoCls: CityClassification;
 }
 
-function getEstimatedTime(vol: number) {
-  if (vol <= 5)  return '2–3 horas';
-  if (vol <= 15) return '3–5 horas';
-  if (vol <= 30) return '5–8 horas';
-  return '1–2 días';
-}
-
-function getInsuranceRate(monto: number): number {
-  if (monto < 100000) return 0.02;
-  if (monto < 500000) return 0.015;
-  return 0.01;
-}
-
-function formatMXN(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
-}
-
-// ─── City classification badge ────────────────────────────────────
-
-const STATUS_CFG: Record<CityStatus, { icon: React.ReactNode; color: string; label: string }> = {
-  en_ruta:    { icon: <BadgeCheck className="w-3 h-3" />,   color: 'bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan',         label: 'En ruta' },
-  desvio:     { icon: <Navigation className="w-3 h-3" />,   color: 'bg-neon-orange/10 border-neon-orange/30 text-neon-orange',   label: 'Con desvío' },
-  extension:  { icon: <RouteIcon className="w-3 h-3" />,    color: 'bg-neon-blue/10 border-neon-blue/30 text-neon-blue',         label: 'Extensión' },
-  exclusivo:  { icon: <ShieldAlert className="w-3 h-3" />,  color: 'bg-destructive/10 border-destructive/30 text-destructive',   label: 'Solo exclusivo' },
-  desconocida:{ icon: <HelpCircle className="w-3 h-3" />,   color: 'bg-muted border-border text-muted-foreground',               label: 'No encontrada' },
-};
-
-function CityBadge({ cls }: { cls: CityClassification }) {
-  if (!cls || cls.status === 'desconocida') return null;
-  const cfg = STATUS_CFG[cls.status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.color}`}>
-      {cfg.icon}
-      {cfg.label}
-      {cls.routeNames.length > 0 && (
-        <span className="opacity-70 font-normal">· {cls.routeNames.slice(0, 2).join(', ')}</span>
-      )}
-    </span>
-  );
-}
-
-interface CityFieldProps {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  dotColor: string;
-  billableVol?: number;
-}
-
-function CityField({ label, value, onChange, placeholder, dotColor, billableVol = 0 }: CityFieldProps) {
-  const [open, setOpen] = useState(false);
-  const cls: CityClassification | null = value.trim().length >= 2 ? classifyCity(value) : null;
-  const suggestions = value.length >= 2
-    ? ALL_CITIES.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
-    : [];
-  const desvioCharge = cls?.status === 'desvio' ? getDesvioSurcharge(Math.max(5, billableVol)) : 0;
-
-  return (
-    <div className="relative">
-      <div className="flex items-center justify-between mb-1">
-        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</label>
-        {cls && <CityBadge cls={cls} />}
-      </div>
-      <input
-        value={value}
-        onChange={e => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder={placeholder}
-        className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all"
-      />
-
-      {/* Autocomplete */}
-      <AnimatePresence>
-        {open && suggestions.length > 0 && (
-          <motion.ul
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-            className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-xl shadow-xl overflow-hidden"
-          >
-            {suggestions.map(city => {
-              const c = classifyCity(city);
-              const cfg = STATUS_CFG[c.status];
-              return (
-                <li key={city}>
-                  <button
-                    type="button"
-                    onMouseDown={() => { onChange(city); setOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between gap-2"
-                  >
-                    <span className="flex items-center gap-2">
-                      <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                      {city}
-                    </span>
-                    {c.status !== 'desconocida' && (
-                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border flex-shrink-0 ${cfg.color}`}>
-                        {cfg.icon}{cfg.label}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-
-      {/* Exclusive zone warning */}
-      <AnimatePresence>
-        {cls?.status === 'exclusivo' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-1.5 flex gap-2 p-2.5 rounded-xl bg-destructive/10 border border-destructive/30">
-              <ShieldAlert className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-destructive font-semibold">
-                Esta zona no aplica para servicio compartido. Solo se ofrece servicio exclusivo.
-              </p>
-            </div>
-          </motion.div>
-        )}
-        {cls?.status === 'desvio' && desvioCharge > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-1.5 flex gap-2 p-2.5 rounded-xl bg-neon-orange/10 border border-neon-orange/30">
-              <Navigation className="w-3.5 h-3.5 text-neon-orange flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-neon-orange font-semibold">
-                Ciudad con desvío · cargo adicional estimado:{' '}
-                <strong>{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(desvioCharge)}</strong>
-                {' '}por volumen.
-              </p>
-            </div>
-          </motion.div>
-        )}
-        {cls?.status === 'extension' && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-1.5 flex gap-2 p-2.5 rounded-xl bg-neon-blue/10 border border-neon-blue/30">
-              <RouteIcon className="w-3.5 h-3.5 text-neon-blue flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-neon-blue font-semibold">
-                Extensión de ruta · confirmar disponibilidad con operaciones.
-              </p>
-            </div>
-          </motion.div>
-        )}
-        {cls?.status === 'desconocida' && value.trim().length >= 3 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-1.5 flex gap-2 p-2.5 rounded-xl bg-muted border border-border">
-              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground font-medium">
-                Ciudad no encontrada en el sistema. Verifica con operaciones.
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ─── Route summary pill (shown when both cities are classified) ────
-
-function RouteSummaryBadge({ origenCls, destinoCls, billableVol }: {
-  origenCls: CityClassification | null;
-  destinoCls: CityClassification | null;
-  billableVol: number;
-}) {
-  if (!origenCls || !destinoCls) return null;
-  const hasExclusivo = origenCls.status === 'exclusivo' || destinoCls.status === 'exclusivo';
-  const hasDesvio = origenCls.status === 'desvio' || destinoCls.status === 'desvio';
-  const desvioCity = origenCls.status === 'desvio'
-    ? 'origen' : destinoCls.status === 'desvio' ? 'destino' : null;
-  const desvioCharge = hasDesvio ? getDesvioSurcharge(Math.max(5, billableVol)) : 0;
-
-  if (hasExclusivo) return null; // already shown per-field
-
-  if (origenCls.status === 'en_ruta' && destinoCls.status === 'en_ruta') {
-    return (
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-cyan/8 border border-neon-cyan/25 text-xs">
-        <CheckCircle2 className="w-4 h-4 text-neon-cyan flex-shrink-0" />
-        <span className="text-neon-cyan font-semibold">
-          Ruta confirmada en nuestra red operativa.{' '}
-          {hasDesvio && desvioCharge > 0 && (
-            <span className="text-neon-orange">
-              · Cargo por desvío ({desvioCity}): {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(desvioCharge)}
-            </span>
-          )}
-        </span>
-      </div>
-    );
-  }
-  return null;
-}
-
-
-function ProgressBar({ step }: { step: number }) {
-  const labels = ['Ruta', 'Detalles', 'Inventario', 'Carga', 'Precio', 'Confirmar'];
-  const pct = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
-  return (
-    <div className="mb-8">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-xs font-bold text-neon-cyan tracking-widest uppercase">Paso {step} de {TOTAL_STEPS}</span>
-        <span className="text-xs text-muted-foreground font-semibold">{labels[step - 1]}</span>
-      </div>
-      <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-gradient-to-r from-neon-cyan to-neon-blue rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        />
-      </div>
-      <div className="flex justify-between mt-2">
-        {labels.map((l, i) => (
-          <div key={l} className={`flex flex-col items-center gap-0.5 ${i + 1 <= step ? 'opacity-100' : 'opacity-30'}`}>
-            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${i + 1 < step ? 'bg-neon-cyan' : i + 1 === step ? 'bg-neon-blue ring-2 ring-neon-blue/30' : 'bg-border'}`} />
-            <span className="text-[9px] text-muted-foreground hidden sm:block">{l}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OptionButton({ label, icon, desc, selected, onClick }: {
-  label: string; icon: string; desc?: string; selected: boolean; onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200 text-center ${
-        selected
-          ? 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_12px_hsl(var(--neon-cyan)/0.3)]'
-          : 'border-border hover:border-neon-cyan/40 hover:bg-surface-2 bg-surface'
-      }`}
-    >
-      <span className="text-2xl">{icon}</span>
-      <span className={`text-xs font-bold leading-tight ${selected ? 'text-neon-cyan' : 'text-foreground'}`}>{label}</span>
-      {desc && <span className="text-[10px] text-muted-foreground leading-tight">{desc}</span>}
-    </button>
-  );
-}
-
-function CounterRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-      <span className="text-sm text-foreground flex-1 pr-4">{label}</span>
-      <div className="flex items-center gap-2.5">
-        <button
-          type="button"
-          onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-neon-cyan hover:border-neon-cyan/50 transition-all active:scale-95"
-        >
-          <Minus className="w-3.5 h-3.5" />
-        </button>
-        <span className={`w-7 text-center font-black text-sm tabular-nums transition-colors ${value > 0 ? 'text-neon-cyan' : 'text-muted-foreground'}`}>{value}</span>
-        <button
-          type="button"
-          onClick={() => onChange(Math.min(99, value + 1))}
-          className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-neon-cyan hover:border-neon-cyan/50 transition-all active:scale-95"
-        >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function TruckVisualizer({ vol, billableVol, unit, prevUnit }: {
-  vol: number; billableVol: number; unit: ReturnType<typeof getUnit>; prevUnit: string | null;
-}) {
-  const fill = unit.fill;
-  const upgraded = prevUnit !== null;
-  const stages = [
-    { min: 0,  max: 30,  label: 'Vacío',      bg: 'from-neon-green to-neon-cyan' },
-    { min: 30, max: 60,  label: 'Medio',       bg: 'from-neon-cyan to-neon-blue' },
-    { min: 60, max: 90,  label: 'Casi lleno',  bg: 'from-neon-blue to-neon-orange' },
-    { min: 90, max: 101, label: '¡Completo!',  bg: 'from-neon-orange to-destructive' },
-  ];
-  const stage = stages.find(s => fill >= s.min && fill < s.max) || stages[3];
-
-  return (
-    <div className="relative rounded-2xl border border-neon-cyan/20 bg-gradient-to-b from-surface to-background overflow-hidden p-5">
-      {/* Unit upgrade banner */}
-      <AnimatePresence>
-        {upgraded && (
-          <motion.div
-            key={unit.label}
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-neon-orange/15 border border-neon-orange/40 text-xs font-bold text-neon-orange"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-            ¡Tu carga ahora requiere una unidad más grande! ({prevUnit} → {unit.label})
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Truck emoji */}
-      <div className="flex items-center justify-center mb-3">
-        <motion.div
-          key={unit.label}
-          initial={{ opacity: 0, scale: 0.7, y: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="text-6xl filter drop-shadow-lg select-none"
-        >
-          {unit.emoji}
-        </motion.div>
-      </div>
-
-      {/* Load bar */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-muted-foreground font-semibold">Ocupación</span>
-          <span className="font-black text-foreground">{Math.round(fill)}%  ·  {stage.label}</span>
-        </div>
-        <div className="w-full h-5 bg-border/40 rounded-full overflow-hidden relative">
-          <motion.div
-            className={`h-full rounded-full bg-gradient-to-r ${stage.bg}`}
-            animate={{ width: `${fill}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-          <div className="absolute inset-0 flex items-center px-2 gap-1 overflow-hidden pointer-events-none">
-            {Array.from({ length: Math.floor(fill / 10) }).map((_, i) => (
-              <span key={i} className="text-[9px]">📦</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Unit chip */}
-      <motion.div
-        key={unit.label}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 mb-3"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{unit.icon}</span>
-          <div>
-            <p className="font-display font-black text-sm text-neon-cyan">{unit.label}</p>
-            <p className="text-[10px] text-muted-foreground">{unit.range}</p>
-          </div>
-        </div>
-        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Unidad sugerida</span>
-      </motion.div>
-
-      {/* Volume: real vs billable */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="text-center p-2 rounded-xl bg-surface border border-border">
-          <p className="text-[10px] text-muted-foreground">Volumen real</p>
-          <motion.p key={vol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
-            className="font-black text-xl text-foreground">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</motion.p>
-        </div>
-        <div className={`text-center p-2 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
-          <p className="text-[10px] text-muted-foreground">Volumen cobrable</p>
-          <motion.p key={billableVol.toFixed(1)} initial={{ scale: 1.2, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
-            className={`font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{`${billableVol.toFixed(1)} m³`}</motion.p>
-        </div>
-      </div>
-      {billableVol > vol && (
-        <p className="text-[10px] text-neon-orange mt-1.5 text-center font-semibold">
-          ⚠️ Volumen mínimo de cotización: {MIN_VOL} m³
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── Main component ───────────────────────────────────────────────
 export default function CotizadorSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   const [step, setStep] = useState(1);
+  const [s, setS] = useState<WizardState>({ ...INITIAL_STATE });
+  const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
+  const [calculating, setCalculating] = useState(false);
+
+  // Order/payment state
   const [ordenOpen, setOrdenOpen] = useState(false);
   const [pagoOpen, setPagoOpen] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
   const [savedCotizacion, setSavedCotizacion] = useState<{
     folio: string; cotizacionId: string; precioTotal: number; precioBase?: number;
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
-
-  const { guardarCotizacion, crearEventoCalendario } = useCotizacion();
   const [savedClienteId, setSavedClienteId] = useState<string | null>(null);
 
-  // INE upload state
-  const [ineFrente, setIneFrente] = useState<File | null>(null);
-  const [ineReverso, setIneReverso] = useState<File | null>(null);
+  const { guardarCotizacion, crearEventoCalendario, cargarRutas } = useCotizacion();
 
-  // Step 1 – Ruta
-  const [origen, setOrigen] = useState('');
-  const [destino, setDestino] = useState('');
-  const [fecha, setFecha] = useState('');
-  const [nombre, setNombre] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [correo, setCorreo] = useState('');
-
-  // Step 2 – Detalles
-  const [tipoServicio, setTipoServicio] = useState<string>('');
-  const [pisos, setPisos] = useState<string>('');
-  const [elevador, setElevador] = useState<string>('');
-  const [acarreo, setAcarreo] = useState<string>('');
-  const [modalidad, setModalidad] = useState<string>('compartido');
-
-  // Step 3 – Inventory
-  const [inventory, setInventory] = useState<Record<string, number>>({
-    cama_king: 0, cama_matrimonial: 0, cama_individual: 0,
-    sofa_3_plazas: 0, sofa_2_plazas: 0, sofa_individual: 0, sofa_cama: 0,
-    comedor_6: 0, comedor_4: 0, mesa_centro: 0,
-    ropero_3p: 0, ropero_2p: 0, cajones_3: 0, buros: 0, tocador: 0, librero: 0,
-    refrigerador_duplex: 0, refrigerador_14: 0, estufa: 0,
-    lavadora: 0, secadora: 0,
-    tv_55: 0, tv_65: 0, tv_75: 0,
-    escritorio: 0, silla_oficina: 0, archivero: 0, computadora: 0,
-    bicicleta: 0, caja_estandar: 0,
-  });
-
-  // Step 5 – Insurance
-  const [seguro, setSeguro] = useState(false);
-  const [montoSeguro, setMontoSeguro] = useState(50000);
-
-  // Volume — real + billable (minimum 5 m³)
-  const vol = Object.entries(inventory).reduce((acc, [k, v]) => acc + (VOLUMES[k] || 0) * v, 0);
+  // Computed values
+  const vol = s.volMode === 'manual'
+    ? s.volManual
+    : Object.entries(s.inventory).reduce((acc, [k, v]) => acc + (VOLUMES[k] || 0) * v, 0);
   const billableVol = Math.max(MIN_VOL, vol);
   const unit = getUnit(billableVol);
-  const prevUnit = unit.prev;
-  const insuranceRate = getInsuranceRate(montoSeguro);
-  const insuranceCost = montoSeguro * insuranceRate;
-  const estimatedTime = getEstimatedTime(billableVol);
 
-  const inventoryRooms = [
-    { section: '🛏️ Recámara', keys: ['cama_king', 'cama_matrimonial', 'cama_individual', 'ropero_3p', 'ropero_2p', 'cajones_3', 'buros', 'tocador'] },
-    { section: '🛋️ Sala', keys: ['sofa_3_plazas', 'sofa_2_plazas', 'sofa_individual', 'sofa_cama', 'mesa_centro', 'librero'] },
-    { section: '🍽️ Comedor', keys: ['comedor_6', 'comedor_4'] },
-    { section: '🍳 Cocina', keys: ['refrigerador_duplex', 'refrigerador_14', 'estufa'] },
-    { section: '🧺 Lavado', keys: ['lavadora', 'secadora'] },
-    { section: '📺 Electrónicos', keys: ['tv_55', 'tv_65', 'tv_75', 'computadora'] },
-    { section: '🗂️ Oficina/otros', keys: ['escritorio', 'silla_oficina', 'archivero', 'bicicleta'] },
-    { section: '📦 Cajas', keys: ['caja_estandar'] },
-  ];
+  const origenCls = useMemo(() => s.origen.trim().length >= 2 ? classifyCity(s.origen) : null, [s.origen]);
+  const destinoCls = useMemo(() => s.destino.trim().length >= 2 ? classifyCity(s.destino) : null, [s.destino]);
+  const hasExclusiveZone = origenCls?.status === 'exclusivo' || destinoCls?.status === 'exclusivo';
 
-  const inventoryLabels: Record<string, string> = {
-    cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',
-    sofa_3_plazas: 'Sofá 3 plazas', sofa_2_plazas: 'Sofá 2 plazas', sofa_individual: 'Sillón individual', sofa_cama: 'Sofá-cama',
-    comedor_6: 'Comedor 6 personas', comedor_4: 'Comedor 4 personas', mesa_centro: 'Mesa de centro',
-    ropero_3p: 'Ropero 3 puertas', ropero_2p: 'Ropero 2 puertas', cajones_3: 'Cajonera', buros: 'Buró(s)', tocador: 'Tocador', librero: 'Librero',
-    refrigerador_duplex: 'Refrigerador dúplex', refrigerador_14: 'Refrigerador normal', estufa: 'Estufa',
-    lavadora: 'Lavadora', secadora: 'Secadora',
-    tv_55: 'TV 55"', tv_65: 'TV 65"', tv_75: 'TV 75"+',
-    escritorio: 'Escritorio', silla_oficina: 'Silla oficina', archivero: 'Archivero', computadora: 'Computadora/laptop',
-    bicicleta: 'Bicicleta',
-    caja_estandar: 'Caja estándar (7 = 1 m³)',
-  };
+  const insuranceRate = getInsuranceRate(s.montoSeguro);
+  const insuranceCost = s.montoSeguro * insuranceRate;
 
-  const filledItems = Object.entries(inventory).filter(([, v]) => v > 0);
+  const availableModalidades = useMemo(() => getAvailableModalidades(billableVol, hasExclusiveZone), [billableVol, hasExclusiveZone]);
 
-  function buildWAMessage(folio?: string) {
-    const serviceLabel = tipoServicio || 'Mudanza';
-    const items = filledItems.map(([k, v]) => `• ${inventoryLabels[k]}: ${v}`).join('\n');
-    const insuranceText = seguro ? `\n🛡️ *Seguro:* ${formatMXN(montoSeguro)} asegurado · ${formatMXN(insuranceCost)}` : '';
-    const folioText = folio ? `\n📋 *Folio:* ${folio}` : '';
-    return encodeURIComponent(
-      `¡Hola! Quiero apartar mi servicio con *La Unión Mudanzas* 🚛${folioText}\n\n` +
-      `👤 *Cliente:* ${nombre}\n📱 *WhatsApp:* ${whatsapp}\n` +
-      `📍 *Origen:* ${origen}\n🎯 *Destino:* ${destino}\n📅 *Fecha:* ${fecha || 'Por confirmar'}\n\n` +
-      `🏠 *Tipo:* ${serviceLabel}\n🚛 *Modalidad:* ${modalidad}\n` +
-      `📐 *Volumen real:* ${vol.toFixed(1)} m³\n📐 *Volumen cobrable:* ${billableVol.toFixed(1)} m³\n🚚 *Unidad:* ${unit.icon} ${unit.label}${insuranceText}\n\n` +
-      `📋 *Inventario:*\n${items || '(por definir)'}\n\n` +
-      `#LaUnionMudanzas ❤️`
-    );
-  }
+  // Update helper
+  const upd = (patch: Partial<WizardState>) => setS(prev => ({ ...prev, ...patch }));
 
-  // Save cotizacion to Supabase and open order modal
+  // ─── Step validation ───────────────────────────────────────────
+  const canStep1 = Boolean(s.nombre.trim() && s.whatsapp.trim().length >= 10 && s.origen.trim() && s.destino.trim());
+  const canStep2 = Boolean(origenCls && destinoCls && !hasExclusiveZone);
+  // Allow step 2 even with exclusive if user picks exclusive modalidad
+
+  // ─── Calculate route ───────────────────────────────────────────
+  const runCalculation = useCallback(async () => {
+    if (!origenCls || !destinoCls) return;
+    setCalculating(true);
+    try {
+      const rutas = await cargarRutas();
+      const autoDesvio = origenCls.status === 'desvio' || destinoCls.status === 'desvio';
+      const ciudadDesvio = origenCls.status === 'desvio' ? s.origen : destinoCls.status === 'desvio' ? s.destino : '';
+
+      const res = calcularRuta(rutas, s.origen, s.destino, billableVol, autoDesvio, ciudadDesvio);
+
+      const precioBase = billableVol * res.costoM3;
+      const costoPisos = s.pisos === '2+' && s.elevador === 'no' ? 500 : 0;
+      const costoAcarreo = s.acarreo === 'largo' ? 800 : 0;
+      const subtotal = precioBase + COSTO_RECOLECCION + COSTO_ENTREGA + res.costoDesvio + costoPisos + costoAcarreo;
+      const conMargen = subtotal * (1 + MARGEN_APP);
+      const seguroCosto = s.seguro ? s.montoSeguro * insuranceRate : 0;
+      const precioTotal = Math.round(conMargen + seguroCosto);
+
+      const advertencias = [...res.advertencias];
+      if (autoDesvio) {
+        const desvioCity = origenCls.status === 'desvio' ? s.origen : s.destino;
+        advertencias.unshift(`📍 "${desvioCity}" es una ciudad con desvío. Se aplicó cargo automáticamente.`);
+      }
+      if (origenCls.status === 'extension' || destinoCls.status === 'extension') {
+        advertencias.push('📌 Una o más ciudades son extensiones de ruta. Confirmar disponibilidad.');
+      }
+
+      setCalcResult({
+        ...res,
+        advertencias,
+        costoDesvio: res.costoDesvio,
+        precioBase,
+        subtotal,
+        conMargen,
+        precioTotal,
+        volumenCobrable: billableVol,
+        unit,
+        origenCls,
+        destinoCls,
+      });
+    } catch {
+      // silent
+    } finally {
+      setCalculating(false);
+    }
+  }, [origenCls, destinoCls, s, billableVol, unit, cargarRutas, insuranceRate]);
+
+  // Auto-calculate when entering step 4
+  const goToStep4 = useCallback(async () => {
+    setStep(4);
+    await runCalculation();
+  }, [runCalculation]);
+
+  // ─── Save & order ──────────────────────────────────────────────
   async function handleApartarServicio() {
     setGuardandoCot(true);
-    const costoPisos = pisos === '2+' && elevador === 'no' ? 500 : 0;
-    const costoAcarreo = acarreo === 'largo' ? 800 : 0;
+    const costoPisos = s.pisos === '2+' && s.elevador === 'no' ? 500 : 0;
+    const costoAcarreo = s.acarreo === 'largo' ? 800 : 0;
     const result = await guardarCotizacion({
-      nombre, whatsapp, correo, origen, destino, fecha,
-      tipoServicio, modalidad,
-      volumenTotal: vol,
-      volumenCobrable: billableVol,
+      nombre: s.nombre, whatsapp: s.whatsapp, correo: s.correo,
+      origen: s.origen, destino: s.destino, fecha: s.fecha,
+      tipoServicio: s.tipoServicio, modalidad: s.modalidad,
+      volumenTotal: vol, volumenCobrable: billableVol,
       unidadSugerida: unit.label,
-      seguro, montoSeguro,
-      costoPisos, costoAcarreo,
-      urgente: false,
+      seguro: s.seguro, montoSeguro: s.montoSeguro,
+      costoPisos, costoAcarreo, urgente: false,
     });
     setGuardandoCot(false);
     if (result) {
       setSavedCotizacion({ folio: result.folio, cotizacionId: result.cotizacionId, precioTotal: result.precioTotal, precioBase: result.precioBase });
       setSavedClienteId(result.clienteId);
-      // Auto-create calendar event on quote generation
       void crearEventoCalendario({
-        cotizacionId: result.cotizacionId,
-        clienteId: result.clienteId,
-        fechaSalida: fecha,
-        origen,
-        destino,
-        folio: result.folio,
+        cotizacionId: result.cotizacionId, clienteId: result.clienteId,
+        fechaSalida: s.fecha, origen: s.origen, destino: s.destino, folio: result.folio,
       });
-      // Send cotizacion email (non-blocking)
       void sendServiceEmail({
-        type: 'cotizacion',
-        folio: result.folio,
-        customer_name: nombre,
-        to: correo || undefined,
-        route: `${origen} → ${destino}`,
-        service_date: fecha,
-        service_type: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
-        volume: billableVol.toFixed(1),
-        unit: unit.label,
-        amount: result.precioTotal,
+        type: 'cotizacion', folio: result.folio, customer_name: s.nombre,
+        to: s.correo || undefined, route: `${s.origen} → ${s.destino}`,
+        service_date: s.fecha, service_type: s.tipoServicio ? `Mudanza ${s.tipoServicio}` : 'Mudanza',
+        volume: billableVol.toFixed(1), unit: unit.label, amount: result.precioTotal,
       });
     }
     setOrdenOpen(true);
   }
 
-  const navBtn = (label: string, onClick: () => void, variant: 'primary' | 'ghost' = 'ghost') => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
-        variant === 'primary'
-          ? 'bg-gradient-to-r from-neon-cyan to-neon-blue text-background hover:shadow-[0_0_20px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99]'
-          : 'border border-border text-muted-foreground hover:border-neon-cyan/30 hover:text-foreground'
-      }`}
-    >
-      {label === 'Atrás' && <ChevronLeft className="w-4 h-4" />}
-      {label}
-      {label !== 'Atrás' && variant === 'primary' && <ChevronRight className="w-4 h-4" />}
-    </button>
-  );
+  // ─── WhatsApp message ──────────────────────────────────────────
+  function buildWALink(folio?: string) {
+    const r = calcResult;
+    const rutaDetectada = r ? (r.tipo === 'directa' ? 'Ruta directa' : r.tipo === 'tramos' ? `Vía tramos: ${r.tramos.map(t => t.desde).join(' → ')} → ${r.tramos[r.tramos.length - 1]?.hasta}` : 'Estimado') : 'Por calcular';
+    const obs = r?.observaciones.join(' · ') || '';
+    const totalText = r ? formatMXN(r.precioTotal) : 'Por confirmar';
 
-  // City classification (memoized)
-  const origenCls = useMemo(() => origen.trim().length >= 2 ? classifyCity(origen) : null, [origen]);
-  const destinoCls = useMemo(() => destino.trim().length >= 2 ? classifyCity(destino) : null, [destino]);
-  const hasExclusiveZone = origenCls?.status === 'exclusivo' || destinoCls?.status === 'exclusivo';
+    const lines = [
+      `Hola, quiero cotizar un servicio 🚛`,
+      ``,
+      `👤 *Nombre:* ${s.nombre}`,
+      `📱 *WhatsApp:* ${s.whatsapp}`,
+      `📍 *Origen:* ${s.origen}`,
+      `🎯 *Destino:* ${s.destino}`,
+      `📅 *Fecha:* ${s.fecha || 'Por confirmar'}`,
+      `📦 *Volumen:* ${billableVol.toFixed(1)} m³`,
+      `🚛 *Unidad:* ${unit.emoji} ${unit.label}`,
+      `🏷️ *Servicio:* ${s.modalidad || 'Por definir'}`,
+      `🗺️ *Ruta detectada:* ${rutaDetectada}`,
+      `💰 *Total estimado:* ${totalText}`,
+    ];
+    if (obs) lines.push(`📋 *Observaciones:* ${obs}`);
+    if (folio) lines.push(`📋 *Folio:* ${folio}`);
+    lines.push(``, `_#LaUnionMudanzas · 4421270514_`);
 
-  // Smart alert conditions
-  const hasHighVolume = billableVol > 60;
-  const hasMultipleFloors = pisos === '2+';
-  const noElevator = elevador === 'no' && pisos !== 'pb';
-  const canProceedStep1 = Boolean(nombre.trim() && whatsapp.trim() && origen.trim() && destino.trim() && fecha.trim()) && !hasExclusiveZone;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+  }
+
+  // ─── Route status label ────────────────────────────────────────
+  function getRouteStatusBlock(cls: CityClassification | null, label: string) {
+    if (!cls) return null;
+    const cfg = STATUS_CFG[cls.status];
+    const messages: Record<string, string> = {
+      en_ruta: 'Dentro de nuestra red operativa',
+      desvio: 'Requiere desvío operativo. Cargo adicional aplicado.',
+      extension: 'Extensión de ruta. Confirmar disponibilidad.',
+      exclusivo: 'Zona restringida. Solo servicio exclusivo.',
+      desconocida: 'Sin cobertura automática. Revisión manual.',
+    };
+    return (
+      <div className={`p-4 rounded-xl border ${cfg.color}`}>
+        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{label}</p>
+        <div className="flex items-center gap-2 mb-1">
+          {cfg.icon}
+          <span className="text-sm font-bold">{cfg.label}</span>
+        </div>
+        <p className="text-xs opacity-80">{messages[cls.status]}</p>
+        {cls.routeNames.length > 0 && (
+          <p className="text-[10px] mt-1 opacity-60">Rutas: {cls.routeNames.slice(0, 3).join(' · ')}</p>
+        )}
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════
 
   return (
-    <section id="cotizador" ref={ref} className="py-24 relative overflow-hidden">
+    <section id="cotizador" ref={ref} className="py-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface/30 via-background to-surface/20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-neon-cyan/4 blur-[140px]" />
 
@@ -624,11 +252,10 @@ export default function CotizadorSection() {
             Calcula tu mudanza{' '}
             <span className="text-neon-cyan" style={{ textShadow: '0 0 24px hsl(180 100% 50% / 0.5)' }}>
               en minutos
-            </span>{' '}
-            🚛
+            </span>
           </h2>
           <p className="text-muted-foreground text-base max-w-md mx-auto">
-            Sin sorpresas, todo claro desde el inicio · <span className="text-neon-cyan font-semibold">#LaUnionMudanzas</span>
+            Sin sorpresas, todo claro desde el inicio
           </p>
         </motion.div>
 
@@ -642,12 +269,12 @@ export default function CotizadorSection() {
           <div className="h-1.5 bg-gradient-to-r from-neon-cyan/40 via-neon-blue/40 to-neon-cyan/40" />
 
           <div className="p-6 md:p-8">
-            {!confirmed && <ProgressBar step={step} />}
+            <ProgressBar step={step} />
 
             <AnimatePresence mode="wait">
 
-              {/* ── STEP 1: RUTA ─────────────────────────────────────── */}
-              {step === 1 && !confirmed && (
+              {/* ════════════ STEP 1: DATOS ════════════ */}
+              {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 flex items-center justify-center">
@@ -662,144 +289,247 @@ export default function CotizadorSection() {
                   <div className="space-y-4 mb-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Nombre completo</label>
-                        <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Nombre completo *</label>
+                        <input value={s.nombre} onChange={e => upd({ nombre: e.target.value })} placeholder="Tu nombre" maxLength={100}
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">WhatsApp</label>
-                        <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="442 127 0514" type="tel" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">WhatsApp *</label>
+                        <input value={s.whatsapp} onChange={e => upd({ whatsapp: e.target.value.replace(/\D/g, '').slice(0, 12) })} placeholder="10 dígitos" type="tel"
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
                       </div>
                       <div className="sm:col-span-2">
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                          Correo electrónico <span className="text-muted-foreground/60 font-normal normal-case">(para recibir tu orden de servicio)</span>
+                          Correo electrónico <span className="text-muted-foreground/60 font-normal normal-case">(para recibir tu orden)</span>
                         </label>
-                        <input value={correo} onChange={e => setCorreo(e.target.value)} placeholder="tu@correo.com" type="email" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                        <input value={s.correo} onChange={e => upd({ correo: e.target.value })} placeholder="tu@correo.com" type="email"
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
                       </div>
                     </div>
 
-                    {/* Route visual with classification */}
+                    {/* Route inputs */}
                     <div className="relative">
                       <div className="absolute left-5 top-[54px] bottom-[54px] w-0.5 bg-gradient-to-b from-neon-cyan via-neon-blue/50 to-neon-green z-10 pointer-events-none" />
                       <div className="space-y-3">
                         <div className="relative pl-10">
                           <div className="absolute left-3.5 top-[34px] w-3 h-3 rounded-full bg-neon-cyan border-2 border-background z-20" />
-                          <CityField
-                            label="Origen 📍"
-                            value={origen}
-                            onChange={setOrigen}
-                            placeholder="Ciudad de origen (ej: Querétaro, CDMX...)"
-                            dotColor="neon-cyan"
-                            billableVol={billableVol}
-                          />
+                          <CityField label="Origen *" value={s.origen} onChange={v => upd({ origen: v })} placeholder="Ciudad de origen" billableVol={billableVol} />
                         </div>
                         <div className="relative pl-10">
                           <div className="absolute left-3.5 top-[34px] w-3 h-3 rounded-full bg-neon-green border-2 border-background z-20" />
-                          <CityField
-                            label="Destino 🎯"
-                            value={destino}
-                            onChange={setDestino}
-                            placeholder="Ciudad destino (ej: Monterrey, Guadalajara...)"
-                            dotColor="neon-green"
-                            billableVol={billableVol}
-                          />
+                          <CityField label="Destino *" value={s.destino} onChange={v => upd({ destino: v })} placeholder="Ciudad destino" billableVol={billableVol} />
                         </div>
                       </div>
                     </div>
 
-                    {/* Route summary — shown when both cities are filled and valid */}
-                    <AnimatePresence>
-                      {origenCls && destinoCls && origen.trim().length >= 2 && destino.trim().length >= 2 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                        >
-                          <RouteSummaryBadge
-                            origenCls={origenCls}
-                            destinoCls={destinoCls}
-                            billableVol={billableVol}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
+                    {/* Date */}
                     <div>
-                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5"><Calendar className="w-3 h-3 inline mr-1" />Fecha estimada del servicio</label>
-                      <input value={fecha} onChange={e => setFecha(e.target.value)} type="date" className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Fecha estimada de servicio</label>
+                      <input type="date" value={s.fecha} onChange={e => upd({ fecha: e.target.value })}
+                        className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                    </div>
+
+                    {/* Volume mode toggle */}
+                    <div className="p-4 rounded-xl bg-surface border border-border">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">¿Cómo calculas tu volumen?</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <OptionButton label="Inventario" icon="📦" desc="Artículo por artículo" selected={s.volMode === 'inventario'} onClick={() => upd({ volMode: 'inventario' })} />
+                        <OptionButton label="Manual" icon="📐" desc="Ya conozco los m³" selected={s.volMode === 'manual'} onClick={() => upd({ volMode: 'manual' })} />
+                      </div>
+
+                      {s.volMode === 'manual' && (
+                        <div className="mt-3">
+                          <input type="number" min={1} max={200} value={s.volManual || ''} onChange={e => upd({ volManual: Number(e.target.value) })}
+                            placeholder="Ej. 15 m³"
+                            className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                        </div>
+                      )}
+
+                      {s.volMode === 'inventario' && (
+                        <div className="mt-3 space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                          {INVENTORY_ROOMS.map(room => (
+                            <div key={room.section} className="glass-card rounded-xl border border-border/50 p-3">
+                              <h4 className="font-display font-bold text-sm text-foreground mb-1">{room.section}</h4>
+                              {room.keys.map(k => (
+                                <CounterRow key={k} label={INVENTORY_LABELS[k] || k} value={s.inventory[k] || 0}
+                                  onChange={v => upd({ inventory: { ...s.inventory, [k]: v } })} />
+                              ))}
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-muted-foreground text-center">
+                            💡 7 cajas = 1 m³ · Mínimo cobrable: <strong className="text-neon-orange">{MIN_VOL} m³</strong>
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Volume summary */}
+                      {vol > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <TruckVisualizer vol={vol} billableVol={billableVol} unit={unit} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Trust pill */}
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4 text-xs text-muted-foreground">
-                    <Star className="w-3.5 h-3.5 text-neon-green flex-shrink-0" />
-                    Salidas todas las semanas · Servicios compartidos · Más de 28 rutas activas
+                  <div className="flex gap-3">
+                    <NavButton label="Validar ruta" onClick={() => setStep(2)} variant="primary" disabled={!canStep1 || vol === 0} />
                   </div>
-
-                  {/* Exclusive zone block */}
-                  {hasExclusiveZone && (
-                    <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
-                      <ShieldAlert className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                      <span>La ruta incluye una <strong>zona exclusiva</strong>. No aplica servicio compartido. Contáctanos para cotizar servicio exclusivo.</span>
-                    </div>
+                  {!canStep1 && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">Completa nombre, WhatsApp, origen y destino</p>
                   )}
-
-                  {/* Incomplete fields warning */}
-                  {!canProceedStep1 && !hasExclusiveZone && (nombre || whatsapp || origen || destino || fecha) && (
-                    <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 text-xs text-foreground">
-                      <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-                      <span>Completa todos los campos: <strong>nombre, WhatsApp, origen, destino y fecha</strong> para continuar.</span>
-                    </div>
-                  )}
-
-                  {hasExclusiveZone ? (
-                    <a
-                      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, quiero cotizar servicio EXCLUSIVO desde ${origen} hasta ${destino}.`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-destructive/80 hover:bg-destructive text-white font-black text-base hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
-                    >
-                      <ShieldAlert className="w-5 h-5" /> Solicitar servicio exclusivo por WhatsApp
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={!canProceedStep1}
-                      onClick={() => setStep(2)}
-                      className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
-                    >
-                      Continuar a Detalles <ChevronRight className="w-5 h-5" />
-                    </button>
+                  {canStep1 && vol === 0 && (
+                    <p className="text-xs text-neon-orange text-center mt-2">Agrega al menos un artículo o ingresa volumen manual</p>
                   )}
                 </motion.div>
               )}
 
-              {/* ── STEP 2: DETALLES ──────────────────────────────────── */}
-              {step === 2 && !confirmed && (
+              {/* ════════════ STEP 2: VALIDACIÓN DE RUTA ════════════ */}
+              {step === 2 && (
                 <motion.div key="s2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
-                      <Home className="w-5 h-5 text-neon-blue" />
+                      <RouteIcon className="w-5 h-5 text-neon-blue" />
                     </div>
                     <div>
-                      <h3 className="font-display font-black text-xl text-foreground">Detalles del servicio</h3>
-                      <p className="text-muted-foreground text-xs">Cuéntanos cómo es tu mudanza</p>
+                      <h3 className="font-display font-black text-xl text-foreground">Validación de ruta</h3>
+                      <p className="text-muted-foreground text-xs">Revisamos tu trayecto en nuestra red</p>
                     </div>
                   </div>
 
-                  <div className="space-y-5 mb-6">
+                  {/* Route summary */}
+                  <div className="p-4 rounded-xl bg-surface border border-border mb-4">
+                    <div className="flex items-center gap-2 text-sm text-foreground font-bold mb-1">
+                      <MapPin className="w-4 h-4 text-neon-cyan" />
+                      {s.origen}
+                      <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                      <MapPin className="w-4 h-4 text-neon-green" />
+                      {s.destino}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{billableVol.toFixed(1)} m³ · {unit.emoji} {unit.label}</p>
+                  </div>
+
+                  {/* Classification cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    {getRouteStatusBlock(origenCls, 'Origen')}
+                    {getRouteStatusBlock(destinoCls, 'Destino')}
+                  </div>
+
+                  {/* Overall route status */}
+                  {origenCls && destinoCls && (
+                    <div className="space-y-3 mb-4">
+                      {/* Both in route */}
+                      {origenCls.status === 'en_ruta' && destinoCls.status === 'en_ruta' && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-neon-cyan/8 border border-neon-cyan/25">
+                          <CheckCircle2 className="w-5 h-5 text-neon-cyan flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-neon-cyan">Tu servicio está dentro de nuestra red operativa</p>
+                            <p className="text-xs text-muted-foreground">Todas las modalidades disponibles</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Has detour */}
+                      {(origenCls.status === 'desvio' || destinoCls.status === 'desvio') && !hasExclusiveZone && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-neon-orange/10 border border-neon-orange/30">
+                          <Navigation className="w-5 h-5 text-neon-orange flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-neon-orange">Tu servicio requiere un desvío operativo</p>
+                            <p className="text-xs text-muted-foreground">Se aplicará cargo adicional: <strong className="text-neon-orange">{formatMXN(getDesvioSurcharge(billableVol))}</strong></p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Exclusive zone */}
+                      {hasExclusiveZone && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/30">
+                          <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-destructive">Zona restringida detectada</p>
+                            <p className="text-xs text-muted-foreground">Solo disponible en servicio exclusivo. Compartido no aplica.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Unknown */}
+                      {(origenCls.status === 'desconocida' || destinoCls.status === 'desconocida') && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-muted border border-border">
+                          <HelpCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-foreground">Sin cobertura automática</p>
+                            <p className="text-xs text-muted-foreground">No tenemos cobertura directa. Puedes solicitar revisión manual.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <NavButton label="Atrás" onClick={() => setStep(1)} />
+                    {(origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida') ? (
+                      <a
+                        href={buildWALink()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm bg-neon-green text-background hover:shadow-glow-green transition-all"
+                      >
+                        Solicitar revisión manual
+                      </a>
+                    ) : (
+                      <NavButton label="Elegir servicio" onClick={() => {
+                        if (hasExclusiveZone) upd({ modalidad: 'exclusivo' });
+                        setStep(3);
+                      }} variant="primary" />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ════════════ STEP 3: TIPO DE SERVICIO ════════════ */}
+              {step === 3 && (
+                <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-neon-orange/10 border border-neon-orange/30 flex items-center justify-center">
+                      <Truck className="w-5 h-5 text-neon-orange" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-black text-xl text-foreground">Tipo de servicio</h3>
+                      <p className="text-muted-foreground text-xs">Elige la modalidad ideal para tu mudanza</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 mb-6">
                     {/* Tipo */}
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">¿Qué tipo de inmueble?</p>
-                      <div className="grid grid-cols-4 gap-2">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">¿Qué mueves?</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {[
-                          { id: 'casa', label: 'Casa', icon: '🏠' },
-                          { id: 'departamento', label: 'Depto.', icon: '🏢' },
-                          { id: 'oficina', label: 'Oficina', icon: '🖥️' },
-                          { id: 'bodega', label: 'Bodega', icon: '🏭' },
+                          { id: 'residencial', label: 'Casa', icon: '🏠' },
+                          { id: 'departamento', label: 'Depto', icon: '🏢' },
+                          { id: 'oficina', label: 'Oficina', icon: '🗂️' },
+                          { id: 'comercial', label: 'Comercial', icon: '🏪' },
                         ].map(o => (
-                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={tipoServicio === o.id} onClick={() => setTipoServicio(o.id)} />
+                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={s.tipoServicio === o.id} onClick={() => upd({ tipoServicio: o.id })} />
                         ))}
                       </div>
+                    </div>
+
+                    {/* Modalidad */}
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Modalidad del servicio</p>
+                      <div className={`grid grid-cols-${availableModalidades.length} gap-2`}>
+                        {availableModalidades.map(o => (
+                          <OptionButton key={o.id} label={o.label} icon={o.emoji} desc={o.desc} selected={s.modalidad === o.id} onClick={() => upd({ modalidad: o.id })} />
+                        ))}
+                      </div>
+                      {hasExclusiveZone && (
+                        <p className="text-xs text-destructive mt-2 font-medium">⛔ Zona restringida: solo servicio exclusivo</p>
+                      )}
+                      {billableVol > 40 && billableVol <= 60 && !hasExclusiveZone && (
+                        <p className="text-xs text-neon-orange mt-2 font-medium">⚠️ Volumen alto: solo directo o exclusivo</p>
+                      )}
+                      {billableVol > 60 && !hasExclusiveZone && (
+                        <p className="text-xs text-neon-orange mt-2 font-medium">⚠️ Volumen &gt; 60 m³: solo exclusivo</p>
+                      )}
                     </div>
 
                     {/* Pisos */}
@@ -811,315 +541,269 @@ export default function CotizadorSection() {
                           { id: '1', label: 'Piso 1', icon: '1️⃣' },
                           { id: '2+', label: 'Piso 2+', icon: '🔼' },
                         ].map(o => (
-                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={pisos === o.id} onClick={() => setPisos(o.id)} />
+                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={s.pisos === o.id} onClick={() => upd({ pisos: o.id })} />
                         ))}
                       </div>
                     </div>
 
                     {/* Elevador */}
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">¿Hay elevador?</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[{ id: 'si', label: 'Sí', icon: '🛗' }, { id: 'no', label: 'No', icon: '🚶' }].map(o => (
-                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={elevador === o.id} onClick={() => setElevador(o.id)} />
-                        ))}
+                    {s.pisos === '2+' && (
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">¿Hay elevador?</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[{ id: 'si', label: 'Sí', icon: '🛗' }, { id: 'no', label: 'No', icon: '🚶' }].map(o => (
+                            <OptionButton key={o.id} label={o.label} icon={o.icon} selected={s.elevador === o.id} onClick={() => upd({ elevador: o.id })} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Acarreo */}
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Acarreo (distancia al camión)</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Distancia al camión</p>
                       <div className="grid grid-cols-2 gap-2">
                         {[{ id: 'corto', label: 'Corto (–10m)', icon: '🟢' }, { id: 'largo', label: 'Largo (+10m)', icon: '🟡' }].map(o => (
-                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={acarreo === o.id} onClick={() => setAcarreo(o.id)} />
+                          <OptionButton key={o.id} label={o.label} icon={o.icon} selected={s.acarreo === o.id} onClick={() => upd({ acarreo: o.id })} />
                         ))}
                       </div>
                     </div>
 
-                    {/* Modalidad */}
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Modalidad del servicio</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { id: 'compartido', label: 'Compartido', icon: '🤝', desc: 'Más económico' },
-                          { id: 'directo', label: 'Directo', icon: '⚡', desc: 'Rápido' },
-                          { id: 'exclusivo', label: 'Exclusivo', icon: '⭐', desc: 'Tu unidad' },
-                        ].map(o => (
-                          <OptionButton key={o.id} label={o.label} icon={o.icon} desc={o.desc} selected={modalidad === o.id} onClick={() => setModalidad(o.id)} />
-                        ))}
+                    {/* Seguro */}
+                    <div className="p-4 rounded-xl bg-surface border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-neon-cyan" />
+                          <span className="font-bold text-sm text-foreground">Protege tu mudanza</span>
+                        </div>
+                        <button type="button" onClick={() => upd({ seguro: !s.seguro })}
+                          className={`relative w-11 h-6 rounded-full border transition-all duration-300 ${s.seguro ? 'bg-neon-cyan border-neon-cyan' : 'bg-muted border-border'}`}>
+                          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-all duration-300 ${s.seguro ? 'left-5' : 'left-0.5'}`} />
+                        </button>
                       </div>
+                      {s.seguro && (
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                            <span>$50,000</span>
+                            <span className="font-bold text-foreground">{formatMXN(s.montoSeguro)}</span>
+                            <span>$1,000,000</span>
+                          </div>
+                          <input type="range" min={50000} max={1000000} step={50000} value={s.montoSeguro} onChange={e => upd({ montoSeguro: Number(e.target.value) })}
+                            className="w-full accent-[hsl(180_100%_50%)]" />
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-xs text-muted-foreground">Tasa {(insuranceRate * 100).toFixed(1)}%</span>
+                            <span className="font-black text-neon-green text-sm">{formatMXN(insuranceCost)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Smart alerts */}
-                  {noElevator && (
+                  {/* Alerts */}
+                  {s.pisos === '2+' && s.elevador === 'no' && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 mb-4 text-xs text-foreground">
                       <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
-                      <span>Sin elevador en piso superior puede generar <strong>costo adicional por maniobras de escalera</strong>.</span>
-                    </div>
-                  )}
-                  {acarreo === 'largo' && (
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 mb-4 text-xs text-foreground">
-                      <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
-                      <span>Acarreo largo puede generar <strong>cargo adicional por distancia</strong>. Se informará al confirmar.</span>
+                      <span>Sin elevador genera <strong>costo adicional por escalera</strong>.</span>
                     </div>
                   )}
 
-                  <div className="flex gap-3">{navBtn('Atrás', () => setStep(1))}{navBtn('Continuar', () => setStep(3), 'primary')}</div>
-                </motion.div>
-              )}
-
-              {/* ── STEP 3: INVENTARIO ────────────────────────────────── */}
-              {step === 3 && !confirmed && (
-                <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-neon-orange/10 border border-neon-orange/30 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-neon-orange" />
-                      </div>
-                      <div>
-                        <h3 className="font-display font-black text-xl text-foreground">Inventario de muebles</h3>
-                        <p className="text-muted-foreground text-xs">Agrega tus artículos, calculamos el volumen</p>
-                      </div>
-                    </div>
-                    {/* Live volume badge */}
-                    <motion.div
-                      key={vol.toFixed(0)}
-                      initial={{ scale: 1.15 }}
-                      animate={{ scale: 1 }}
-                      className="flex flex-col items-center px-3 py-1.5 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30"
-                    >
-                      <span className="font-black text-neon-cyan text-lg leading-tight">{vol.toFixed(1)}</span>
-                      <span className="text-[9px] text-muted-foreground">m³</span>
-                    </motion.div>
-                  </div>
-
-                  <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 pb-2 scrollbar-thin">
-                    {inventoryRooms.map(room => (
-                      <div key={room.section} className="glass-card rounded-xl border border-border/50 p-4">
-                        <h4 className="font-display font-bold text-sm text-foreground mb-2">{room.section}</h4>
-                        {room.keys.map(k => (
-                          <CounterRow
-                            key={k}
-                            label={inventoryLabels[k] || k}
-                            value={inventory[k] || 0}
-                            onChange={v => setInventory({ ...inventory, [k]: v })}
-                          />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 p-3 rounded-xl bg-surface border border-neon-cyan/20 text-xs text-muted-foreground">
-                    💡 <strong className="text-foreground">7 cajas estándar = 1 m³</strong> · Volumen mínimo cobrable: <strong className="text-neon-orange">{MIN_VOL} m³</strong>
-                  </div>
-
-                  {vol === 0 && (
-                    <div className="flex items-start gap-2 mt-3 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 text-xs text-foreground">
-                      <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
-                      Agrega al menos un artículo para calcular tu volumen antes de continuar.
-                    </div>
-                  )}
-
-                  <div className="flex gap-3 mt-4">
-                    {navBtn('Atrás', () => setStep(2))}
-                    <button
-                      type="button"
-                      onClick={() => setStep(4)}
-                      className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-neon-cyan to-neon-blue text-background hover:shadow-[0_0_20px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
-                    >
-                      Ver mi carga <ChevronRight className="w-4 h-4" />
-                    </button>
+                  <div className="flex gap-3">
+                    <NavButton label="Atrás" onClick={() => setStep(2)} />
+                    <NavButton label="Ver cálculo" onClick={goToStep4} variant="primary" />
                   </div>
                 </motion.div>
               )}
 
-              {/* ── STEP 4: VISUALIZACIÓN ─────────────────────────────── */}
-              {step === 4 && !confirmed && (
+              {/* ════════════ STEP 4: DETALLE DE CÁLCULO ════════════ */}
+              {step === 4 && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                  <div className="flex items-center gap-3 mb-5">
+                  <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
-                      <Truck className="w-5 h-5 text-neon-green" />
+                      <Star className="w-5 h-5 text-neon-green" />
                     </div>
                     <div>
-                      <h3 className="font-display font-black text-xl text-foreground">Tu carga en movimiento</h3>
-                      <p className="text-muted-foreground text-xs">Así se ve tu mudanza en nuestra unidad</p>
+                      <h3 className="font-display font-black text-xl text-foreground">Detalle de cálculo</h3>
+                      <p className="text-muted-foreground text-xs">Desglose transparente de tu cotización</p>
                     </div>
                   </div>
 
-                  <TruckVisualizer vol={vol} billableVol={billableVol} unit={unit} prevUnit={prevUnit} />
+                  {calculating ? (
+                    <div className="flex flex-col items-center gap-4 py-12">
+                      <Loader2 className="w-8 h-8 text-neon-cyan animate-spin" />
+                      <p className="text-muted-foreground text-sm">Calculando tu ruta...</p>
+                    </div>
+                  ) : calcResult ? (
+                    <div className="space-y-4">
+                      {/* Route info card */}
+                      <div className="p-4 rounded-xl bg-surface border border-border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="w-4 h-4 text-neon-cyan" />
+                          <span className="font-bold text-sm text-foreground">{s.origen}</span>
+                          <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                          <MapPin className="w-4 h-4 text-neon-green" />
+                          <span className="font-bold text-sm text-foreground">{s.destino}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                            calcResult.tipo === 'directa' ? 'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/30' :
+                            calcResult.tipo === 'tramos' ? 'bg-neon-orange/15 text-neon-orange border-neon-orange/30' :
+                            'bg-destructive/15 text-destructive border-destructive/30'
+                          }`}>
+                            <RouteIcon className="w-3 h-3" />
+                            {calcResult.tipo === 'directa' ? 'Ruta directa' : calcResult.tipo === 'tramos' ? 'Vía tramos' : 'Estimado'}
+                          </span>
+                          {origenCls && <CityBadge cls={origenCls} />}
+                          {destinoCls && <CityBadge cls={destinoCls} />}
+                        </div>
+                      </div>
 
-                  {/* Smart alerts */}
-                  {hasHighVolume && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-3 mt-4 p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/30 text-xs text-foreground">
-                      <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
-                      <span>⚠️ Con este volumen la unidad grande puede <strong>no ingresar a zonas residenciales estrechas</strong>. Confirma accesos.</span>
-                    </motion.div>
-                  )}
-                  {vol === 0 && (
-                    <div className="flex items-start gap-3 mt-4 p-3 rounded-xl bg-neon-blue/10 border border-neon-blue/30 text-xs text-foreground">
-                      <Package className="w-4 h-4 text-neon-blue flex-shrink-0 mt-0.5" />
-                      <span>Agrega artículos en el paso anterior para ver tu carga estimada.</span>
+                      {/* Tramos */}
+                      {calcResult.tramos.length > 0 && (
+                        <div className="p-4 rounded-xl bg-surface border border-border">
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Trayecto</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {calcResult.tramos.map((t, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                {i === 0 && (
+                                  <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan">
+                                    <MapPin className="w-2.5 h-2.5 inline mr-1" />{t.desde}
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+                                  {formatMXN(t.costo)}/m³
+                                </span>
+                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+                                  i === calcResult.tramos.length - 1
+                                    ? 'bg-neon-green/10 border border-neon-green/30 text-neon-green'
+                                    : 'bg-muted border border-border text-muted-foreground'
+                                }`}>
+                                  <MapPin className="w-2.5 h-2.5 inline mr-1" />{t.hasta}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Price breakdown */}
+                      <div className="p-4 rounded-xl bg-surface border border-border">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Desglose</p>
+                        <div className="space-y-2">
+                          <PriceRow label="Tarifa de ruta" value={`${formatMXN(calcResult.costoM3)}/m³`} accent />
+                          <PriceRow label={`Volumen cobrable (${calcResult.volumenCobrable} m³)`} value={formatMXN(calcResult.precioBase)} />
+                          <PriceRow label="Recolección + entrega" value={formatMXN(COSTO_RECOLECCION + COSTO_ENTREGA)} />
+                          {calcResult.costoDesvio > 0 && <PriceRow label="Cargo por desvío" value={formatMXN(calcResult.costoDesvio)} warn />}
+                          {s.pisos === '2+' && s.elevador === 'no' && <PriceRow label="Maniobras escalera" value={formatMXN(500)} warn />}
+                          {s.acarreo === 'largo' && <PriceRow label="Acarreo largo" value={formatMXN(800)} warn />}
+                          <div className="border-t border-border pt-2 mt-1">
+                            <PriceRow label={`Margen operativo (${MARGEN_APP * 100}%)`} value={formatMXN(calcResult.conMargen - calcResult.subtotal)} />
+                          </div>
+                          {s.seguro && <PriceRow label={`Seguro (${(insuranceRate * 100).toFixed(1)}% de ${formatMXN(s.montoSeguro)})`} value={formatMXN(insuranceCost)} />}
+                          <div className="border-t-2 border-neon-cyan/30 pt-2">
+                            <PriceRow label="TOTAL ESTIMADO" value={formatMXN(calcResult.precioTotal)} total />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Warnings */}
+                      {calcResult.advertencias.length > 0 && (
+                        <div className="space-y-2">
+                          {calcResult.advertencias.map((a, i) => (
+                            <div key={i} className="flex gap-2 p-3 rounded-xl bg-neon-orange/8 border border-neon-orange/20">
+                              <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-neon-orange font-medium">{a}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Observations */}
+                      {calcResult.observaciones.length > 0 && (
+                        <div className="space-y-2">
+                          {calcResult.observaciones.map((o, i) => (
+                            <div key={i} className="flex gap-2 p-3 rounded-xl bg-neon-blue/8 border border-neon-blue/20">
+                              <Info className="w-4 h-4 text-neon-blue flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-neon-blue font-medium">{o}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No se pudo calcular la ruta.</p>
                     </div>
                   )}
 
-                  {/* Time estimate */}
-                  <div className="flex items-center gap-3 mt-4 p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
-                    <Clock className="w-5 h-5 text-neon-cyan flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Tiempo estimado de servicio</p>
-                      <p className="font-display font-black text-foreground">{estimatedTime}</p>
-                      <p className="text-[10px] text-muted-foreground">Puede variar según accesos y pisos</p>
-                    </div>
+                  <div className="flex gap-3 mt-6">
+                    <NavButton label="Atrás" onClick={() => setStep(3)} />
+                    <NavButton label="Ver resultado" onClick={() => setStep(5)} variant="primary" disabled={!calcResult} />
                   </div>
-
-                  {vol > 0 && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-3 flex items-center gap-2 text-xs text-neon-cyan font-semibold">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Tu carga ya requiere: <strong>{unit.label}</strong> ({unit.range})
-                    </motion.div>
-                  )}
-
-                  <div className="flex gap-3 mt-5">{navBtn('Atrás', () => setStep(3))}{navBtn('Ver precio', () => setStep(5), 'primary')}</div>
                 </motion.div>
               )}
 
-              {/* ── STEP 5: PRECIO ────────────────────────────────────── */}
-              {step === 5 && !confirmed && (
+              {/* ════════════ STEP 5: RESULTADO Y CIERRE ════════════ */}
+              {step === 5 && (
                 <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
-                      <Star className="w-5 h-5 text-neon-blue" />
-                    </div>
-                    <div>
-                      <h3 className="font-display font-black text-xl text-foreground">Resultado inteligente</h3>
-                      <p className="text-muted-foreground text-xs">Tu mudanza documentada y lista</p>
-                    </div>
+                  <div className="text-center mb-6">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neon-cyan/10 border-2 border-neon-cyan mb-3"
+                    >
+                      <CheckCircle2 className="w-8 h-8 text-neon-cyan" />
+                    </motion.div>
+                    <h3 className="font-display font-black text-2xl text-foreground mb-1">Tu cotización estimada está lista</h3>
+                    <p className="text-muted-foreground text-sm">Cada mudanza es distinta. Si necesitas ajustar detalles, te atendemos por WhatsApp.</p>
                   </div>
 
-                  {/* Result cards — 4 grid with billable vol prominently */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📦 Volumen real</p>
-                      <p className="font-display font-black text-xl text-neon-cyan">{vol > 0 ? `${vol.toFixed(1)} m³` : '—'}</p>
-                    </div>
-                    <div className={`p-4 rounded-xl border ${billableVol > vol ? 'bg-neon-orange/5 border-neon-orange/30' : 'bg-neon-cyan/5 border-neon-cyan/20'}`}>
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">📐 Volumen cobrable</p>
-                      <p className={`font-display font-black text-xl ${billableVol > vol ? 'text-neon-orange' : 'text-neon-cyan'}`}>{billableVol.toFixed(1)} m³</p>
-                      {billableVol > vol && <p className="text-[10px] text-neon-orange">Mínimo: {MIN_VOL} m³</p>}
-                    </div>
-                    <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">🚛 Unidad</p>
-                      <p className="font-display font-black text-base text-neon-green leading-tight">{unit.label}</p>
-                      <p className="text-[10px] text-muted-foreground">{unit.range}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase tracking-wider">⚙️ Modalidad</p>
-                      <p className="font-display font-black text-base text-neon-orange capitalize leading-tight">{modalidad}</p>
-                      {modalidad === 'compartido' && <p className="text-[10px] text-neon-green">✔ Recomendado</p>}
-                    </div>
-                  </div>
-
-                  {/* Time */}
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 mb-4">
-                    <Clock className="w-4 h-4 text-neon-cyan flex-shrink-0" />
-                    <div>
-                      <span className="text-xs text-muted-foreground">⏱️ Tiempo estimado: </span>
-                      <span className="font-bold text-foreground text-xs">{estimatedTime}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground ml-auto">puede variar</span>
-                  </div>
-
-                  {/* Precio base */}
-                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-3">
-                    <p className="text-xs font-bold text-neon-green mb-2">🟢 Precio base</p>
-                    <p className="font-display font-black text-2xl text-foreground mb-1">A cotizar</p>
-                    <p className="text-xs text-muted-foreground">Confirmamos precio exacto por WhatsApp · <strong className="text-foreground">Sin compromiso</strong></p>
-                    <p className="text-[11px] text-neon-orange mt-1.5 font-semibold">⚠️ El precio puede ajustarse si el volumen real es mayor</p>
-                  </div>
-
-                  {/* Posibles adicionales */}
-                  <div className="p-4 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-3">
-                    <p className="text-xs font-bold text-neon-orange mb-2">🟡 Posibles cargos adicionales</p>
-                    <ul className="space-y-1">
-                      {[
-                        hasMultipleFloors && 'Pisos adicionales no informados',
-                        noElevator && 'Maniobras de escalera sin elevador',
-                        acarreo === 'largo' && 'Acarreo de larga distancia',
-                        hasHighVolume && 'Volumen extra al cotizado',
-                      ].filter(Boolean).map(item => (
-                        <li key={String(item)} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="w-1 h-1 rounded-full bg-neon-orange flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                      <li className="flex items-center gap-2 text-xs text-muted-foreground"><span className="w-1 h-1 rounded-full bg-neon-orange flex-shrink-0" />Embalaje especializado no cotizado</li>
-                    </ul>
-                  </div>
-
-                  {/* Advertencias rojas */}
-                  <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 mb-4">
-                    <p className="text-xs font-bold text-destructive mb-1.5">🔴 Advertencias importantes</p>
-                    <ul className="space-y-1">
-                      {[
-                        'No se descarga sin liquidación del servicio',
-                        'Accesos complicados generan cargos adicionales',
-                        hasHighVolume && 'La unidad puede no ingresar al domicilio — confirma acceso',
-                      ].filter(Boolean).map(item => (
-                        <li key={String(item)} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="w-1 h-1 rounded-full bg-destructive flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Seguro slider */}
-                  <div className="p-4 rounded-xl bg-surface border border-border mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-neon-cyan" />
-                        <span className="font-bold text-sm text-foreground">Protege tu mudanza</span>
+                  {calcResult && (
+                    <div className="space-y-4 mb-6">
+                      {/* Summary cards */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 rounded-xl bg-surface border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">🗺️ Ruta</p>
+                          <p className="font-bold text-sm text-foreground">{s.origen} → {s.destino}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-surface border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">🏷️ Servicio</p>
+                          <p className="font-bold text-sm text-foreground capitalize">{s.modalidad}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-surface border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">📦 Volumen</p>
+                          <p className="font-bold text-sm text-foreground">{calcResult.volumenCobrable} m³</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-surface border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">💰 Costo/m³</p>
+                          <p className="font-bold text-sm text-neon-cyan">{formatMXN(calcResult.costoM3)}</p>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setSeguro(!seguro)}
-                        className={`relative w-11 h-6 rounded-full border transition-all duration-300 ${seguro ? 'bg-neon-cyan border-neon-cyan' : 'bg-muted border-border'}`}
-                      >
-                        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-all duration-300 ${seguro ? 'left-5' : 'left-0.5'}`} />
-                      </button>
+
+                      {/* Total */}
+                      <div className="p-6 rounded-xl bg-neon-cyan/5 border-2 border-neon-cyan/30 text-center">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total estimado</p>
+                        <p className="font-display font-black text-4xl text-neon-cyan" style={{ textShadow: '0 0 20px hsl(180 100% 50% / 0.4)' }}>
+                          {formatMXN(calcResult.precioTotal)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {calcResult.unit.emoji} {calcResult.unit.label} · {calcResult.tipo === 'directa' ? 'Ruta directa' : 'Vía tramos'}
+                        </p>
+                      </div>
+
+                      {/* Observations */}
+                      {calcResult.observaciones.length > 0 && (
+                        <div className="p-3 rounded-xl bg-neon-blue/5 border border-neon-blue/20">
+                          <p className="text-xs font-bold text-neon-blue mb-1">📋 Observaciones</p>
+                          {calcResult.observaciones.map((o, i) => (
+                            <p key={i} className="text-xs text-muted-foreground">• {o}</p>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {seguro && (
-                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                          <span>$50,000</span>
-                          <span className="font-bold text-foreground">{formatMXN(montoSeguro)}</span>
-                          <span>$1,000,000</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={50000}
-                          max={1000000}
-                          step={50000}
-                          value={montoSeguro}
-                          onChange={e => setMontoSeguro(Number(e.target.value))}
-                          className="w-full accent-[hsl(180_100%_50%)]"
-                        />
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-xs text-muted-foreground">Tasa {(insuranceRate * 100).toFixed(1)}%</span>
-                          <span className="font-black text-neon-green text-sm">{formatMXN(insuranceCost)}</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
+                  )}
 
-                  {/* Urgency strip */}
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-5 text-xs">
-                    <span className="text-lg">🚛</span>
-                    <span className="text-muted-foreground">#LaUnionMudanzas ❤️ · Salimos todas las semanas · <strong className="text-neon-green">Espacios limitados en rutas compartidas</strong></span>
-                  </div>
-
-                   {/* CTAs */}
+                  {/* CTAs */}
                   <div className="space-y-2.5">
                     <button
                       type="button"
@@ -1130,158 +814,33 @@ export default function CotizadorSection() {
                       {guardandoCot ? (
                         <><Loader2 className="w-5 h-5 animate-spin" />Generando orden…</>
                       ) : (
-                        <>🎯 APARTAR MI SERVICIO + PAGAR</>
+                        <>🎯 APARTAR MI SERVICIO</>
                       )}
                     </button>
+
                     <a
-                      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
+                      href={buildWALink(savedCotizacion?.folio)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
+                      className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-base hover:shadow-glow-green hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                      QUIERO MI COTIZACIÓN
+                      Cotizar por WhatsApp
                     </a>
+
                     <a
                       href={`tel:${WHATSAPP_NUMBER}`}
                       className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl border border-border text-foreground font-bold text-sm hover:border-neon-cyan/50 transition-all"
                     >
                       <Phone className="w-4 h-4" />
-                      HABLAR POR WHATSAPP
+                      Solicitar llamada
                     </a>
+
+                    <button type="button" onClick={() => setStep(1)}
+                      className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-2">
+                      ← Ajustar datos
+                    </button>
                   </div>
-
-                  <button type="button" onClick={() => setStep(4)} className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3">
-                    ← Volver a visualización de carga
-                  </button>
-                </motion.div>
-              )}
-
-              {/* ── STEP 6: CONFIRMACIÓN + INE + ORDEN ────────────────── */}
-              {step === 6 && !confirmed && (
-                <motion.div key="s6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                  <div className="text-center mb-6">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                      className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-neon-green/10 border-2 border-neon-green mb-4 shadow-[0_0_30px_hsl(142_100%_42%/0.3)]"
-                    >
-                      <span className="text-4xl">🎉</span>
-                    </motion.div>
-                    <h3 className="font-display font-black text-2xl text-foreground mb-1">¡Gracias por elegirnos!</h3>
-                    <p className="text-muted-foreground text-sm">Un paso más · Completa tu expediente con <strong className="text-neon-cyan">#LaUnionMudanzas</strong></p>
-                  </div>
-
-                  {/* Summary */}
-                  <div className="grid grid-cols-2 gap-2 mb-5 text-xs">
-                    {[
-                      { label: 'Cliente', value: nombre },
-                      { label: 'Ruta', value: `${origen} → ${destino}` },
-                      { label: 'Fecha', value: fecha || 'Por confirmar' },
-                      { label: 'Unidad', value: `${unit.icon} ${unit.label}` },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="p-3 rounded-xl bg-surface border border-border">
-                        <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[10px] mb-0.5">{label}</p>
-                        <p className="text-foreground font-bold truncate">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* INE Upload */}
-                  <div className="p-4 rounded-xl bg-neon-blue/5 border border-neon-blue/20 mb-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CreditCard className="w-4 h-4 text-neon-blue flex-shrink-0" />
-                      <p className="font-bold text-neon-blue text-sm">Identificación oficial (INE)</p>
-                      <span className="ml-auto text-[10px] text-muted-foreground font-semibold bg-neon-blue/10 px-2 py-0.5 rounded-full border border-neon-blue/20">Requerida</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                      🔒 Su identificación se usará únicamente para validar y documentar su servicio.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* INE Frente */}
-                      <label className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${ineFrente ? 'border-neon-green/50 bg-neon-green/5' : 'border-border hover:border-neon-blue/50 hover:bg-surface'}`}>
-                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => setIneFrente(e.target.files?.[0] || null)} />
-                        {ineFrente ? (
-                          <>
-                            <CheckCircle2 className="w-6 h-6 text-neon-green" />
-                            <span className="text-[10px] text-neon-green font-bold text-center leading-tight">✓ Cargado</span>
-                            <span className="text-[9px] text-muted-foreground text-center line-clamp-1">{ineFrente.name}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-5 h-5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground font-semibold text-center">INE Frente</span>
-                            <span className="text-[10px] text-muted-foreground">Imagen o PDF</span>
-                          </>
-                        )}
-                      </label>
-                      {/* INE Reverso */}
-                      <label className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${ineReverso ? 'border-neon-green/50 bg-neon-green/5' : 'border-border hover:border-neon-blue/50 hover:bg-surface'}`}>
-                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={e => setIneReverso(e.target.files?.[0] || null)} />
-                        {ineReverso ? (
-                          <>
-                            <CheckCircle2 className="w-6 h-6 text-neon-green" />
-                            <span className="text-[10px] text-neon-green font-bold text-center leading-tight">✓ Cargado</span>
-                            <span className="text-[9px] text-muted-foreground text-center line-clamp-1">{ineReverso.name}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-5 h-5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground font-semibold text-center">INE Reverso</span>
-                            <span className="text-[10px] text-muted-foreground">Imagen o PDF</span>
-                          </>
-                        )}
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Service order CTA */}
-                  <button
-                    type="button"
-                    onClick={() => setOrdenOpen(true)}
-                    className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-black text-base hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mb-3"
-                  >
-                    <FileText className="w-5 h-5" />
-                    VER MI ORDEN DE SERVICIO
-                  </button>
-
-                  {/* Checklist */}
-                  <div className="p-4 rounded-xl bg-neon-green/5 border border-neon-green/20 mb-4">
-                    <p className="font-bold text-neon-green text-sm mb-3">✔ Prepárate para tu mudanza</p>
-                    {[
-                      'El personal llevará tu orden de servicio impresa',
-                      'Revisa el inventario antes de la carga',
-                      'Toma fotos de artículos de valor',
-                      'Reporta cualquier anomalía antes de firmar',
-                      '50% se liquida al momento de la carga',
-                    ].map(item => (
-                      <div key={item} className="flex items-start gap-2 mb-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-neon-green flex-shrink-0 mt-0.5" />
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Extras warning */}
-                  <div className="p-3 rounded-xl bg-neon-orange/5 border border-neon-orange/20 mb-5 text-xs text-muted-foreground">
-                    <p className="font-bold text-neon-orange mb-1">⚠️ Costos extras pueden generarse por:</p>
-                    <p>Acarreos · Pisos adicionales · Volumen extra · Se solicitará firma digital</p>
-                  </div>
-
-                  {/* WhatsApp CTA */}
-                  <a
-                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage()}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-neon-green text-background font-black text-base hover:shadow-[0_0_24px_hsl(142_100%_42%/0.4)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mb-3"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                    IR A MI SEGUIMIENTO POR WHATSAPP
-                  </a>
-                  <button type="button" onClick={() => { setStep(1); setConfirmed(false); setIneFrente(null); setIneReverso(null); }} className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    Nueva cotización
-                  </button>
                 </motion.div>
               )}
 
@@ -1296,75 +855,61 @@ export default function CotizadorSection() {
           transition={{ delay: 0.5 }}
           className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
         >
-          {[
-            '🚛 Más de 28 rutas activas',
-            '📋 Toda mudanza con orden de servicio',
-            '🔒 Tu mercancía viaja documentada',
-            '⭐ Sin sorpresas, todo claro',
-          ].map(item => (
-            <span key={item} className="flex items-center gap-1">{item}</span>
+          {['🚛 +28 rutas activas', '📋 Toda mudanza documentada', '🔒 Mercancía asegurada', '⭐ Sin sorpresas'].map(item => (
+            <span key={item}>{item}</span>
           ))}
         </motion.div>
       </div>
 
-      {/* Orden de Servicio Modal */}
+      {/* Modals */}
       <OrdenServicioModal
         isOpen={ordenOpen}
         onClose={() => setOrdenOpen(false)}
         onPagar={() => { setOrdenOpen(false); setPagoOpen(true); }}
         data={{
-          nombre, whatsapp, origen, destino, fecha,
-          serviceLabel: tipoServicio ? `Mudanza ${tipoServicio.charAt(0).toUpperCase() + tipoServicio.slice(1)}` : 'Mudanza',
-          vol: vol.toFixed(1),
-          unitLabel: unit.label,
-          unitIcon: unit.icon,
-          folio: savedCotizacion?.folio,
-          precioTotal: savedCotizacion?.precioTotal,
+          nombre: s.nombre, whatsapp: s.whatsapp, origen: s.origen, destino: s.destino, fecha: s.fecha,
+          serviceLabel: s.tipoServicio ? `Mudanza ${s.tipoServicio.charAt(0).toUpperCase() + s.tipoServicio.slice(1)}` : 'Mudanza',
+          vol: vol.toFixed(1), unitLabel: unit.label, unitIcon: unit.emoji,
+          folio: savedCotizacion?.folio, precioTotal: savedCotizacion?.precioTotal,
           cotizacionId: savedCotizacion?.cotizacionId,
         }}
       />
 
-      {/* Pago Modal */}
       {savedCotizacion && (
         <PagoModal
           isOpen={pagoOpen}
           onClose={() => setPagoOpen(false)}
-          onPagoExitoso={() => { setPagoOpen(false); setStep(6); setConfirmed(true); }}
+          onPagoExitoso={() => setPagoOpen(false)}
           data={{
-            folio: savedCotizacion.folio,
-            nombre,
-            whatsapp,
-            correo: correo || undefined,
-            monto: savedCotizacion.precioTotal,
-            origen,
-            destino,
-            fecha,
-            serviceLabel: tipoServicio ? `Mudanza ${tipoServicio}` : 'Mudanza',
-            tipoServicio,
-            modalidad,
-            vol: billableVol.toFixed(1),
-            unitLabel: unit.label,
+            folio: savedCotizacion.folio, nombre: s.nombre, whatsapp: s.whatsapp,
+            correo: s.correo || undefined, monto: savedCotizacion.precioTotal,
+            origen: s.origen, destino: s.destino, fecha: s.fecha,
+            serviceLabel: s.tipoServicio ? `Mudanza ${s.tipoServicio}` : 'Mudanza',
+            tipoServicio: s.tipoServicio, modalidad: s.modalidad,
+            vol: billableVol.toFixed(1), unitLabel: unit.label,
             cotizacionId: savedCotizacion.cotizacionId,
             precioBase: savedCotizacion.precioBase ?? undefined,
-            costoRecoleccion: 500,
-            costoEntrega: 500,
-            seguroMonto: seguro ? montoSeguro : undefined,
-            seguroCosto: seguro ? montoSeguro * 0.025 : undefined,
-            inventario: inventory,
-            inventarioLabels: {
-              cama_king: 'Cama king', cama_matrimonial: 'Cama matrimonial', cama_individual: 'Cama individual',
-              sofa_3_plazas: 'Sofá 3 plazas', sofa_2_plazas: 'Sofá 2 plazas', sofa_individual: 'Sillón', sofa_cama: 'Sofá-cama',
-              comedor_6: 'Comedor 6p', comedor_4: 'Comedor 4p', mesa_centro: 'Mesa de centro',
-              ropero_3p: 'Ropero 3p', ropero_2p: 'Ropero 2p', cajones_3: 'Cajonera', buros: 'Buró', tocador: 'Tocador', librero: 'Librero',
-              refrigerador_duplex: 'Refrigerador dúplex', refrigerador_14: 'Refrigerador', estufa: 'Estufa',
-              lavadora: 'Lavadora', secadora: 'Secadora',
-              tv_55: 'TV 55"', tv_65: 'TV 65"', tv_75: 'TV 75"+',
-              escritorio: 'Escritorio', silla_oficina: 'Silla oficina', archivero: 'Archivero', computadora: 'Computadora',
-              bicicleta: 'Bicicleta', caja_estandar: 'Caja estándar',
-            },
+            costoRecoleccion: COSTO_RECOLECCION, costoEntrega: COSTO_ENTREGA,
           }}
         />
       )}
     </section>
+  );
+}
+
+// ─── Price Row ───────────────────────────────────────────────────
+function PriceRow({ label, value, accent, warn, total }: {
+  label: string; value: string; accent?: boolean; warn?: boolean; total?: boolean;
+}) {
+  return (
+    <div className={`flex justify-between items-center py-1 ${total ? 'py-1.5' : ''}`}>
+      <span className={`text-sm ${total ? 'font-black text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+      <span className={`text-sm font-bold tabular-nums ${
+        total ? 'text-neon-cyan text-base font-black'
+        : accent ? 'text-foreground'
+        : warn ? 'text-neon-orange'
+        : 'text-foreground'
+      }`}>{value}</span>
+    </div>
   );
 }
