@@ -23,6 +23,8 @@ import { classifyCity, type CityClassification } from '@/lib/routing-data';
 import { sendServiceEmail } from '@/lib/email-service';
 import OrdenServicioModal from '@/components/OrdenServicioModal';
 import PagoModal from '@/components/PagoModal';
+import ProveedorSelector from '@/components/ProveedorSelector';
+import AsesorBanner from '@/components/AsesorBanner';
 import type { TramoResult, RutaRow } from '@/hooks/use-cotizacion';
 
 // ─── Calculation result type ─────────────────────────────────────
