@@ -557,6 +557,13 @@ export default function PortalProveedor() {
           </motion.div>
         )}
 
+        {/* ═══ TAB: SERVICIOS OPERATIVOS ═══ */}
+        {tab === 'servicios' && proveedorId && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <ServiciosOperativos proveedorId={proveedorId} />
+          </motion.div>
+        )}
+
         {/* ═══ TAB: UNIDADES ═══ */}
         {tab === 'unidades' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
