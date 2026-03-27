@@ -3,7 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import LeadFormSection from '@/components/LeadFormSection';
 import BenefitsSection from '@/components/BenefitsSection';
 import CotizadorSection from '@/components/CotizadorSection';
-import MotorCotizacion from '@/components/MotorCotizacion';
+
 import ServiciosSection from '@/components/ServiciosSection';
 import ComoFuncionaSection from '@/components/ComoFuncionaSection';
 import CoberturaSection from '@/components/CoberturaSection';
@@ -28,7 +28,7 @@ export default function Index() {
       <LeadFormSection />
       <BenefitsSection />
       <CotizadorSection />
-      <MotorCotizacion />
+      
       <ServiciosSection />
       <ComoFuncionaSection />
       <CoberturaSection />
