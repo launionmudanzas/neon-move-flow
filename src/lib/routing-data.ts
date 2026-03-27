@@ -275,6 +275,19 @@ function cityMatch(a: string, b: string): boolean {
   return na === nb || na.includes(nb) || nb.includes(na);
 }
 
+/** Resolve an alias (e.g. "cdmx") to its canonical city name */
+function resolveAlias(input: string): string | null {
+  const n = norm(input);
+  // Lazy import: CITY_ALIASES is defined below but hoisted
+  for (const [canonical, aliases] of Object.entries(CITY_ALIASES)) {
+    if (aliases.some(a => a === n || n.includes(a) || a.includes(n))) {
+      return canonical;
+    }
+    if (norm(canonical) === n) return canonical;
+  }
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CITY CLASSIFICATION ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
