@@ -16,6 +16,7 @@ import {
   WHATSAPP_NUMBER, MIN_VOL, VOLUMES, INVENTORY_LABELS, INVENTORY_ROOMS,
   getUnit, formatMXN, getInsuranceRate, getAvailableModalidades,
   INITIAL_STATE, MARGEN_APP, COSTO_RECOLECCION, COSTO_ENTREGA,
+  SERVICE_TYPES, COMPLEX_SERVICE_TYPES,
   type WizardState,
 } from '@/components/cotizador/constants';
 import { useCotizacion, calcularRuta, getDesvioSurcharge } from '@/hooks/use-cotizacion';
@@ -159,6 +160,13 @@ export default function CotizadorSection() {
       unidadSugerida: unit.label,
       seguro: s.seguro, montoSeguro: s.montoSeguro,
       costoPisos, costoAcarreo, urgente: false,
+      horarioCarga: s.horarioCarga || undefined,
+      horarioEntrega: s.horarioEntrega || undefined,
+      peso: s.peso ? Number(s.peso) : undefined,
+      presupuestoCliente: s.presupuestoCliente ? Number(s.presupuestoCliente) : undefined,
+      comentariosEspeciales: s.comentariosEspeciales || undefined,
+      visitaOcular: s.visitaOcular,
+      cotizacionEspecial: COMPLEX_SERVICE_TYPES.includes(s.tipoServicio),
     });
     setGuardandoCot(false);
     if (result) {
@@ -508,20 +516,20 @@ export default function CotizadorSection() {
                     </div>
                   </div>
 
-                  <div className="space-y-4 mb-6">
-                    {/* Tipo */}
+                   <div className="space-y-4 mb-6">
+                    {/* Tipo de servicio expandido */}
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">¿Qué mueves?</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Tipo de servicio</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {[
-                          { id: 'residencial', label: 'Casa', icon: '🏠' },
-                          { id: 'departamento', label: 'Depto', icon: '🏢' },
-                          { id: 'oficina', label: 'Oficina', icon: '🗂️' },
-                          { id: 'comercial', label: 'Comercial', icon: '🏪' },
-                        ].map(o => (
+                        {SERVICE_TYPES.map(o => (
                           <OptionButton key={o.id} label={o.label} icon={o.icon} selected={s.tipoServicio === o.id} onClick={() => upd({ tipoServicio: o.id })} />
                         ))}
                       </div>
+                      {COMPLEX_SERVICE_TYPES.includes(s.tipoServicio) && (
+                        <div className="mt-3">
+                          <AsesorBanner reason="Servicio especial" nombre={s.nombre} origen={s.origen} destino={s.destino} volumen={billableVol} />
+                        </div>
+                      )}
                     </div>
 
                     {/* Modalidad */}
@@ -606,6 +614,53 @@ export default function CotizadorSection() {
                           </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* New fields: horarios, peso, presupuesto, comentarios */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Horario de carga</label>
+                        <input type="time" value={s.horarioCarga} onChange={e => upd({ horarioCarga: e.target.value })}
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Horario de entrega</label>
+                        <input type="time" value={s.horarioEntrega} onChange={e => upd({ horarioEntrega: e.target.value })}
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Peso estimado (kg)</label>
+                        <input type="number" min={0} value={s.peso || ''} onChange={e => upd({ peso: e.target.value })} placeholder="Opcional"
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Tu presupuesto</label>
+                        <input type="number" min={0} value={s.presupuestoCliente || ''} onChange={e => upd({ presupuestoCliente: e.target.value })} placeholder="Opcional ($)"
+                          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                        Comentarios especiales <span className="text-muted-foreground/60 font-normal normal-case">(aduanas, ferry, grúas, accesos, permisos)</span>
+                      </label>
+                      <textarea value={s.comentariosEspeciales} onChange={e => upd({ comentariosEspeciales: e.target.value })} placeholder="Describe cualquier condición especial..."
+                        rows={2} className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all resize-none" />
+                    </div>
+
+                    {/* Visita ocular toggle */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-surface border border-border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🔍</span>
+                        <span className="font-bold text-sm text-foreground">¿Requieres visita ocular?</span>
+                      </div>
+                      <button type="button" onClick={() => upd({ visitaOcular: !s.visitaOcular })}
+                        className={`relative w-11 h-6 rounded-full border transition-all duration-300 ${s.visitaOcular ? 'bg-neon-cyan border-neon-cyan' : 'bg-muted border-border'}`}>
+                        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-all duration-300 ${s.visitaOcular ? 'left-5' : 'left-0.5'}`} />
+                      </button>
                     </div>
                   </div>
 

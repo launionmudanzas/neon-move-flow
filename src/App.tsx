@@ -21,6 +21,7 @@ import PortalProveedor from "./pages/PortalProveedor.tsx";
 import TerminosCondiciones from "./pages/TerminosCondiciones.tsx";
 import AvisoPrivacidad from "./pages/AvisoPrivacidad.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import OrdenPublica from "./pages/OrdenPublica.tsx";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/portal-proveedor" element={<PortalProveedor />} />
             <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
             <Route path="/aviso-de-privacidad" element={<AvisoPrivacidad />} />
+            <Route path="/orden/:folio" element={<OrdenPublica />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

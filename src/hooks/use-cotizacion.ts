@@ -47,6 +47,14 @@ interface CotizacionInput {
   costoPisos: number;
   costoAcarreo: number;
   urgente: boolean;
+  // New fields
+  horarioCarga?: string;
+  horarioEntrega?: string;
+  peso?: number;
+  presupuestoCliente?: number;
+  comentariosEspeciales?: string;
+  visitaOcular?: boolean;
+  cotizacionEspecial?: boolean;
 }
 
 export interface CotizacionResult {
@@ -369,6 +377,14 @@ export function useCotizacion() {
           seguro_porcentaje: input.seguro ? 2.5 : null,
           estatus: 'cotizado',
           cliente_acepto: false,
+          // New fields
+          horario_carga: input.horarioCarga || null,
+          horario_entrega: input.horarioEntrega || null,
+          peso: input.peso || null,
+          presupuesto_cliente: input.presupuestoCliente || null,
+          comentarios_especiales: input.comentariosEspeciales || null,
+          visita_ocular: input.visitaOcular || false,
+          cotizacion_especial: input.cotizacionEspecial || false,
         })
         .select('id')
         .single();

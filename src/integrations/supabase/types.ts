@@ -207,25 +207,31 @@ export type Database = {
         Row: {
           cliente_acepto: boolean
           cliente_id: string
+          comentarios_especiales: string | null
           comision_app: number | null
           costo_adicionales: number | null
           costo_entrega: number | null
           costo_recoleccion: number | null
+          cotizacion_especial: boolean
           created_at: string
           destino: string | null
           estatus: string | null
           fecha_llegada: string | null
           fecha_salida: string | null
           folio: string | null
+          horario_carga: string | null
+          horario_entrega: string | null
           id: string
           margen_negocio: number | null
           modalidad: string | null
           modalidad_sugerida: string | null
           observaciones: string | null
           origen: string | null
+          peso: number | null
           porcentaje_urgencia: number
           precio_base: number | null
           precio_total: number | null
+          presupuesto_cliente: number | null
           proveedor_id: string | null
           seguro_costo: number | null
           seguro_monto: number | null
@@ -234,31 +240,38 @@ export type Database = {
           unidad_sugerida: string | null
           updated_at: string
           urgencia: boolean
+          visita_ocular: boolean
           volumen_cobrable: number | null
           volumen_total: number | null
         }
         Insert: {
           cliente_acepto?: boolean
           cliente_id: string
+          comentarios_especiales?: string | null
           comision_app?: number | null
           costo_adicionales?: number | null
           costo_entrega?: number | null
           costo_recoleccion?: number | null
+          cotizacion_especial?: boolean
           created_at?: string
           destino?: string | null
           estatus?: string | null
           fecha_llegada?: string | null
           fecha_salida?: string | null
           folio?: string | null
+          horario_carga?: string | null
+          horario_entrega?: string | null
           id?: string
           margen_negocio?: number | null
           modalidad?: string | null
           modalidad_sugerida?: string | null
           observaciones?: string | null
           origen?: string | null
+          peso?: number | null
           porcentaje_urgencia?: number
           precio_base?: number | null
           precio_total?: number | null
+          presupuesto_cliente?: number | null
           proveedor_id?: string | null
           seguro_costo?: number | null
           seguro_monto?: number | null
@@ -267,31 +280,38 @@ export type Database = {
           unidad_sugerida?: string | null
           updated_at?: string
           urgencia?: boolean
+          visita_ocular?: boolean
           volumen_cobrable?: number | null
           volumen_total?: number | null
         }
         Update: {
           cliente_acepto?: boolean
           cliente_id?: string
+          comentarios_especiales?: string | null
           comision_app?: number | null
           costo_adicionales?: number | null
           costo_entrega?: number | null
           costo_recoleccion?: number | null
+          cotizacion_especial?: boolean
           created_at?: string
           destino?: string | null
           estatus?: string | null
           fecha_llegada?: string | null
           fecha_salida?: string | null
           folio?: string | null
+          horario_carga?: string | null
+          horario_entrega?: string | null
           id?: string
           margen_negocio?: number | null
           modalidad?: string | null
           modalidad_sugerida?: string | null
           observaciones?: string | null
           origen?: string | null
+          peso?: number | null
           porcentaje_urgencia?: number
           precio_base?: number | null
           precio_total?: number | null
+          presupuesto_cliente?: number | null
           proveedor_id?: string | null
           seguro_costo?: number | null
           seguro_monto?: number | null
@@ -300,6 +320,7 @@ export type Database = {
           unidad_sugerida?: string | null
           updated_at?: string
           urgencia?: boolean
+          visita_ocular?: boolean
           volumen_cobrable?: number | null
           volumen_total?: number | null
         }

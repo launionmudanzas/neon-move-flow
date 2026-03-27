@@ -11,8 +11,10 @@ const CHECKBOXES = [
   { id: 'descarga', label: 'Entiendo que no se realiza descarga sin liquidación total del servicio' },
 ] as const;
 
-const LEGAL_FINAL =
-  'CONFIRMO DE RECIBIDO Y ESTOY DE ACUERDO CON LOS TÉRMINOS Y CONDICIONES DEL SERVICIO, ACEPTANDO EL CIERRE DE MI SERVICIO CON LA UNIÓN MUDANZAS';
+function getLegalFinal(proveedorNombre?: string) {
+  const prov = proveedorNombre || 'EL PROVEEDOR ASIGNADO';
+  return `CONFIRMO DE RECIBIDO Y ACEPTO LOS TÉRMINOS Y CONDICIONES DEL SERVICIO, AUTORIZANDO EXPRESAMENTE A ${prov} A TRAVÉS DE LA UNIÓN MUDANZAS, PARA REALIZAR EL SERVICIO CONTRATADO. RECONOZCO QUE LA UNIÓN MUDANZAS ACTÚA COMO COORDINADOR LOGÍSTICO Y VÍNCULO ENTRE LAS PARTES, Y QUE EL PROVEEDOR ASIGNADO ES EL RESPONSABLE DIRECTO DE LA EJECUCIÓN DEL SERVICIO.`;
+}
 
 const BRIEF_POINTS = [
   'El servicio está sujeto a volumen declarado',
@@ -28,9 +30,10 @@ interface LegalAcceptanceBlockProps {
   accepted: boolean;
   onAcceptedChange: (val: boolean) => void;
   compact?: boolean;
+  proveedorNombre?: string;
 }
 
-export default function LegalAcceptanceBlock({ accepted, onAcceptedChange, compact = false }: LegalAcceptanceBlockProps) {
+export default function LegalAcceptanceBlock({ accepted, onAcceptedChange, compact = false, proveedorNombre }: LegalAcceptanceBlockProps) {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [finalCheck, setFinalCheck] = useState(false);
 
@@ -103,7 +106,7 @@ export default function LegalAcceptanceBlock({ accepted, onAcceptedChange, compa
       {/* Final acceptance */}
       <div className="p-4 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20">
         <p className="text-xs text-muted-foreground leading-relaxed mb-3 italic">
-          "{LEGAL_FINAL}"
+          "{getLegalFinal(proveedorNombre)}"
         </p>
         <label className="flex items-start gap-3 cursor-pointer group">
           <Checkbox
