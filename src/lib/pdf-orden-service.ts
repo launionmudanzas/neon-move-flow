@@ -251,31 +251,46 @@ export function generateOrdenPDF(data: OrdenPDFData): jsPDF {
     '• El proveedor puede ajustar costos si hay diferencias.',
     '• No se descarga sin liquidación total del servicio.',
     '• El servicio puede presentar demoras por causas externas.',
+    '• La empresa actúa como intermediario logístico.',
+    '• El servicio es ejecutado por el proveedor asignado.',
   ];
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(50, 50, 50);
   doc.text(terms, 14, y);
-  y += terms.length * 5 + 6;
+  y += terms.length * 5 + 4;
+
+  // Legal URLs
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(...ORANGE);
+  doc.text('Términos completos: launionmudanzas.com/terminos-y-condiciones', 14, y);
+  y += 4;
+  doc.text('Aviso de privacidad: launionmudanzas.com/aviso-de-privacidad', 14, y);
+  y += 8;
 
   // ── 8. LEYENDA LEGAL ─────────────────────────────────────────────────────
   // Check if we need a new page
-  if (y > 230) { doc.addPage(); y = 20; }
+  if (y > 220) { doc.addPage(); y = 20; }
 
   doc.setFillColor(...NAVY);
-  doc.roundedRect(12, y, W - 24, 22, 3, 3, 'F');
+  doc.roundedRect(12, y, W - 24, 30, 3, 3, 'F');
   doc.setDrawColor(...ORANGE);
-  doc.roundedRect(12, y, W - 24, 22, 3, 3, 'S');
+  doc.roundedRect(12, y, W - 24, 30, 3, 3, 'S');
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...ORANGE);
   doc.text('LEYENDA DE ACEPTACIÓN', 16, y + 6);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(200, 225, 255);
-  const leyenda = 'CONFIRMO DE RECIBIDO Y ESTOY DE ACUERDO CON EL TÉRMINO ESTABLECIDO EN EL DOCUMENTO DE ADHESIÓN ACEPTANDO EL CIERRE DE MI SERVICIO CON LA UNIÓN MUDANZAS';
+  const leyenda = 'CONFIRMO DE RECIBIDO Y ESTOY DE ACUERDO CON LOS TÉRMINOS Y CONDICIONES DEL SERVICIO, ACEPTANDO EL CIERRE DE MI SERVICIO CON LA UNIÓN MUDANZAS';
   const leyendaLines = doc.splitTextToSize(leyenda, W - 32);
   doc.text(leyendaLines, 16, y + 11);
-  y += 28;
+  // Acceptance metadata
+  doc.setFontSize(6.5);
+  doc.setTextColor(160, 190, 220);
+  doc.text(`Cliente: ${data.nombre}  |  Fecha de aceptación: ${new Date().toLocaleDateString('es-MX')}  |  Estatus: Aceptado digitalmente`, 16, y + 24);
+  y += 36;
 
   // ── 9. FIRMA ─────────────────────────────────────────────────────────────
   doc.setFontSize(7);
