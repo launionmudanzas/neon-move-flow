@@ -60,9 +60,10 @@ export default function ProveedorSelector({ origen, destino, fecha, volumen, mod
       setLoading(true);
       // Use the public view — no auth required
       const { data } = await supabase
-        .from('proveedores_publico' as any)
-        .select('*');
-      if (data) setProveedores(data as ProveedorPublico[]);
+        .from('proveedores')
+        .select('id,nombre_comercial,logo_url,calificacion,ciudades_cobertura,rutas_frecuentes,premium_activo')
+        .eq('activo', true);
+      if (data) setProveedores(data as unknown as ProveedorPublico[]);
       setLoading(false);
     };
     fetchProveedores();
