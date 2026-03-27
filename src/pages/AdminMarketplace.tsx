@@ -149,10 +149,17 @@ function PublicacionDetail({
             {[
               { label: 'Proveedor', value: publicacion.proveedores?.nombre_comercial },
               { label: 'Tipo', value: publicacion.tipo_publicacion },
+              { label: 'Tipo oportunidad', value: publicacion.tipo_oportunidad?.replace(/_/g, ' ') },
               { label: 'Volumen disponible', value: publicacion.volumen_disponible != null ? `${publicacion.volumen_disponible} m³` : '—' },
+              { label: 'Peso disponible', value: publicacion.peso_disponible != null ? `${publicacion.peso_disponible} kg` : '—' },
+              { label: 'Modalidad', value: publicacion.modalidad_disponible },
+              { label: 'Unidad', value: publicacion.tipo_unidad },
               { label: 'Costo ofrecido', value: fmt(publicacion.costo_ofrecido) },
               { label: 'Fecha salida', value: fmtDate(publicacion.fecha_salida) },
+              { label: 'Llegada estimada', value: publicacion.fecha_llegada_estimada ? fmtDate(publicacion.fecha_llegada_estimada) : '—' },
               { label: 'Expira en', value: timeRemaining(publicacion.expira_at) },
+              { label: 'Vistas en cotizaciones', value: (publicacion.vistas_cotizaciones ?? 0).toString() },
+              { label: 'Intereses', value: (publicacion.intereses_count ?? 0).toString() },
               { label: 'Comisión publicador', value: publicacion.comision_app_publicador != null ? `${publicacion.comision_app_publicador}%` : '10%' },
               { label: 'Comisión tomador', value: publicacion.comision_app_tomador != null ? `${publicacion.comision_app_tomador}%` : '10%' },
             ].map(f => (
