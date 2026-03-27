@@ -456,7 +456,7 @@ export default function AdminServicios() {
 
                   {/* Footer */}
                   {cot && (
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-border/50">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-border/50 flex-wrap">
                       <span className="flex items-center gap-1">
                         <CreditCard className="w-3 h-3" />
                         {fmt(cot.precio_total)}
@@ -468,6 +468,15 @@ export default function AdminServicios() {
                       {cot.modalidad && <span>{cot.modalidad}</span>}
                       {cot.urgencia && (
                         <span className="text-orange-400 font-semibold">⚡ Urgente</span>
+                      )}
+                      {(s as any).proveedores?.nombre_comercial && (
+                        <span className="flex items-center gap-1 text-primary">
+                          <Truck className="w-3 h-3" />
+                          {(s as any).proveedores.nombre_comercial}
+                        </span>
+                      )}
+                      {!s.aceptado_proveedor && s.estatus === 'asignado' && (
+                        <span className="text-orange-400 font-semibold animate-pulse">⏳ Pendiente aceptación</span>
                       )}
                     </div>
                   )}
