@@ -993,31 +993,64 @@ export type Database = {
       }
       ordenes_servicio: {
         Row: {
+          aceptado_proveedor: boolean | null
           contrato_url: string | null
           cotizacion_id: string
           created_at: string
           estatus: string | null
+          evidencias_carga: boolean | null
+          evidencias_entrega: boolean | null
+          fecha_aceptacion_proveedor: string | null
+          fecha_asignacion: string | null
+          firma_cliente: boolean | null
           folio: string | null
           id: string
+          notas_cierre: string | null
+          origen_asignacion: string | null
+          pago_completo: boolean | null
           pdf_url: string | null
+          proveedor_id: string | null
+          unidad_asignada_id: string | null
         }
         Insert: {
+          aceptado_proveedor?: boolean | null
           contrato_url?: string | null
           cotizacion_id: string
           created_at?: string
           estatus?: string | null
+          evidencias_carga?: boolean | null
+          evidencias_entrega?: boolean | null
+          fecha_aceptacion_proveedor?: string | null
+          fecha_asignacion?: string | null
+          firma_cliente?: boolean | null
           folio?: string | null
           id?: string
+          notas_cierre?: string | null
+          origen_asignacion?: string | null
+          pago_completo?: boolean | null
           pdf_url?: string | null
+          proveedor_id?: string | null
+          unidad_asignada_id?: string | null
         }
         Update: {
+          aceptado_proveedor?: boolean | null
           contrato_url?: string | null
           cotizacion_id?: string
           created_at?: string
           estatus?: string | null
+          evidencias_carga?: boolean | null
+          evidencias_entrega?: boolean | null
+          fecha_aceptacion_proveedor?: string | null
+          fecha_asignacion?: string | null
+          firma_cliente?: boolean | null
           folio?: string | null
           id?: string
+          notas_cierre?: string | null
+          origen_asignacion?: string | null
+          pago_completo?: boolean | null
           pdf_url?: string | null
+          proveedor_id?: string | null
+          unidad_asignada_id?: string | null
         }
         Relationships: [
           {
@@ -1025,6 +1058,27 @@ export type Database = {
             columns: ["cotizacion_id"]
             isOneToOne: false
             referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordenes_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordenes_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordenes_servicio_unidad_asignada_id_fkey"
+            columns: ["unidad_asignada_id"]
+            isOneToOne: false
+            referencedRelation: "proveedor_unidades"
             referencedColumns: ["id"]
           },
         ]
