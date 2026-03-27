@@ -102,10 +102,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chats_publicaciones_proveedor_interesado_id_fkey"
+            columns: ["proveedor_interesado_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chats_publicaciones_proveedor_origen_id_fkey"
             columns: ["proveedor_origen_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_publicaciones_proveedor_origen_id_fkey"
+            columns: ["proveedor_origen_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
           {
@@ -304,6 +318,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cotizaciones_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       eventos_calendario: {
@@ -366,6 +387,13 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_calendario_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
         ]
@@ -491,6 +519,51 @@ export type Database = {
         }
         Relationships: []
       }
+      horarios_visita_proveedor: {
+        Row: {
+          activo: boolean
+          created_at: string
+          dia_semana: number
+          hora_fin: string
+          hora_inicio: string
+          id: string
+          proveedor_id: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          dia_semana: number
+          hora_fin?: string
+          hora_inicio?: string
+          id?: string
+          proveedor_id: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          dia_semana?: number
+          hora_fin?: string
+          hora_inicio?: string
+          id?: string
+          proveedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horarios_visita_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horarios_visita_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidencias: {
         Row: {
           cliente_id: string | null
@@ -559,6 +632,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "incidencias_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       incidencias_evidencias: {
@@ -624,6 +704,13 @@ export type Database = {
             columns: ["proveedor_interesado_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intereses_publicacion_proveedor_interesado_id_fkey"
+            columns: ["proveedor_interesado_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
           {
@@ -711,6 +798,13 @@ export type Database = {
             columns: ["remitente_proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_chat_publicacion_remitente_proveedor_id_fkey"
+            columns: ["remitente_proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
         ]
@@ -863,6 +957,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pagos_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       proveedor_unidades: {
@@ -902,6 +1003,13 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proveedor_unidades_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
         ]
@@ -1029,6 +1137,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "publicaciones_carga_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reembolsos: {
@@ -1098,6 +1213,13 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reembolsos_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
         ]
@@ -1183,6 +1305,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sanciones_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       seguimientos: {
@@ -1239,6 +1368,74 @@ export type Database = {
           },
         ]
       }
+      solicitudes_visita: {
+        Row: {
+          cliente_id: string | null
+          cotizacion_id: string | null
+          created_at: string
+          direccion: string | null
+          estatus: string
+          fecha_solicitada: string
+          hora_solicitada: string | null
+          id: string
+          notas: string | null
+          proveedor_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          direccion?: string | null
+          estatus?: string
+          fecha_solicitada: string
+          hora_solicitada?: string | null
+          id?: string
+          notas?: string | null
+          proveedor_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          cotizacion_id?: string | null
+          created_at?: string
+          direccion?: string | null
+          estatus?: string
+          fecha_solicitada?: string
+          hora_solicitada?: string | null
+          id?: string
+          notas?: string | null
+          proveedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_visita_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_visita_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_visita_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_visita_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suscripciones_proveedor: {
         Row: {
           autopause: boolean
@@ -1284,6 +1481,13 @@ export type Database = {
             referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "suscripciones_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_identities: {
@@ -1321,6 +1525,13 @@ export type Database = {
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_identities_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
             referencedColumns: ["id"]
           },
         ]
@@ -1405,9 +1616,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      proveedores_publico: {
+        Row: {
+          activo: boolean | null
+          calificacion: number | null
+          ciudades_cobertura: string[] | null
+          id: string | null
+          logo_url: string | null
+          nombre_comercial: string | null
+          premium_activo: boolean | null
+          rutas_frecuentes: string[] | null
+        }
+        Insert: {
+          activo?: boolean | null
+          calificacion?: number | null
+          ciudades_cobertura?: string[] | null
+          id?: string | null
+          logo_url?: string | null
+          nombre_comercial?: string | null
+          premium_activo?: boolean | null
+          rutas_frecuentes?: string[] | null
+        }
+        Update: {
+          activo?: boolean | null
+          calificacion?: number | null
+          ciudades_cobertura?: string[] | null
+          id?: string | null
+          logo_url?: string | null
+          nombre_comercial?: string | null
+          premium_activo?: boolean | null
+          rutas_frecuentes?: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      desbloquear_chat: { Args: { p_chat_id: string }; Returns: undefined }
       expire_publicaciones_now: { Args: never; Returns: number }
       init_user_identity: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
@@ -1416,6 +1660,15 @@ export type Database = {
         Returns: Json
       }
       next_folio: { Args: never; Returns: string }
+      obtener_proveedores_disponibles: {
+        Args: { p_destino: string; p_fecha: string; p_origen: string }
+        Returns: {
+          calificacion: number
+          disponible: boolean
+          nombre: string
+          proveedor_id: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
