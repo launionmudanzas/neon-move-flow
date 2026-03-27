@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import logoOficial from '@/assets/logo-oficial.png';
+import ReputacionPanel from '@/components/admin/ReputacionPanel';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface Proveedor {
@@ -484,6 +485,7 @@ export default function AdminProveedores() {
   const [filterEstatus, setFilterEstatus] = useState('todos');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'lista' | 'reputacion'>('lista');
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) navigate('/');
@@ -550,11 +552,27 @@ export default function AdminProveedores() {
               <span className="font-bold text-foreground text-lg">Proveedores Logísticos</span>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="border-border text-muted-foreground hover:text-foreground gap-2 self-start sm:self-auto">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Actualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="border-border text-muted-foreground hover:text-foreground gap-2 self-start sm:self-auto">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Actualizar
+            </Button>
+          </div>
         </div>
 
+        {/* View mode toggle */}
+        <div className="flex bg-card border border-border rounded-xl p-1 gap-1 mb-6 w-fit">
+          <button onClick={() => setViewMode('lista')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${viewMode === 'lista' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+            📋 Proveedores
+          </button>
+          <button onClick={() => setViewMode('reputacion')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${viewMode === 'reputacion' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+            🏆 Reputación
+          </button>
+        </div>
+
+        {viewMode === 'reputacion' ? (
+          <ReputacionPanel />
+        ) : (
+        <>
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {stats.map(s => (
@@ -673,6 +691,8 @@ export default function AdminProveedores() {
       </div>
 
       <ProveedorDetailModal proveedorId={selectedId} onClose={() => setSelectedId(null)} onUpdate={fetchData} />
-    </div>
+        </div>
+        </>
+        )}
   );
 }
