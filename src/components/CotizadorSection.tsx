@@ -62,6 +62,8 @@ export default function CotizadorSection() {
   } | null>(null);
   const [guardandoCot, setGuardandoCot] = useState(false);
   const [savedClienteId, setSavedClienteId] = useState<string | null>(null);
+  const [selectedProveedorId, setSelectedProveedorId] = useState<string | null>(null);
+  const [selectedProveedorNombre, setSelectedProveedorNombre] = useState<string | null>(null);
 
   const { guardarCotizacion, crearEventoCalendario, cargarRutas } = useCotizacion();
 
