@@ -232,7 +232,7 @@ export default function CotizadorSection() {
   // ═══════════════════════════════════════════════════════════════
 
   return (
-    <section id="cotizador" ref={ref} className="py-20 relative overflow-hidden">
+    <section id="cotizador" ref={ref} className="py-20 relative overflow-x-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-surface/30 via-background to-surface/20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-neon-cyan/4 blur-[140px]" />
 

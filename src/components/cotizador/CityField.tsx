@@ -4,7 +4,7 @@ import {
   MapPin, BadgeCheck, Navigation, ShieldAlert, HelpCircle,
   Route as RouteIcon,
 } from 'lucide-react';
-import { classifyCity, ALL_CITIES, CityStatus, CityClassification } from '@/lib/routing-data';
+import { classifyCity, searchCities, CityStatus, CityClassification } from '@/lib/routing-data';
 import { getDesvioSurcharge } from '@/hooks/use-cotizacion';
 
 const STATUS_CFG: Record<CityStatus, { icon: React.ReactNode; color: string; label: string }> = {
@@ -43,9 +43,7 @@ interface CityFieldProps {
 export default function CityField({ label, value, onChange, placeholder, billableVol = 0, showWarnings = true }: CityFieldProps) {
   const [open, setOpen] = useState(false);
   const cls: CityClassification | null = value.trim().length >= 2 ? classifyCity(value) : null;
-  const suggestions = value.length >= 2
-    ? ALL_CITIES.filter(c => c.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
-    : [];
+  const suggestions = searchCities(value);
   const desvioCharge = cls?.status === 'desvio' ? getDesvioSurcharge(Math.max(5, billableVol)) : 0;
 
   return (

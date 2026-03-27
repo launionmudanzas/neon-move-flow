@@ -1325,6 +1325,51 @@ export type Database = {
           },
         ]
       }
+      whatsapp_inbox: {
+        Row: {
+          id: string
+          message_type: string
+          origin: string | null
+          phone_number_id: string
+          raw_payload: Json
+          received_at: string
+          user_display_name: string | null
+          user_phone: string | null
+          username: string | null
+          vcard: string | null
+          wa_message_id: string
+          wa_user_id: string | null
+        }
+        Insert: {
+          id?: string
+          message_type: string
+          origin?: string | null
+          phone_number_id: string
+          raw_payload: Json
+          received_at?: string
+          user_display_name?: string | null
+          user_phone?: string | null
+          username?: string | null
+          vcard?: string | null
+          wa_message_id: string
+          wa_user_id?: string | null
+        }
+        Update: {
+          id?: string
+          message_type?: string
+          origin?: string | null
+          phone_number_id?: string
+          raw_payload?: Json
+          received_at?: string
+          user_display_name?: string | null
+          user_phone?: string | null
+          username?: string | null
+          vcard?: string | null
+          wa_message_id?: string
+          wa_user_id?: string | null
+        }
+        Relationships: []
+      }
       zonas_restringidas: {
         Row: {
           camioneta_forzosa: boolean

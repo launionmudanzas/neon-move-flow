@@ -275,6 +275,19 @@ function cityMatch(a: string, b: string): boolean {
   return na === nb || na.includes(nb) || nb.includes(na);
 }
 
+/** Resolve an alias (e.g. "cdmx") to its canonical city name */
+function resolveAlias(input: string): string | null {
+  const n = norm(input);
+  // Lazy import: CITY_ALIASES is defined below but hoisted
+  for (const [canonical, aliases] of Object.entries(CITY_ALIASES)) {
+    if (aliases.some(a => a === n || n.includes(a) || a.includes(n))) {
+      return canonical;
+    }
+    if (norm(canonical) === n) return canonical;
+  }
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CITY CLASSIFICATION ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,8 +302,11 @@ export function classifyCity(cityInput: string): CityClassification {
     };
   }
 
+  // Resolve alias to canonical name first
+  const resolved = resolveAlias(cityInput) || cityInput;
+
   // 1. Check restricted zones first
-  if (RESTRICTED_ZONES.some(r => cityMatch(cityInput, r))) {
+  if (RESTRICTED_ZONES.some(r => cityMatch(resolved, r))) {
     return {
       status: 'exclusivo',
       routeNames: [],
@@ -302,7 +318,7 @@ export function classifyCity(cityInput: string): CityClassification {
   // 2. Check main route cities
   const inRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.cities.some(c => cityMatch(cityInput, c))) {
+    if (route.cities.some(c => cityMatch(resolved, c))) {
       inRoutes.push(route.name);
     }
   }
@@ -318,7 +334,7 @@ export function classifyCity(cityInput: string): CityClassification {
   // 3. Check extension cities
   const inExtRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.extensions.some(c => cityMatch(cityInput, c))) {
+    if (route.extensions.some(c => cityMatch(resolved, c))) {
       inExtRoutes.push(route.name);
     }
   }
@@ -334,12 +350,12 @@ export function classifyCity(cityInput: string): CityClassification {
   // 4. Check detour cities
   const inDesvioRoutes: string[] = [];
   for (const route of ROUTES) {
-    if (route.detours.some(c => cityMatch(cityInput, c))) {
+    if (route.detours.some(c => cityMatch(resolved, c))) {
       inDesvioRoutes.push(route.name);
     }
   }
   // Also check flat detour list
-  const inFlatDesvio = ALL_DETOUR_CITIES.some(c => cityMatch(cityInput, c));
+  const inFlatDesvio = ALL_DETOUR_CITIES.some(c => cityMatch(resolved, c));
 
   if (inDesvioRoutes.length > 0 || inFlatDesvio) {
     const routes = inDesvioRoutes.length > 0 ? inDesvioRoutes : [];
@@ -358,6 +374,64 @@ export function classifyCity(cityInput: string): CityClassification {
     message: '❓ Ciudad no encontrada en el sistema. Verificar con operaciones si aplica servicio.',
     allowsCompartido: true,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CITY ALIASES (for autocomplete search)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CITY_ALIASES: Record<string, string[]> = {
+  'Ciudad de México': ['cdmx', 'ciudad de mexico', 'df', 'distrito federal', 'mexico city'],
+  'Guadalajara': ['gdl', 'guadalajara', 'perla tapatio'],
+  'Monterrey': ['mty', 'monterrey', 'regio'],
+  'León': ['leon', 'leon guanajuato', 'bajio'],
+  'San Luis Potosí': ['san luis potosi', 'slp'],
+  'San Miguel de Allende': ['san miguel', 'san miguel de allende'],
+  'Cd. Juárez': ['cd juarez', 'ciudad juarez', 'juarez'],
+  'Lázaro Cárdenas': ['lazaro cardenas', 'lcardenasport'],
+  'Los Cabos': ['los cabos', 'cabo san lucas', 'san jose del cabo'],
+  'La Paz': ['la paz', 'la paz bcs'],
+  'Nuevo Laredo': ['nuevo laredo'],
+  'Villahermosa': ['villahermosa', 'tabasco'],
+  'Tijuana': ['tj', 'tijuana'],
+  'Querétaro': ['queretaro', 'qro'],
+  'Aguascalientes': ['ags', 'aguascalientes'],
+  'Mérida': ['merida'],
+  'Cancún': ['cancun'],
+  'Puebla': ['puebla', 'pue'],
+  'Veracruz': ['veracruz', 'ver'],
+  'Oaxaca': ['oaxaca', 'oax'],
+  'Tuxtla Gutiérrez': ['tuxtla', 'tuxtla gutierrez'],
+  'Hermosillo': ['hermosillo', 'hmo'],
+  'Chihuahua': ['chihuahua', 'chih'],
+  'Culiacán': ['culiacan'],
+  'Mazatlán': ['mazatlan'],
+  'Morelia': ['morelia'],
+  'Toluca': ['toluca'],
+  'Tampico': ['tampico'],
+  'Coatzacoalcos': ['coatza', 'coatzacoalcos'],
+  'Playa del Carmen': ['playa del carmen', 'playa'],
+};
+
+/** Given a search term, find canonical cities matching by name OR alias */
+export function searchCities(query: string): string[] {
+  if (query.length < 2) return [];
+  const q = norm(query);
+  const results = new Set<string>();
+
+  // 1. Match against ALL_CITIES by substring
+  for (const city of ALL_CITIES) {
+    if (norm(city).includes(q)) results.add(city);
+  }
+
+  // 2. Match against aliases → return canonical name
+  for (const [canonical, aliases] of Object.entries(CITY_ALIASES)) {
+    if (aliases.some(a => a.includes(q) || q.includes(a))) {
+      results.add(canonical);
+    }
+  }
+
+  return Array.from(results).sort().slice(0, 8);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
