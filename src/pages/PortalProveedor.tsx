@@ -858,6 +858,12 @@ export default function PortalProveedor() {
 
   // ── Helpers for pub form/card ──
   function renderPubForm() {
+    const TIPO_OPORTUNIDADES = [
+      { value: 'espacio_vacio', label: 'Espacio vacío en unidad' },
+      { value: 'carga_compartida', label: 'Carga compartida compatible' },
+      { value: 'proveedor_paso', label: 'Proveedor de paso' },
+      { value: 'salida_cercana', label: 'Salida cercana en fecha' },
+    ];
     return (
       <div className="bg-card border border-primary/30 rounded-2xl p-5 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -865,11 +871,35 @@ export default function PortalProveedor() {
             className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
             {TIPO_PUBLICACIONES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
           </select>
+          <select value={newPub.tipoOportunidad} onChange={e => setNewPub(p => ({ ...p, tipoOportunidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Tipo de oportunidad</option>
+            {TIPO_OPORTUNIDADES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
           <Input value={newPub.origen} onChange={e => setNewPub(p => ({ ...p, origen: e.target.value }))} placeholder="Origen" className="bg-background border-border" />
           <Input value={newPub.destino} onChange={e => setNewPub(p => ({ ...p, destino: e.target.value }))} placeholder="Destino" className="bg-background border-border" />
-          <Input value={newPub.fecha} onChange={e => setNewPub(p => ({ ...p, fecha: e.target.value }))} type="date" className="bg-background border-border" />
-          <Input value={newPub.volumen} onChange={e => setNewPub(p => ({ ...p, volumen: e.target.value }))} placeholder="Volumen m³" type="number" className="bg-background border-border" />
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Fecha salida</label>
+            <Input value={newPub.fecha} onChange={e => setNewPub(p => ({ ...p, fecha: e.target.value }))} type="date" className="bg-background border-border" />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Fecha llegada estimada</label>
+            <Input value={newPub.fechaLlegada} onChange={e => setNewPub(p => ({ ...p, fechaLlegada: e.target.value }))} type="date" className="bg-background border-border" />
+          </div>
+          <Input value={newPub.volumen} onChange={e => setNewPub(p => ({ ...p, volumen: e.target.value }))} placeholder="Volumen disponible m³" type="number" className="bg-background border-border" />
+          <Input value={newPub.peso} onChange={e => setNewPub(p => ({ ...p, peso: e.target.value }))} placeholder="Peso disponible kg" type="number" className="bg-background border-border" />
+          <select value={newPub.modalidad} onChange={e => setNewPub(p => ({ ...p, modalidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Modalidad disponible</option>
+            {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <select value={newPub.tipoUnidad} onChange={e => setNewPub(p => ({ ...p, tipoUnidad: e.target.value }))}
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground">
+            <option value="">Unidad</option>
+            {TIPO_UNIDADES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
           <Input value={newPub.costo} onChange={e => setNewPub(p => ({ ...p, costo: e.target.value }))} placeholder="Costo ofrecido $" type="number" className="bg-background border-border" />
+          <Input value={newPub.observaciones} onChange={e => setNewPub(p => ({ ...p, observaciones: e.target.value }))} placeholder="Observaciones" className="bg-background border-border" />
         </div>
         <p className="text-[10px] text-muted-foreground">Comisión: 10% publicador · 10% tomador · Expira en 48h</p>
         <div className="flex gap-2">
