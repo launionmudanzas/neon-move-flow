@@ -625,7 +625,13 @@ export default function PagoModal({ isOpen, onClose, onPagoExitoso, data }: Pago
                   <SpeiPanel folio={data.folio} monto={apartadoNum} />
                 )}
 
-                <p className="text-[10px] text-muted-foreground text-center mt-4">
+                {/* Legal links */}
+                <div className="flex gap-4 justify-center mt-4">
+                  <a href="/terminos-y-condiciones" target="_blank" className="text-[10px] text-neon-cyan hover:underline">Términos y condiciones</a>
+                  <a href="/aviso-de-privacidad" target="_blank" className="text-[10px] text-neon-purple hover:underline">Aviso de privacidad</a>
+                </div>
+
+                <p className="text-[10px] text-muted-foreground text-center mt-2">
                   🔒 Pagos seguros · SSL · La Unión Mudanzas SA de CV
                 </p>
               </div>
