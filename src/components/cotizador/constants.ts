@@ -86,6 +86,20 @@ export function getAvailableModalidades(vol: number, hasExclusiveZone: boolean) 
   ];
 }
 
+// ─── Service types (tronco común) ────────────────────────────────
+export const SERVICE_TYPES = [
+  { id: 'mudanza_casa', label: 'Mudanza casa', icon: '🏠' },
+  { id: 'flete', label: 'Flete', icon: '📦' },
+  { id: 'traslado_auto', label: 'Traslado auto', icon: '🚗' },
+  { id: 'traslado_moto', label: 'Traslado moto', icon: '🏍️' },
+  { id: 'maniobras', label: 'Maniobras', icon: '🏗️' },
+  { id: 'paqueteria', label: 'Paquetería', icon: '📬' },
+  { id: 'almacenaje', label: 'Almacenaje', icon: '🏭' },
+  { id: 'especial', label: 'Especial', icon: '⭐' },
+] as const;
+
+export const COMPLEX_SERVICE_TYPES = ['maniobras', 'almacenaje', 'especial'];
+
 // ─── Wizard state type ──────────────────────────────────────────
 export interface WizardState {
   nombre: string;
@@ -104,6 +118,13 @@ export interface WizardState {
   acarreo: string;
   seguro: boolean;
   montoSeguro: number;
+  // New fields
+  horarioCarga: string;
+  horarioEntrega: string;
+  peso: string;
+  presupuestoCliente: string;
+  comentariosEspeciales: string;
+  visitaOcular: boolean;
 }
 
 export const INITIAL_INVENTORY: Record<string, number> = Object.fromEntries(
@@ -119,4 +140,7 @@ export const INITIAL_STATE: WizardState = {
   tipoServicio: '',
   pisos: '', elevador: '', acarreo: '',
   seguro: false, montoSeguro: 50000,
+  horarioCarga: '', horarioEntrega: '',
+  peso: '', presupuestoCliente: '', comentariosEspeciales: '',
+  visitaOcular: false,
 };
