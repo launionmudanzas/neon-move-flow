@@ -2105,6 +2105,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rutas_publico: {
+        Row: {
+          activa: boolean | null
+          destino: string | null
+          es_directa: boolean | null
+          id: string | null
+          notas: string | null
+          origen: string | null
+        }
+        Insert: {
+          activa?: boolean | null
+          destino?: string | null
+          es_directa?: boolean | null
+          id?: string | null
+          notas?: string | null
+          origen?: string | null
+        }
+        Update: {
+          activa?: boolean | null
+          destino?: string | null
+          es_directa?: boolean | null
+          id?: string | null
+          notas?: string | null
+          origen?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       compute_reputation_level: {
