@@ -846,7 +846,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 5: RESULTADO Y CIERRE ════════════ */}
-              {step === 5 && (
+              {step === 5 && !localMode && (
                 <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="text-center mb-6">
                     <motion.div
