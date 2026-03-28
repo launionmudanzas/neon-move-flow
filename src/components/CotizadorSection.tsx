@@ -541,7 +541,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 3: TIPO DE SERVICIO ════════════ */}
-              {step === 3 && (
+              {step === 3 && !localMode && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-orange/10 border border-neon-orange/30 flex items-center justify-center">
