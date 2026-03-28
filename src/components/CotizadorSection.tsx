@@ -58,6 +58,7 @@ export default function CotizadorSection() {
   const [s, setS] = useState<WizardState>({ ...INITIAL_STATE });
   const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
   const [calculating, setCalculating] = useState(false);
+  const [localMode, setLocalMode] = useState(false);
 
   // Order/payment state
   const [ordenOpen, setOrdenOpen] = useState(false);
