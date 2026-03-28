@@ -717,7 +717,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 4: DETALLE DE CÁLCULO ════════════ */}
-              {step === 4 && (
+              {step === 4 && !localMode && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
