@@ -488,6 +488,38 @@ export type Database = {
           },
         ]
       }
+      documentos: {
+        Row: {
+          created_at: string | null
+          id: string
+          orden_id: string | null
+          tipo: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          orden_id?: string | null
+          tipo?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          orden_id?: string | null
+          tipo?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes_servicio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos_calendario: {
         Row: {
           cliente_id: string | null
@@ -1694,6 +1726,62 @@ export type Database = {
           },
         ]
       }
+      servicios: {
+        Row: {
+          created_at: string | null
+          estatus: string | null
+          id: string
+          orden_id: string | null
+          proveedor_id: string | null
+          unidad_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          estatus?: string | null
+          id?: string
+          orden_id?: string | null
+          proveedor_id?: string | null
+          unidad_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          estatus?: string | null
+          id?: string
+          orden_id?: string | null
+          proveedor_id?: string | null
+          unidad_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicios_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes_servicio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicios_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicios_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicios_unidad_id_fkey"
+            columns: ["unidad_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitudes_visita: {
         Row: {
           cliente_id: string | null
@@ -1809,6 +1897,48 @@ export type Database = {
           },
           {
             foreignKeyName: "suscripciones_proveedor_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidades: {
+        Row: {
+          capacidad: number | null
+          created_at: string | null
+          id: string
+          placas: string | null
+          proveedor_id: string | null
+          tipo: string | null
+        }
+        Insert: {
+          capacidad?: number | null
+          created_at?: string | null
+          id?: string
+          placas?: string | null
+          proveedor_id?: string | null
+          tipo?: string | null
+        }
+        Update: {
+          capacidad?: number | null
+          created_at?: string | null
+          id?: string
+          placas?: string | null
+          proveedor_id?: string | null
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unidades_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unidades_proveedor_id_fkey"
             columns: ["proveedor_id"]
             isOneToOne: false
             referencedRelation: "proveedores_publico"
@@ -2140,6 +2270,7 @@ export type Database = {
       }
       desbloquear_chat: { Args: { p_chat_id: string }; Returns: undefined }
       expire_publicaciones_now: { Args: never; Returns: number }
+      generar_folio: { Args: never; Returns: string }
       guardar_aceptacion: {
         Args: {
           p_cliente_id: string
