@@ -2018,6 +2018,60 @@ export type Database = {
       }
     }
     Views: {
+      calificaciones_publico: {
+        Row: {
+          comentario: string | null
+          created_at: string | null
+          cuidado_carga: number | null
+          cumplimiento: number | null
+          experiencia_general: number | null
+          id: string | null
+          promedio: number | null
+          proveedor_id: string | null
+          puntualidad: number | null
+          trato: number | null
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string | null
+          cuidado_carga?: number | null
+          cumplimiento?: number | null
+          experiencia_general?: number | null
+          id?: string | null
+          promedio?: number | null
+          proveedor_id?: string | null
+          puntualidad?: number | null
+          trato?: number | null
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string | null
+          cuidado_carga?: number | null
+          cumplimiento?: number | null
+          experiencia_general?: number | null
+          id?: string | null
+          promedio?: number | null
+          proveedor_id?: string | null
+          puntualidad?: number | null
+          trato?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calificaciones_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_servicio_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores_publico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proveedores_publico: {
         Row: {
           activo: boolean | null
