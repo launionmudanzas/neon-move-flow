@@ -1,0 +1,1 @@
+ALTER VIEW public.proveedores_publico SET (security_invoker = on);
