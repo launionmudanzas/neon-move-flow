@@ -487,24 +487,6 @@ export default function CotizadorSection() {
                     </div>
                   )}
 
-                  {/* Local CDMX detection */}
-                  {isLocalZone && !hasExclusiveZone && !(origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida') && (
-                    <div className="p-4 rounded-xl bg-neon-green/8 border border-neon-green/25 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-5 h-5 text-neon-green flex-shrink-0" />
-                        <p className="text-sm font-bold text-neon-green">¡Servicio local CDMX detectado!</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Ambas ubicaciones están en la zona metropolitana. Usa nuestro cotizador local con precios fijos por unidad, desglose de pisos y extras.
-                      </p>
-                      <button
-                        onClick={() => setLocalMode(true)}
-                        className="w-full px-4 py-3 rounded-xl font-bold text-sm bg-neon-green text-background hover:shadow-glow-green transition-all"
-                      >
-                        🏙️ Cotizar servicio local CDMX
-                      </button>
-                    </div>
-                  )}
 
                   <div className="flex gap-3">
                     <NavButton label="Atrás" onClick={() => setStep(1)} />
@@ -518,9 +500,8 @@ export default function CotizadorSection() {
                         Solicitar revisión manual
                       </a>
                     ) : (
-                      <NavButton label={isLocalZone ? 'Cotizar foráneo' : 'Elegir servicio'} onClick={() => {
+                      <NavButton label="Elegir servicio" onClick={() => {
                         if (hasExclusiveZone) upd({ modalidad: 'exclusivo' });
-                        setLocalMode(false);
                         setStep(3);
                       }} variant="primary" />
                     )}
@@ -528,20 +509,8 @@ export default function CotizadorSection() {
                 </motion.div>
               )}
 
-              {/* ════════════ LOCAL CDMX MODE ════════════ */}
-              {localMode && (
-                <motion.div key="local" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                  <CotizadorLocal
-                    volumenInicial={billableVol}
-                    origen={s.origen}
-                    destino={s.destino}
-                    onBack={() => { setLocalMode(false); setStep(2); }}
-                  />
-                </motion.div>
-              )}
-
               {/* ════════════ STEP 3: TIPO DE SERVICIO ════════════ */}
-              {step === 3 && !localMode && (
+              {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-orange/10 border border-neon-orange/30 flex items-center justify-center">
@@ -717,7 +686,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 4: DETALLE DE CÁLCULO ════════════ */}
-              {step === 4 && !localMode && (
+              {step === 4 && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
@@ -846,7 +815,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 5: RESULTADO Y CIERRE ════════════ */}
-              {step === 5 && !localMode && (
+              {step === 5 && (
                 <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="text-center mb-6">
                     <motion.div
