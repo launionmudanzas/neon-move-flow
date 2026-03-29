@@ -1,3 +1,9 @@
+/**
+ * whatsapp-webhook — La Unión Mudanzas
+ * Processes incoming WhatsApp messages, upserts contacts, and links leads by folio.
+ * NOTE: Function folder still named whatsapp-webhook-v3g for deploy compatibility.
+ *       Will be renamed in a future migration.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,7 +13,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,7 +24,7 @@ Deno.serve(async (req) => {
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
-    const VERIFY_TOKEN = Deno.env.get("WA_VERIFY_TOKEN") || "v3g-verify-token";
+    const VERIFY_TOKEN = Deno.env.get("WA_VERIFY_TOKEN") || "lum-verify-token";
 
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
       return new Response(challenge, { status: 200, headers: corsHeaders });
@@ -37,7 +42,6 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      // Process each entry
       const entries = body?.entry || [];
       for (const entry of entries) {
         const changes = entry?.changes || [];
@@ -50,12 +54,10 @@ Deno.serve(async (req) => {
           const messages = value.messages || [];
 
           for (const msg of messages) {
-            // Extract BSUID (the 'from' field in WhatsApp Cloud API is the user's WA ID,
-            // but the BSUID comes from the contacts array as wa_id)
             const contactMatch = contacts.find(
               (c: any) => c.wa_id === msg.from
             );
-            const bsuid = msg.from; // WhatsApp Cloud API user ID (business-scoped)
+            const bsuid = msg.from;
             const contactName = contactMatch?.profile?.name || null;
             const phoneNumber = msg.from;
             const messageBody = msg.text?.body || msg.caption || "";
@@ -77,7 +79,6 @@ Deno.serve(async (req) => {
             if (existingContact) {
               contactId = existingContact.id;
               leadId = existingContact.lead_id;
-              // Update last_message_at and name
               await supabase
                 .from("whatsapp_contacts")
                 .update({
@@ -100,8 +101,8 @@ Deno.serve(async (req) => {
               contactId = newContact!.id;
             }
 
-            // 2. Try to detect folio in message body (V3G-YYYYMMDD-XXXX)
-            const folioMatch = messageBody.match(/V3G-\d{8}-\d{4}/);
+            // 2. Detect folio in message body (LUM-YYYYMMDD-XXXX or legacy V3G-YYYYMMDD-XXXX)
+            const folioMatch = messageBody.match(/(?:LUM|V3G)-\d{8}-\d{4}/);
             if (folioMatch && !leadId) {
               const { data: lead } = await supabase
                 .from("leads_v3g")
