@@ -83,7 +83,7 @@ export default function CotizadorSection() {
   const origenCls = useMemo(() => s.origen.trim().length >= 2 ? classifyCity(s.origen) : null, [s.origen]);
   const destinoCls = useMemo(() => s.destino.trim().length >= 2 ? classifyCity(s.destino) : null, [s.destino]);
   const hasExclusiveZone = origenCls?.status === 'exclusivo' || destinoCls?.status === 'exclusivo';
-  const isLocalZone = useMemo(() => isZonaLocal(s.origen) && isZonaLocal(s.destino), [s.origen, s.destino]);
+  
 
   const insuranceRate = getInsuranceRate(s.montoSeguro);
   const insuranceCost = s.montoSeguro * insuranceRate;
