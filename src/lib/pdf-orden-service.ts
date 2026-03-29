@@ -323,7 +323,7 @@ export function generateOrdenPDF(data: OrdenPDFData): jsPDF {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(180, 210, 240);
   doc.text('Salimos todas las semanas · Servicio compartido disponible', W / 2, 291, { align: 'center' });
-  doc.text(`WhatsApp: 4421270514  |  launionmudanzas.com`, W / 2, 295, { align: 'center' });
+  doc.text('WhatsApp: 4421270514  |  launionmudanzas.com', W / 2, 295, { align: 'center' });
 
   return doc;
 }

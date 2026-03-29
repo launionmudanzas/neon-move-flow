@@ -22,7 +22,7 @@ function buildWAMessage(folio: string, nombre: string, origen: string, destino: 
   return encodeURIComponent(lines.join('\n'));
 }
 
-export default function LeadFormV3G() {
+export default function LeadFormPublic() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
 

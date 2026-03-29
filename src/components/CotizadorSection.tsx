@@ -220,7 +220,7 @@ export default function CotizadorSection() {
     ];
     if (obs) lines.push(`📋 *Observaciones:* ${obs}`);
     if (folio) lines.push(`📋 *Folio:* ${folio}`);
-    lines.push(``, `_#LaUnionMudanzas · 4421270514_`);
+    lines.push(``, `_#LaUnionMudanzas · ${WHATSAPP_NUMBER}_`);
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
   }

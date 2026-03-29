@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Download, MessageSquare, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { buildWhatsAppLink } from '@/lib/whatsapp-messages';
 
-const WHATSAPP_EMPRESA = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_EMPRESA = siteConfig.whatsApp;
 
 interface OrdenGeneradaModalProps {
   isOpen: boolean;

@@ -3,7 +3,8 @@
  * La Unión Mudanzas
  */
 
-export const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+export const WHATSAPP_NUMBER = siteConfig.whatsApp;
 export const MIN_VOL = 5;
 export const TOTAL_STEPS = 5;
 export const MARGEN_APP = 0.30;

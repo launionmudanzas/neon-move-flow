@@ -4,7 +4,8 @@
  */
 import { AlertTriangle, MessageSquare, Phone } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 interface Props {
   reason: string;

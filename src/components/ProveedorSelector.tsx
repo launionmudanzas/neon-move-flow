@@ -37,7 +37,8 @@ interface Props {
   onNoProviders?: () => void;
 }
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 export default function ProveedorSelector({
   origen, destino, fecha, volumen, modalidad, tipoServicio,

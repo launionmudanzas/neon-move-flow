@@ -7,7 +7,8 @@ import {
 import { sendServiceEmail } from '@/lib/email-service';
 import LegalAcceptanceBlock from '@/components/LegalAcceptanceBlock';
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 interface OrdenServicioProps {
   isOpen: boolean;

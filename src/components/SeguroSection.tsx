@@ -3,7 +3,8 @@ import { useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { Shield, CheckCircle2, XCircle, AlertTriangle, Clock, Calculator } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 const cubre = [
   { icon: '🔒', label: 'Robo de unidad', desc: 'Cubre los bienes asegurados contra la falta de entrega del contenido por extravío o robo' },
