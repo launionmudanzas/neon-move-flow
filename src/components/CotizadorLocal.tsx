@@ -1,42 +1,62 @@
 /**
- * CotizadorLocal — Wizard de cotización local CDMX
- * Se activa cuando origen Y destino están en la zona metropolitana CDMX
+ * CotizadorLocal — Cotizador standalone para mudanzas locales
+ * Soporta múltiples zonas (CDMX inicial, expandible)
  */
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck, MapPin, Building, Package, Shield, AlertTriangle,
   CheckCircle2, ChevronRight, Plus, Minus, Info, Wrench,
-  DoorOpen, ArrowUp, Eye,
+  DoorOpen, ArrowUp, Eye, Phone,
 } from 'lucide-react';
 import {
   UNIDADES_LOCALES, seleccionarUnidad, PIEZAS_ESPECIALES,
   EXTRAS_INICIALES, calcularCostoPisos, calcularVolumenExtra,
-  calcularServicioLocal,
+  calcularServicioLocal, ZONAS_COBERTURA_LOCAL,
   type ExtraItem, type PisosConfig, type ResultadoLocal,
 } from '@/lib/cotizador-local';
-import { formatMXN } from '@/components/cotizador/constants';
+import { formatMXN, WHATSAPP_NUMBER } from '@/components/cotizador/constants';
 import { NavButton } from '@/components/cotizador/shared';
+
+// ─── Zonas disponibles ───────────────────────────────────────────
+interface ZonaConfig {
+  id: string;
+  nombre: string;
+  emoji: string;
+  descripcion: string;
+}
+
+const ZONAS_DISPONIBLES: ZonaConfig[] = [
+  { id: 'cdmx', nombre: 'CDMX y Zona Metropolitana', emoji: '🏙️', descripcion: 'Ciudad de México, Naucalpan, Atizapán, Huixquilucan, Tlalpan, Coyoacán' },
+  // Futuras zonas se agregan aquí
+];
 
 // ─── State ───────────────────────────────────────────────────────
 interface LocalState {
+  zona: string;
+  nombre: string;
+  whatsapp: string;
+  origen: string;
+  destino: string;
   volumen: number;
-  // Pisos
   pisosOrigen: number;
   pisosDestino: number;
   elevadorOrigen: boolean;
   elevadorDestino: boolean;
   escaleras: boolean;
   tipoPiso: 'sencillo' | 'complejo';
-  // Volumen real
   m3Reales: number;
-  // Extras
   extras: ExtraItem[];
   piezasSeleccionadas: string[];
   piezasObservaciones: string;
 }
 
 const INITIAL_LOCAL: LocalState = {
+  zona: 'cdmx',
+  nombre: '',
+  whatsapp: '',
+  origen: '',
+  destino: '',
   volumen: 0,
   pisosOrigen: 1,
   pisosDestino: 1,
@@ -113,9 +133,8 @@ function DesgloseLine({ label, value, accent, warn, bold }: {
   );
 }
 
-// ─── Progress ────────────────────────────────────────────────────
-function LocalProgress({ step }: { step: number }) {
-  const steps = ['Volumen', 'Pisos', 'Extras', 'Resultado'];
+function LocalProgress({ step, total }: { step: number; total: number }) {
+  const steps = ['Datos', 'Volumen', 'Pisos', 'Extras', 'Resultado'];
   return (
     <div className="flex items-center gap-1 mb-6">
       {steps.map((s, i) => (
@@ -133,20 +152,9 @@ function LocalProgress({ step }: { step: number }) {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════
 
-interface CotizadorLocalProps {
-  volumenInicial: number;
-  origen: string;
-  destino: string;
-  onBack: () => void;
-}
-
-export default function CotizadorLocal({ volumenInicial, origen, destino, onBack }: CotizadorLocalProps) {
+export default function CotizadorLocal() {
   const [step, setStep] = useState(1);
-  const [s, setS] = useState<LocalState>({
-    ...INITIAL_LOCAL,
-    volumen: volumenInicial,
-    m3Reales: volumenInicial,
-  });
+  const [s, setS] = useState<LocalState>({ ...INITIAL_LOCAL });
 
   const upd = (patch: Partial<LocalState>) => setS(prev => ({ ...prev, ...patch }));
 
@@ -176,26 +184,102 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
     });
   };
 
+  const canStep1 = Boolean(s.nombre.trim() && s.whatsapp.trim().length >= 10 && s.origen.trim() && s.destino.trim());
+
+  const selectedZona = ZONAS_DISPONIBLES.find(z => z.id === s.zona);
+
   // ════════════ RENDER ════════════
   return (
     <div>
-      <LocalProgress step={step} />
-
-      {/* Zone banner */}
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-cyan/8 border border-neon-cyan/25 mb-4">
-        <MapPin className="w-4 h-4 text-neon-cyan flex-shrink-0" />
-        <div>
-          <p className="text-xs font-bold text-neon-cyan">Servicio Local CDMX</p>
-          <p className="text-[10px] text-muted-foreground">{origen} → {destino} · Zona metropolitana</p>
-        </div>
-      </div>
+      <LocalProgress step={step} total={5} />
 
       <AnimatePresence mode="wait">
 
-        {/* ════════════ STEP 1: VOLUMEN Y UNIDAD ════════════ */}
+        {/* ════════════ STEP 1: DATOS Y ZONA ════════════ */}
         {step === 1 && (
           <motion.div key="l1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
+            <StepHeader icon={<MapPin className="w-5 h-5 text-neon-cyan" />} title="Datos y zona" subtitle="Tu información y zona de servicio" />
+
+            {/* Zona selector */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Zona de servicio</p>
+              <div className="space-y-2">
+                {ZONAS_DISPONIBLES.map(zona => (
+                  <button
+                    key={zona.id}
+                    onClick={() => upd({ zona: zona.id })}
+                    className={`w-full p-4 rounded-xl border text-left transition-all ${
+                      s.zona === zona.id
+                        ? 'border-neon-cyan bg-neon-cyan/5 shadow-[0_0_20px_hsl(180_100%_50%/0.08)]'
+                        : 'border-border bg-surface hover:border-border/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{zona.emoji}</span>
+                      <div>
+                        <p className={`font-bold text-sm ${s.zona === zona.id ? 'text-neon-cyan' : 'text-foreground'}`}>{zona.nombre}</p>
+                        <p className="text-[10px] text-muted-foreground">{zona.descripcion}</p>
+                      </div>
+                      {s.zona === zona.id && <CheckCircle2 className="w-5 h-5 text-neon-cyan ml-auto flex-shrink-0" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                Más zonas próximamente · Tarifa básica hasta 50 km
+              </p>
+            </div>
+
+            {/* Contact fields */}
+            <div className="space-y-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Nombre completo *</label>
+                  <input value={s.nombre} onChange={e => upd({ nombre: e.target.value })} placeholder="Tu nombre" maxLength={100}
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">WhatsApp *</label>
+                  <input value={s.whatsapp} onChange={e => upd({ whatsapp: e.target.value.replace(/\D/g, '').slice(0, 12) })} placeholder="10 dígitos" type="tel"
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Origen *</label>
+                  <input value={s.origen} onChange={e => upd({ origen: e.target.value })} placeholder="Colonia o zona de origen" maxLength={150}
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Destino *</label>
+                  <input value={s.destino} onChange={e => upd({ destino: e.target.value })} placeholder="Colonia o zona de destino" maxLength={150}
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <NavButton label="Siguiente" onClick={() => setStep(2)} variant="primary" disabled={!canStep1} />
+            </div>
+            {!canStep1 && (
+              <p className="text-xs text-muted-foreground text-center mt-2">Completa nombre, WhatsApp, origen y destino</p>
+            )}
+          </motion.div>
+        )}
+
+        {/* ════════════ STEP 2: VOLUMEN Y UNIDAD ════════════ */}
+        {step === 2 && (
+          <motion.div key="l2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
             <StepHeader icon={<Truck className="w-5 h-5 text-neon-cyan" />} title="Volumen y unidad" subtitle="Selecciona según tu carga" />
+
+            {/* Zone banner */}
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-cyan/8 border border-neon-cyan/25 mb-4">
+              <MapPin className="w-4 h-4 text-neon-cyan flex-shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-neon-cyan">Servicio Local · {selectedZona?.nombre}</p>
+                <p className="text-[10px] text-muted-foreground">{s.origen} → {s.destino}</p>
+              </div>
+            </div>
 
             {/* Volume input */}
             <div className="p-4 rounded-xl bg-surface border border-border mb-4">
@@ -205,7 +289,7 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
                 value={s.volumen || ''}
                 onChange={e => {
                   const v = Number(e.target.value);
-                  upd({ volumen: v, m3Reales: Math.max(v, s.m3Reales === INITIAL_LOCAL.m3Reales ? v : s.m3Reales) });
+                  upd({ volumen: v, m3Reales: Math.max(v, s.m3Reales === 0 ? v : s.m3Reales) });
                 }}
                 placeholder="Ej. 10"
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all"
@@ -248,15 +332,15 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
             </div>
 
             <div className="flex gap-3">
-              <NavButton label="Atrás" onClick={onBack} />
-              <NavButton label="Pisos y acceso" onClick={() => setStep(2)} variant="primary" disabled={!unidad} />
+              <NavButton label="Atrás" onClick={() => setStep(1)} />
+              <NavButton label="Pisos y acceso" onClick={() => setStep(3)} variant="primary" disabled={!unidad} />
             </div>
           </motion.div>
         )}
 
-        {/* ════════════ STEP 2: PISOS ════════════ */}
-        {step === 2 && (
-          <motion.div key="l2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
+        {/* ════════════ STEP 3: PISOS ════════════ */}
+        {step === 3 && (
+          <motion.div key="l3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
             <StepHeader icon={<Building className="w-5 h-5 text-neon-cyan" />} title="Pisos y acceso" subtitle="Condiciones de carga y descarga" />
 
             {/* Tipo de servicio de pisos */}
@@ -328,15 +412,15 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
             })()}
 
             <div className="flex gap-3">
-              <NavButton label="Atrás" onClick={() => setStep(1)} />
-              <NavButton label="Extras" onClick={() => setStep(3)} variant="primary" />
+              <NavButton label="Atrás" onClick={() => setStep(2)} />
+              <NavButton label="Extras" onClick={() => setStep(4)} variant="primary" />
             </div>
           </motion.div>
         )}
 
-        {/* ════════════ STEP 3: EXTRAS ════════════ */}
-        {step === 3 && (
-          <motion.div key="l3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
+        {/* ════════════ STEP 4: EXTRAS ════════════ */}
+        {step === 4 && (
+          <motion.div key="l4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
             <StepHeader icon={<Wrench className="w-5 h-5 text-neon-cyan" />} title="Extras y piezas especiales" subtitle="Cobros adicionales al servicio base" />
 
             {/* Volumen extra */}
@@ -427,15 +511,15 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
             </div>
 
             <div className="flex gap-3">
-              <NavButton label="Atrás" onClick={() => setStep(2)} />
-              <NavButton label="Ver resultado" onClick={() => setStep(4)} variant="primary" />
+              <NavButton label="Atrás" onClick={() => setStep(3)} />
+              <NavButton label="Ver resultado" onClick={() => setStep(5)} variant="primary" />
             </div>
           </motion.div>
         )}
 
-        {/* ════════════ STEP 4: RESULTADO ════════════ */}
-        {step === 4 && resultado && (
-          <motion.div key="l4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
+        {/* ════════════ STEP 5: RESULTADO ════════════ */}
+        {step === 5 && resultado && (
+          <motion.div key="l5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
             <StepHeader icon={<Eye className="w-5 h-5 text-neon-cyan" />} title="Resumen de cotización" subtitle="Desglose completo del servicio local" />
 
             {/* Validation warning */}
@@ -534,14 +618,17 @@ export default function CotizadorLocal({ volumenInicial, origen, destino, onBack
             <div className="flex gap-3">
               <NavButton label="Modificar" onClick={() => setStep(1)} />
               <a
-                href={`https://wa.me/4421270514?text=${encodeURIComponent(
-                  `Hola, solicito cotización de servicio local CDMX:\n\n` +
-                  `📍 ${origen} → ${destino}\n` +
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                  `Hola, solicito cotización de servicio local:\n\n` +
+                  `👤 ${s.nombre}\n` +
+                  `📱 ${s.whatsapp}\n` +
+                  `🏙️ Zona: ${selectedZona?.nombre}\n` +
+                  `📍 ${s.origen} → ${s.destino}\n` +
                   `📦 Volumen: ${s.volumen} m³\n` +
                   `🚛 Unidad: ${resultado.unidad.nombre}\n` +
                   `💰 Estimado: ${formatMXN(resultado.total)}\n` +
                   (s.piezasSeleccionadas.length > 0 ? `⚠️ Piezas especiales: ${s.piezasSeleccionadas.join(', ')}\n` : '') +
-                  `\n_#LaUnionMudanzas · Local CDMX_`
+                  `\n_#LaUnionMudanzas · Servicio Local_`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

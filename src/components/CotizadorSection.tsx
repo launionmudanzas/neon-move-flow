@@ -29,7 +29,7 @@ import PagoModal from '@/components/PagoModal';
 import ProveedorSelector from '@/components/ProveedorSelector';
 import AsesorBanner from '@/components/AsesorBanner';
 import CotizadorLocal from '@/components/CotizadorLocal';
-import { isZonaLocal } from '@/lib/cotizador-local';
+
 import type { TramoResult, RutaRow } from '@/hooks/use-cotizacion';
 
 // ─── Calculation result type ─────────────────────────────────────
@@ -54,11 +54,11 @@ export default function CotizadorSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
+  const [cotizadorMode, setCotizadorMode] = useState<'local' | 'foraneo'>('local');
   const [step, setStep] = useState(1);
   const [s, setS] = useState<WizardState>({ ...INITIAL_STATE });
   const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
   const [calculating, setCalculating] = useState(false);
-  const [localMode, setLocalMode] = useState(false);
 
   // Order/payment state
   const [ordenOpen, setOrdenOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function CotizadorSection() {
   const origenCls = useMemo(() => s.origen.trim().length >= 2 ? classifyCity(s.origen) : null, [s.origen]);
   const destinoCls = useMemo(() => s.destino.trim().length >= 2 ? classifyCity(s.destino) : null, [s.destino]);
   const hasExclusiveZone = origenCls?.status === 'exclusivo' || destinoCls?.status === 'exclusivo';
-  const isLocalZone = useMemo(() => isZonaLocal(s.origen) && isZonaLocal(s.destino), [s.origen, s.destino]);
+  
 
   const insuranceRate = getInsuranceRate(s.montoSeguro);
   const insuranceCost = s.montoSeguro * insuranceRate;
@@ -292,7 +292,46 @@ export default function CotizadorSection() {
         >
           <div className="h-1.5 bg-gradient-to-r from-neon-cyan/40 via-neon-blue/40 to-neon-cyan/40" />
 
+          {/* ═══ Tab selector: Local / Foráneo ═══ */}
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => { setCotizadorMode('local'); setStep(1); }}
+              className={`flex-1 py-3.5 text-sm font-bold tracking-wide transition-all relative ${
+                cotizadorMode === 'local'
+                  ? 'text-neon-cyan'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🏙️ Mudanza Local
+              {cotizadorMode === 'local' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-cyan" />
+              )}
+            </button>
+            <button
+              onClick={() => { setCotizadorMode('foraneo'); setStep(1); }}
+              className={`flex-1 py-3.5 text-sm font-bold tracking-wide transition-all relative ${
+                cotizadorMode === 'foraneo'
+                  ? 'text-neon-orange'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🚛 Mudanza Foránea
+              {cotizadorMode === 'foraneo' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-orange" />
+              )}
+            </button>
+          </div>
+
           <div className="p-6 md:p-8">
+
+            {/* ═══ LOCAL MODE ═══ */}
+            {cotizadorMode === 'local' && (
+              <CotizadorLocal />
+            )}
+
+            {/* ═══ FORÁNEO MODE ═══ */}
+            {cotizadorMode === 'foraneo' && (
+              <>
             <ProgressBar step={step} />
 
             <AnimatePresence mode="wait">
@@ -487,24 +526,6 @@ export default function CotizadorSection() {
                     </div>
                   )}
 
-                  {/* Local CDMX detection */}
-                  {isLocalZone && !hasExclusiveZone && !(origenCls?.status === 'desconocida' || destinoCls?.status === 'desconocida') && (
-                    <div className="p-4 rounded-xl bg-neon-green/8 border border-neon-green/25 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-5 h-5 text-neon-green flex-shrink-0" />
-                        <p className="text-sm font-bold text-neon-green">¡Servicio local CDMX detectado!</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Ambas ubicaciones están en la zona metropolitana. Usa nuestro cotizador local con precios fijos por unidad, desglose de pisos y extras.
-                      </p>
-                      <button
-                        onClick={() => setLocalMode(true)}
-                        className="w-full px-4 py-3 rounded-xl font-bold text-sm bg-neon-green text-background hover:shadow-glow-green transition-all"
-                      >
-                        🏙️ Cotizar servicio local CDMX
-                      </button>
-                    </div>
-                  )}
 
                   <div className="flex gap-3">
                     <NavButton label="Atrás" onClick={() => setStep(1)} />
@@ -518,9 +539,8 @@ export default function CotizadorSection() {
                         Solicitar revisión manual
                       </a>
                     ) : (
-                      <NavButton label={isLocalZone ? 'Cotizar foráneo' : 'Elegir servicio'} onClick={() => {
+                      <NavButton label="Elegir servicio" onClick={() => {
                         if (hasExclusiveZone) upd({ modalidad: 'exclusivo' });
-                        setLocalMode(false);
                         setStep(3);
                       }} variant="primary" />
                     )}
@@ -528,20 +548,8 @@ export default function CotizadorSection() {
                 </motion.div>
               )}
 
-              {/* ════════════ LOCAL CDMX MODE ════════════ */}
-              {localMode && (
-                <motion.div key="local" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                  <CotizadorLocal
-                    volumenInicial={billableVol}
-                    origen={s.origen}
-                    destino={s.destino}
-                    onBack={() => { setLocalMode(false); setStep(2); }}
-                  />
-                </motion.div>
-              )}
-
               {/* ════════════ STEP 3: TIPO DE SERVICIO ════════════ */}
-              {step === 3 && !localMode && (
+              {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-orange/10 border border-neon-orange/30 flex items-center justify-center">
@@ -717,7 +725,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 4: DETALLE DE CÁLCULO ════════════ */}
-              {step === 4 && !localMode && (
+              {step === 4 && (
                 <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
@@ -846,7 +854,7 @@ export default function CotizadorSection() {
               )}
 
               {/* ════════════ STEP 5: RESULTADO Y CIERRE ════════════ */}
-              {step === 5 && !localMode && (
+              {step === 5 && (
                 <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
                   <div className="text-center mb-6">
                     <motion.div
@@ -993,6 +1001,8 @@ export default function CotizadorSection() {
               )}
 
             </AnimatePresence>
+              </>
+            )}
           </div>
         </motion.div>
 
