@@ -1005,7 +1005,6 @@ export default function CotizadorSection() {
             )}
           </div>
         </motion.div>
-        </motion.div>
 
         {/* Trust strip */}
         <motion.div
