@@ -3,7 +3,9 @@
  * Each event generates a pre-filled wa.me link
  */
 
-const WA_NUMBER = '524421270514';
+import { siteConfig } from '@/lib/site-config';
+
+const WA_NUMBER = siteConfig.whatsAppFull;
 
 export interface ServiceData {
   folio: string;
@@ -102,7 +104,7 @@ export function buildWhatsAppMessage(event: WAEvent, data: ServiceData): string 
   if (data.total) lines.push(`💰 *Total:* $${data.total.toLocaleString('es-MX')} MXN`);
   if (data.proveedor) lines.push(`🤝 *Proveedor:* ${data.proveedor}`);
 
-  lines.push(``, extra, ``, `_#LaUnionMudanzas · 4421270514_`);
+  lines.push(``, extra, ``, `_${siteConfig.hashtag} · ${siteConfig.phone}_`);
 
   return lines.join('\n');
 }
