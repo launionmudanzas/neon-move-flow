@@ -4,8 +4,7 @@ import { useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { MapPin, Phone, User, ArrowRight, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
 
 function buildWAMessage(nombre: string, origen: string, destino: string) {
   const lines = [
@@ -15,7 +14,7 @@ function buildWAMessage(nombre: string, origen: string, destino: string) {
     `📍 *Origen:* ${origen}`,
     `📍 *Destino:* ${destino}`,
     ``,
-    `_#LaUnionMudanzas · 4421270514_`,
+    `_${siteConfig.hashtag} · ${siteConfig.phone}_`,
   ];
   return encodeURIComponent(lines.join('\n'));
 }
@@ -62,7 +61,7 @@ export default function LeadFormSection() {
     }
   };
 
-  const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${buildWAMessage(
+  const waLink = `https://wa.me/${siteConfig.whatsApp}?text=${buildWAMessage(
     nombre || 'Cliente',
     origen || 'origen',
     destino || 'destino'

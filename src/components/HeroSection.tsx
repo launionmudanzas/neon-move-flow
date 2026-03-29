@@ -3,7 +3,8 @@ import { ArrowRight, MapPin, Shield, Clock, Building2, CheckCircle2, AlertTriang
 import truckHero from '@/assets/truck-hero.jpg';
 import mexicoMap from '@/assets/mexico-neon-map.jpg';
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 const badges = [
   { icon: MapPin, label: 'Cobertura nacional' },

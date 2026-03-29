@@ -2,7 +2,8 @@ import { Facebook, Instagram, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoOficial from '@/assets/logo-oficial.png';
 
-const WHATSAPP_NUMBER = '4421270514';
+import { siteConfig } from '@/lib/site-config';
+const WHATSAPP_NUMBER = siteConfig.whatsApp;
 
 export default function Footer() {
   return (
