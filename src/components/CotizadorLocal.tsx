@@ -1,6 +1,6 @@
 /**
  * CotizadorLocal — Cotizador standalone para mudanzas locales
- * Soporta múltiples zonas (CDMX inicial, expandible)
+ * Soporta múltiples zonas con configuración independiente
  */
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,26 +10,12 @@ import {
   DoorOpen, ArrowUp, Eye, Phone,
 } from 'lucide-react';
 import {
-  UNIDADES_LOCALES, seleccionarUnidad, PIEZAS_ESPECIALES,
-  EXTRAS_INICIALES, calcularCostoPisos, calcularVolumenExtra,
-  calcularServicioLocal, ZONAS_COBERTURA_LOCAL,
-  type ExtraItem, type PisosConfig, type ResultadoLocal,
+  ZONAS_LOCALES, getZonaConfig, seleccionarUnidadZona,
+  calcularCostoPisosZona, calcularVolumenExtra, calcularServicioZona,
+  type ExtraItem, type PisosConfig, type ResultadoLocal, type ZonaLocalConfig,
 } from '@/lib/cotizador-local';
 import { formatMXN, WHATSAPP_NUMBER } from '@/components/cotizador/constants';
 import { NavButton } from '@/components/cotizador/shared';
-
-// ─── Zonas disponibles ───────────────────────────────────────────
-interface ZonaConfig {
-  id: string;
-  nombre: string;
-  emoji: string;
-  descripcion: string;
-}
-
-const ZONAS_DISPONIBLES: ZonaConfig[] = [
-  { id: 'cdmx', nombre: 'CDMX y Zona Metropolitana', emoji: '🏙️', descripcion: 'Ciudad de México, Naucalpan, Atizapán, Huixquilucan, Tlalpan, Coyoacán' },
-  // Futuras zonas se agregan aquí
-];
 
 // ─── State ───────────────────────────────────────────────────────
 interface LocalState {
@@ -51,24 +37,27 @@ interface LocalState {
   piezasObservaciones: string;
 }
 
-const INITIAL_LOCAL: LocalState = {
-  zona: 'cdmx',
-  nombre: '',
-  whatsapp: '',
-  origen: '',
-  destino: '',
-  volumen: 0,
-  pisosOrigen: 1,
-  pisosDestino: 1,
-  elevadorOrigen: false,
-  elevadorDestino: false,
-  escaleras: true,
-  tipoPiso: 'sencillo',
-  m3Reales: 0,
-  extras: EXTRAS_INICIALES.map(e => ({ ...e })),
-  piezasSeleccionadas: [],
-  piezasObservaciones: '',
-};
+function makeInitialState(zonaId: string): LocalState {
+  const zona = getZonaConfig(zonaId);
+  return {
+    zona: zonaId,
+    nombre: '',
+    whatsapp: '',
+    origen: '',
+    destino: '',
+    volumen: 0,
+    pisosOrigen: 1,
+    pisosDestino: 1,
+    elevadorOrigen: false,
+    elevadorDestino: false,
+    escaleras: true,
+    tipoPiso: 'sencillo',
+    m3Reales: 0,
+    extras: (zona?.extras ?? []).map(e => ({ ...e })),
+    piezasSeleccionadas: [],
+    piezasObservaciones: '',
+  };
+}
 
 // ─── Sub-components ──────────────────────────────────────────────
 function StepHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
@@ -133,7 +122,8 @@ function DesgloseLine({ label, value, accent, warn, bold }: {
   );
 }
 
-function LocalProgress({ step, total }: { step: number; total: number }) {
+function LocalProgress({ step, total, zonaConfig }: { step: number; total: number; zonaConfig: ZonaLocalConfig }) {
+  // Ajustar pasos según zona (sin volumen extra = skip some labels)
   const steps = ['Datos', 'Volumen', 'Pisos', 'Extras', 'Resultado'];
   return (
     <div className="flex items-center gap-1 mb-6">
@@ -154,15 +144,23 @@ function LocalProgress({ step, total }: { step: number; total: number }) {
 
 export default function CotizadorLocal() {
   const [step, setStep] = useState(1);
-  const [s, setS] = useState<LocalState>({ ...INITIAL_LOCAL });
+  const [s, setS] = useState<LocalState>(() => makeInitialState(ZONAS_LOCALES[0].id));
 
   const upd = (patch: Partial<LocalState>) => setS(prev => ({ ...prev, ...patch }));
 
-  const unidad = useMemo(() => seleccionarUnidad(s.volumen), [s.volumen]);
+  const zonaConfig = useMemo(() => getZonaConfig(s.zona), [s.zona]);
+
+  const handleZonaChange = (zonaId: string) => {
+    setS(makeInitialState(zonaId));
+    setStep(1);
+  };
+
+  const unidad = useMemo(() => seleccionarUnidadZona(s.zona, s.volumen), [s.zona, s.volumen]);
 
   const resultado: ResultadoLocal | null = useMemo(() => {
-    if (!unidad) return null;
-    return calcularServicioLocal({
+    if (!unidad || !zonaConfig) return null;
+    return calcularServicioZona({
+      zonaId: s.zona,
       volumen: s.volumen,
       pisos: {
         pisosOrigen: s.pisosOrigen,
@@ -176,7 +174,7 @@ export default function CotizadorLocal() {
       extras: s.extras,
       piezasEspeciales: s.piezasSeleccionadas,
     });
-  }, [s, unidad]);
+  }, [s, unidad, zonaConfig]);
 
   const updateExtra = (id: string, patch: Partial<ExtraItem>) => {
     upd({
@@ -186,12 +184,12 @@ export default function CotizadorLocal() {
 
   const canStep1 = Boolean(s.nombre.trim() && s.whatsapp.trim().length >= 10 && s.origen.trim() && s.destino.trim());
 
-  const selectedZona = ZONAS_DISPONIBLES.find(z => z.id === s.zona);
+  if (!zonaConfig) return null;
 
   // ════════════ RENDER ════════════
   return (
     <div>
-      <LocalProgress step={step} total={5} />
+      <LocalProgress step={step} total={5} zonaConfig={zonaConfig} />
 
       <AnimatePresence mode="wait">
 
@@ -204,10 +202,10 @@ export default function CotizadorLocal() {
             <div className="mb-4">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Zona de servicio</p>
               <div className="space-y-2">
-                {ZONAS_DISPONIBLES.map(zona => (
+                {ZONAS_LOCALES.map(zona => (
                   <button
                     key={zona.id}
-                    onClick={() => upd({ zona: zona.id })}
+                    onClick={() => handleZonaChange(zona.id)}
                     className={`w-full p-4 rounded-xl border text-left transition-all ${
                       s.zona === zona.id
                         ? 'border-neon-cyan bg-neon-cyan/5 shadow-[0_0_20px_hsl(180_100%_50%/0.08)]'
@@ -226,7 +224,7 @@ export default function CotizadorLocal() {
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                Más zonas próximamente · Tarifa básica hasta 50 km
+                Más zonas próximamente
               </p>
             </div>
 
@@ -276,7 +274,7 @@ export default function CotizadorLocal() {
             <div className="flex items-center gap-2 p-3 rounded-xl bg-neon-cyan/8 border border-neon-cyan/25 mb-4">
               <MapPin className="w-4 h-4 text-neon-cyan flex-shrink-0" />
               <div>
-                <p className="text-xs font-bold text-neon-cyan">Servicio Local · {selectedZona?.nombre}</p>
+                <p className="text-xs font-bold text-neon-cyan">Servicio Local · {zonaConfig.nombre}</p>
                 <p className="text-[10px] text-muted-foreground">{s.origen} → {s.destino}</p>
               </div>
             </div>
@@ -285,7 +283,7 @@ export default function CotizadorLocal() {
             <div className="p-4 rounded-xl bg-surface border border-border mb-4">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Volumen estimado (m³)</label>
               <input
-                type="number" min={1} max={45} step={0.5}
+                type="number" min={1} max={zonaConfig.maxVolumen} step={0.5}
                 value={s.volumen || ''}
                 onChange={e => {
                   const v = Number(e.target.value);
@@ -294,10 +292,10 @@ export default function CotizadorLocal() {
                 placeholder="Ej. 10"
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all"
               />
-              {s.volumen > 45 && (
+              {s.volumen > zonaConfig.maxVolumen && (
                 <p className="text-xs text-neon-orange mt-2 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
-                  Volumen fuera de rango local. Contacta un asesor.
+                  Volumen fuera de rango para {zonaConfig.nombre}. Contacta un asesor.
                 </p>
               )}
             </div>
@@ -305,7 +303,7 @@ export default function CotizadorLocal() {
             {/* Unit cards */}
             <div className="space-y-2 mb-4">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Unidades disponibles</p>
-              {UNIDADES_LOCALES.map(u => {
+              {zonaConfig.unidades.map(u => {
                 const selected = unidad?.id === u.id;
                 return (
                   <div key={u.id} className={`p-4 rounded-xl border transition-all ${selected ? 'border-neon-cyan bg-neon-cyan/5 shadow-[0_0_20px_hsl(180_100%_50%/0.08)]' : 'border-border bg-surface'}`}>
@@ -319,7 +317,7 @@ export default function CotizadorLocal() {
                       </div>
                       <div className="text-right">
                         <p className={`font-mono font-bold text-sm ${selected ? 'text-neon-cyan' : 'text-foreground'}`}>
-                          {formatMXN(u.precioMin)}{u.precioMin !== u.precioMax && ` - ${formatMXN(u.precioMax)}`}
+                          {formatMXN(u.precioBase)}
                         </p>
                         {selected && (
                           <span className="text-[10px] text-neon-cyan font-bold">✓ SUGERIDA</span>
@@ -343,28 +341,42 @@ export default function CotizadorLocal() {
           <motion.div key="l3" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
             <StepHeader icon={<Building className="w-5 h-5 text-neon-cyan" />} title="Pisos y acceso" subtitle="Condiciones de carga y descarga" />
 
-            {/* Tipo de servicio de pisos */}
-            <div className="p-4 rounded-xl bg-surface border border-border mb-4">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Tipo de maniobra</p>
-              <div className="grid grid-cols-2 gap-2">
-                {(['sencillo', 'complejo'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => upd({ tipoPiso: t })}
-                    className={`p-3 rounded-xl border text-sm font-bold transition-all ${
-                      s.tipoPiso === t
-                        ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan'
-                        : 'border-border bg-background text-muted-foreground hover:border-border/60'
-                    }`}
-                  >
-                    {t === 'sencillo' ? '📦 Regular / Sencillo' : '🏗️ Complejo / Pesado'}
-                  </button>
-                ))}
+            {/* Tipo de servicio de pisos — solo si el modelo es cdmx */}
+            {zonaConfig.pisos.modelo === 'cdmx' && (
+              <div className="p-4 rounded-xl bg-surface border border-border mb-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Tipo de maniobra</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['sencillo', 'complejo'] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => upd({ tipoPiso: t })}
+                      className={`p-3 rounded-xl border text-sm font-bold transition-all ${
+                        s.tipoPiso === t
+                          ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan'
+                          : 'border-border bg-background text-muted-foreground hover:border-border/60'
+                      }`}
+                    >
+                      {t === 'sencillo' ? '📦 Regular / Sencillo' : '🏗️ Complejo / Pesado'}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {s.tipoPiso === 'sencillo'
+                    ? `$${zonaConfig.pisos.costoSencillo}/piso adicional`
+                    : `$${zonaConfig.pisos.costoComplejo}/piso adicional (piezas pesadas, difícil acceso)`}
+                </p>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-2">
-                {s.tipoPiso === 'sencillo' ? '$250/piso adicional' : '$450/piso adicional (piezas pesadas, difícil acceso)'}
-              </p>
-            </div>
+            )}
+
+            {/* Info de tarifa fija */}
+            {zonaConfig.pisos.modelo === 'fijo' && (
+              <div className="p-3 rounded-xl bg-neon-cyan/8 border border-neon-cyan/20 mb-4 flex items-center gap-2">
+                <Info className="w-4 h-4 text-neon-cyan flex-shrink-0" />
+                <p className="text-xs text-neon-cyan font-bold">
+                  Tarifa por piso: {formatMXN(zonaConfig.pisos.costoPorPiso ?? 0)} por piso adicional
+                </p>
+              </div>
+            )}
 
             {/* Origen */}
             <div className="p-4 rounded-xl bg-surface border border-border mb-3">
@@ -388,7 +400,7 @@ export default function CotizadorLocal() {
 
             {/* Pisos summary */}
             {(() => {
-              const dp = calcularCostoPisos({
+              const dp = calcularCostoPisosZona(s.zona, {
                 pisosOrigen: s.pisosOrigen,
                 pisosDestino: s.pisosDestino,
                 elevadorOrigen: s.elevadorOrigen,
@@ -421,32 +433,34 @@ export default function CotizadorLocal() {
         {/* ════════════ STEP 4: EXTRAS ════════════ */}
         {step === 4 && (
           <motion.div key="l4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-            <StepHeader icon={<Wrench className="w-5 h-5 text-neon-cyan" />} title="Extras y piezas especiales" subtitle="Cobros adicionales al servicio base" />
+            <StepHeader icon={<Wrench className="w-5 h-5 text-neon-cyan" />} title="Extras" subtitle="Cobros adicionales al servicio base" />
 
-            {/* Volumen extra */}
-            <div className="p-4 rounded-xl bg-surface border border-border mb-4">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Volumen real vs. cotizado</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase block mb-1">m³ cotizados</label>
-                  <input type="number" value={s.volumen} disabled
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm opacity-60" />
+            {/* Volumen extra — solo si la zona lo soporta */}
+            {zonaConfig.volumenExtra && (
+              <div className="p-4 rounded-xl bg-surface border border-border mb-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Volumen real vs. cotizado</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase block mb-1">m³ cotizados</label>
+                    <input type="number" value={s.volumen} disabled
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm opacity-60" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase block mb-1">m³ reales</label>
+                    <input type="number" min={0} max={100} step={0.5} value={s.m3Reales || ''}
+                      onChange={e => upd({ m3Reales: Number(e.target.value) })}
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase block mb-1">m³ reales</label>
-                  <input type="number" min={0} max={100} step={0.5} value={s.m3Reales || ''}
-                    onChange={e => upd({ m3Reales: Number(e.target.value) })}
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" />
-                </div>
+                {s.m3Reales > s.volumen && unidad && (
+                  <div className="mt-2 p-2 rounded-lg bg-neon-orange/8 border border-neon-orange/20">
+                    <p className="text-[11px] text-neon-orange font-bold">
+                      +{(s.m3Reales - s.volumen).toFixed(1)} m³ extra · Cargo adicional: {formatMXN(calcularVolumenExtra(s.volumen, s.m3Reales, unidad.precioBase).costoExtra)}
+                    </p>
+                  </div>
+                )}
               </div>
-              {s.m3Reales > s.volumen && unidad && (
-                <div className="mt-2 p-2 rounded-lg bg-neon-orange/8 border border-neon-orange/20">
-                  <p className="text-[11px] text-neon-orange font-bold">
-                    +{(s.m3Reales - s.volumen).toFixed(1)} m³ extra · Cargo adicional: {formatMXN(calcularVolumenExtra(s.volumen, s.m3Reales, Math.round((unidad.precioMin + unidad.precioMax) / 2)).costoExtra)}
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Extras */}
             <div className="space-y-3 mb-4">
@@ -474,41 +488,43 @@ export default function CotizadorLocal() {
               ))}
             </div>
 
-            {/* Piezas especiales */}
-            <div className="p-4 rounded-xl bg-surface border border-border mb-4">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Piezas especiales</p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {PIEZAS_ESPECIALES.map(pieza => {
-                  const selected = s.piezasSeleccionadas.includes(pieza);
-                  return (
-                    <button
-                      key={pieza}
-                      onClick={() => {
-                        const next = selected
-                          ? s.piezasSeleccionadas.filter(p => p !== pieza)
-                          : [...s.piezasSeleccionadas, pieza];
-                        upd({ piezasSeleccionadas: next });
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                        selected
-                          ? 'border-neon-orange bg-neon-orange/10 text-neon-orange'
-                          : 'border-border text-muted-foreground hover:border-border/60'
-                      }`}
-                    >
-                      {selected ? '✓ ' : ''}{pieza}
-                    </button>
-                  );
-                })}
-              </div>
-              {s.piezasSeleccionadas.length > 0 && (
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase block mb-1">Observaciones de piezas</label>
-                  <input value={s.piezasObservaciones} onChange={e => upd({ piezasObservaciones: e.target.value })}
-                    placeholder="Detalles de las piezas especiales..."
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" maxLength={300} />
+            {/* Piezas especiales — solo si la zona las define */}
+            {zonaConfig.piezasEspeciales.length > 0 && (
+              <div className="p-4 rounded-xl bg-surface border border-border mb-4">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Piezas especiales</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {zonaConfig.piezasEspeciales.map(pieza => {
+                    const selected = s.piezasSeleccionadas.includes(pieza);
+                    return (
+                      <button
+                        key={pieza}
+                        onClick={() => {
+                          const next = selected
+                            ? s.piezasSeleccionadas.filter(p => p !== pieza)
+                            : [...s.piezasSeleccionadas, pieza];
+                          upd({ piezasSeleccionadas: next });
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                          selected
+                            ? 'border-neon-orange bg-neon-orange/10 text-neon-orange'
+                            : 'border-border text-muted-foreground hover:border-border/60'
+                        }`}
+                      >
+                        {selected ? '✓ ' : ''}{pieza}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+                {s.piezasSeleccionadas.length > 0 && (
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase block mb-1">Observaciones de piezas</label>
+                    <input value={s.piezasObservaciones} onChange={e => upd({ piezasObservaciones: e.target.value })}
+                      placeholder="Detalles de las piezas especiales..."
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-neon-cyan/60 transition-all" maxLength={300} />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <NavButton label="Atrás" onClick={() => setStep(3)} />
@@ -520,16 +536,18 @@ export default function CotizadorLocal() {
         {/* ════════════ STEP 5: RESULTADO ════════════ */}
         {step === 5 && resultado && (
           <motion.div key="l5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-            <StepHeader icon={<Eye className="w-5 h-5 text-neon-cyan" />} title="Resumen de cotización" subtitle="Desglose completo del servicio local" />
+            <StepHeader icon={<Eye className="w-5 h-5 text-neon-cyan" />} title="Resumen de cotización" subtitle={`Desglose completo · ${zonaConfig.nombre}`} />
 
             {/* Validation warning */}
             <div className="p-3 rounded-xl bg-neon-orange/10 border border-neon-orange/25 mb-4 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-neon-orange flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-neon-orange">Sujeto a validación por fotos o visita virtual.</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Si no se suben fotos o hay datos ambiguos, la cotización queda pendiente de validación.
-                </p>
+                <p className="text-xs font-bold text-neon-orange">{zonaConfig.validacionMsg}</p>
+                {zonaConfig.volumenExtra && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Si no se suben fotos o hay datos ambiguos, la cotización queda pendiente de validación.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -568,7 +586,7 @@ export default function CotizadorLocal() {
                   <DesgloseLine label="Pisos" value="Sin cargo" />
                 )}
 
-                {resultado.desgloseVolumen.m3Extra > 0 && (
+                {zonaConfig.volumenExtra && resultado.desgloseVolumen.m3Extra > 0 && (
                   <DesgloseLine
                     label={`m³ extra (${resultado.desgloseVolumen.m3Extra.toFixed(1)} × ${formatMXN(resultado.desgloseVolumen.costoM3)})`}
                     value={formatMXN(resultado.costoVolumenExtra)}
@@ -601,8 +619,7 @@ export default function CotizadorLocal() {
             <div className="p-3 rounded-xl bg-muted border border-border mb-4 flex items-start gap-2">
               <Info className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
               <p className="text-[11px] text-muted-foreground">
-                Costos adicionales pueden aplicarse según condiciones reales del servicio. 
-                Las tarifas son indicativas y pueden variar tras la validación visual del inventario.
+                Costos adicionales pueden aplicarse según condiciones reales del servicio.
               </p>
             </div>
 
@@ -622,7 +639,7 @@ export default function CotizadorLocal() {
                   `Hola, solicito cotización de servicio local:\n\n` +
                   `👤 ${s.nombre}\n` +
                   `📱 ${s.whatsapp}\n` +
-                  `🏙️ Zona: ${selectedZona?.nombre}\n` +
+                  `🏙️ Zona: ${zonaConfig.nombre}\n` +
                   `📍 ${s.origen} → ${s.destino}\n` +
                   `📦 Volumen: ${s.volumen} m³\n` +
                   `🚛 Unidad: ${resultado.unidad.nombre}\n` +
