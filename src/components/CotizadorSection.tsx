@@ -1001,7 +1001,10 @@ export default function CotizadorSection() {
               )}
 
             </AnimatePresence>
+              </>
+            )}
           </div>
+        </motion.div>
         </motion.div>
 
         {/* Trust strip */}
