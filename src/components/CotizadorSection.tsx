@@ -54,11 +54,11 @@ export default function CotizadorSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
+  const [cotizadorMode, setCotizadorMode] = useState<'local' | 'foraneo'>('local');
   const [step, setStep] = useState(1);
   const [s, setS] = useState<WizardState>({ ...INITIAL_STATE });
   const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
   const [calculating, setCalculating] = useState(false);
-  const [localMode, setLocalMode] = useState(false);
 
   // Order/payment state
   const [ordenOpen, setOrdenOpen] = useState(false);
