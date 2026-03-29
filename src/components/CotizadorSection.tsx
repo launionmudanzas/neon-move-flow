@@ -292,7 +292,46 @@ export default function CotizadorSection() {
         >
           <div className="h-1.5 bg-gradient-to-r from-neon-cyan/40 via-neon-blue/40 to-neon-cyan/40" />
 
+          {/* ═══ Tab selector: Local / Foráneo ═══ */}
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => { setCotizadorMode('local'); setStep(1); }}
+              className={`flex-1 py-3.5 text-sm font-bold tracking-wide transition-all relative ${
+                cotizadorMode === 'local'
+                  ? 'text-neon-cyan'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🏙️ Mudanza Local
+              {cotizadorMode === 'local' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-cyan" />
+              )}
+            </button>
+            <button
+              onClick={() => { setCotizadorMode('foraneo'); setStep(1); }}
+              className={`flex-1 py-3.5 text-sm font-bold tracking-wide transition-all relative ${
+                cotizadorMode === 'foraneo'
+                  ? 'text-neon-orange'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              🚛 Mudanza Foránea
+              {cotizadorMode === 'foraneo' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-orange" />
+              )}
+            </button>
+          </div>
+
           <div className="p-6 md:p-8">
+
+            {/* ═══ LOCAL MODE ═══ */}
+            {cotizadorMode === 'local' && (
+              <CotizadorLocal />
+            )}
+
+            {/* ═══ FORÁNEO MODE ═══ */}
+            {cotizadorMode === 'foraneo' && (
+              <>
             <ProgressBar step={step} />
 
             <AnimatePresence mode="wait">
