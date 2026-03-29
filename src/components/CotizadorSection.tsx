@@ -29,7 +29,7 @@ import PagoModal from '@/components/PagoModal';
 import ProveedorSelector from '@/components/ProveedorSelector';
 import AsesorBanner from '@/components/AsesorBanner';
 import CotizadorLocal from '@/components/CotizadorLocal';
-import { isZonaLocal } from '@/lib/cotizador-local';
+
 import type { TramoResult, RutaRow } from '@/hooks/use-cotizacion';
 
 // ─── Calculation result type ─────────────────────────────────────
