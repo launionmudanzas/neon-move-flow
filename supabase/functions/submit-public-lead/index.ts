@@ -11,7 +11,7 @@ const corsHeaders = {
 function sanitize(val: unknown, maxLen: number): string {
   if (typeof val !== "string") return "";
   return val
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "") // strip control chars
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
     .trim()
     .slice(0, maxLen);
 }
@@ -20,10 +20,21 @@ function isValidPhone(v: string): boolean {
   return /^\d{10,15}$/.test(v);
 }
 
+function toBool(val: unknown): boolean {
+  return val === true || val === "true";
+}
+
+function toNumber(val: unknown): number | null {
+  if (val === null || val === undefined || val === "") return null;
+  const n = Number(val);
+  if (isNaN(n) || n < 0 || n > 500000) return null;
+  return n;
+}
+
 /* ---------- rate-limit map (per IP, in-memory) ---------- */
 const ipBucket = new Map<string, { count: number; resetAt: number }>();
-const RATE_WINDOW_MS = 60_000; // 1 min
-const RATE_LIMIT = 5; // max 5 leads per IP per minute
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 5;
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -50,7 +61,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Rate limit by IP
   const clientIp =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("cf-connecting-ip") ??
@@ -73,7 +83,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  // --- Validate & sanitize ---
+  // --- Validate & sanitize required fields ---
   const nombre = sanitize(body.nombre, 100);
   const telefono = sanitize(body.telefono, 15).replace(/\D/g, "");
   const origen = sanitize(body.origen, 80);
@@ -92,12 +102,17 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Optional fields
+  // --- Optional fields ---
   const fechaTentativa = sanitize(body.fecha_tentativa, 10) || null;
-  const tipoServicio = sanitize(body.tipo_servicio, 30) || null;
+  const tipoServicio = sanitize(body.tipo_servicio, 40) || null;
   const tipoInmueble = sanitize(body.tipo_inmueble, 30) || null;
+  const tipoCarga = sanitize(body.tipo_carga, 40) || null;
   const pisoElevador = sanitize(body.piso_elevador, 60) || null;
   const mensajeAdicional = sanitize(body.mensaje_adicional, 500) || null;
+  const presupuestoEstimado = toNumber(body.presupuesto_estimado);
+  const requiereAsesor = toBool(body.requiere_asesor);
+  const requiereManiobras = toBool(body.requiere_maniobras);
+  const aceptaPrivacidad = toBool(body.acepta_privacidad);
 
   // Validate fecha_tentativa format if provided
   if (fechaTentativa && !/^\d{4}-\d{2}-\d{2}$/.test(fechaTentativa)) {
@@ -115,7 +130,7 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase
     .from("leads_v3g")
     .insert({
-      folio: "TEMP", // DB trigger replaces with next_folio_v3g()
+      folio: "TEMP",
       nombre,
       telefono,
       origen,
@@ -123,8 +138,13 @@ Deno.serve(async (req) => {
       fecha_tentativa: fechaTentativa,
       tipo_servicio: tipoServicio,
       tipo_inmueble: tipoInmueble,
+      tipo_carga: tipoCarga,
       piso_elevador: pisoElevador,
       mensaje_adicional: mensajeAdicional,
+      presupuesto_estimado: presupuestoEstimado,
+      requiere_asesor: requiereAsesor,
+      requiere_maniobras: requiereManiobras,
+      acepta_privacidad: aceptaPrivacidad,
     })
     .select("folio")
     .single();
