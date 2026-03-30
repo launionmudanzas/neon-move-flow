@@ -976,6 +976,7 @@ export type Database = {
       }
       leads_v3g: {
         Row: {
+          acepta_privacidad: boolean | null
           created_at: string
           destino: string
           fecha_tentativa: string | null
@@ -985,11 +986,16 @@ export type Database = {
           nombre: string
           origen: string
           piso_elevador: string | null
+          presupuesto_estimado: number | null
+          requiere_asesor: boolean | null
+          requiere_maniobras: boolean | null
           telefono: string
+          tipo_carga: string | null
           tipo_inmueble: string | null
           tipo_servicio: string | null
         }
         Insert: {
+          acepta_privacidad?: boolean | null
           created_at?: string
           destino: string
           fecha_tentativa?: string | null
@@ -999,11 +1005,16 @@ export type Database = {
           nombre: string
           origen: string
           piso_elevador?: string | null
+          presupuesto_estimado?: number | null
+          requiere_asesor?: boolean | null
+          requiere_maniobras?: boolean | null
           telefono: string
+          tipo_carga?: string | null
           tipo_inmueble?: string | null
           tipo_servicio?: string | null
         }
         Update: {
+          acepta_privacidad?: boolean | null
           created_at?: string
           destino?: string
           fecha_tentativa?: string | null
@@ -1013,7 +1024,11 @@ export type Database = {
           nombre?: string
           origen?: string
           piso_elevador?: string | null
+          presupuesto_estimado?: number | null
+          requiere_asesor?: boolean | null
+          requiere_maniobras?: boolean | null
           telefono?: string
+          tipo_carga?: string | null
           tipo_inmueble?: string | null
           tipo_servicio?: string | null
         }
