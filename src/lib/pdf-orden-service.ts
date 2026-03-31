@@ -264,9 +264,9 @@ export function generateOrdenPDF(data: OrdenPDFData): jsPDF {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(...ORANGE);
-  doc.text('Términos completos: launionmudanzas.com/terminos-y-condiciones', 14, y);
+  doc.text(`Términos completos: ${siteConfig.domain}/terminos-y-condiciones`, 14, y);
   y += 4;
-  doc.text('Aviso de privacidad: launionmudanzas.com/aviso-de-privacidad', 14, y);
+  doc.text(`Aviso de privacidad: ${siteConfig.domain}/aviso-de-privacidad`, 14, y);
   y += 8;
 
   // ── 8. LEYENDA LEGAL ─────────────────────────────────────────────────────
