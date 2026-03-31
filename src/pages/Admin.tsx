@@ -165,7 +165,6 @@ export default function Admin() {
 
   useEffect(() => {
     if (isAdmin) fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   /* ── update estatus ────────────────────────────────────────────────────── */
