@@ -132,6 +132,21 @@ export const buildCotizacionMessage = ({
   return `🚛 *${siteConfig.brandName}*\nHola ${nombre}, recibimos tu solicitud de cotización.\n\n📍 Ruta: ${origen} → ${destino}\n📦 Servicio: ${servicio}\n📊 Volumen estimado: ${volumen}\n\nEn breve un asesor te contactará para darte opciones.\n\n📲 WhatsApp: ${siteConfig.whatsAppDisplay}\n\n*${siteConfig.slogan}*`;
 };
 
+/** Mensaje de orden de servicio confirmada */
+export const buildOrdenMessage = ({
+  nombre,
+  folio,
+  proveedor,
+  ruta,
+}: {
+  nombre: string;
+  folio: string;
+  proveedor: string;
+  ruta: string;
+}) => {
+  return `📄 *ORDEN DE SERVICIO*\n🚛 ${siteConfig.brandName}\n\nHola ${nombre},\nTu servicio ha sido confirmado.\n\n🔖 Folio: ${folio}\n🚚 Proveedor: ${proveedor}\n📍 Ruta: ${ruta}\n\nTu proveedor se pondrá en contacto contigo para coordinar detalles.\n\n📲 ${siteConfig.whatsAppDisplay}\n\nGracias por confiar en nosotros.`;
+};
+
 /** Opens WhatsApp in a new tab */
 export function openWhatsApp(event: WAEvent, data: ServiceData, targetNumber?: string): void {
   window.open(buildWhatsAppLink(event, data, targetNumber), '_blank');
