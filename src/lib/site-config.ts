@@ -11,10 +11,11 @@ export const siteConfig = {
   hashtag: "#LaUnionMudanzas",
 
   // Contacto
-  whatsApp: "4421270514",
-  whatsAppFull: "524421270514",
-  whatsAppDisplay: "442 127 0514",
-  phone: "4421270514",
+  whatsApp: "4151773626",
+  whatsAppFull: "524151773626",
+  whatsAppDisplay: "415 177 3626",
+  phone: "5549102634",
+  phoneDisplay: "554 910 2634",
   email: "launionmudanzas@gmail.com",
   domain: "https://launionmudanzas.com",
 
