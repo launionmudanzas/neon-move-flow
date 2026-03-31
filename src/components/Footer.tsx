@@ -91,7 +91,7 @@ export default function Footer() {
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-neon-cyan flex-shrink-0" />
                 <a href={`tel:${WHATSAPP_NUMBER}`} className="hover:text-neon-cyan transition-colors">
-                  442 127 0514
+                  {siteConfig.whatsAppDisplay}
                 </a>
               </li>
               <li className="flex items-center gap-2">

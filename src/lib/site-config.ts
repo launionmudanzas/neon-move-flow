@@ -4,7 +4,7 @@
  * NO hardcodear datos de contacto, folios ni branding en otros archivos.
  */
 export const siteConfig = {
-  brandName: "La Unión Mudanzas",
+  brandName: "LA UNIÓN MUDANZAS",
   brandShort: "LUM",
   slogan: "Cada mudanza es una historia",
   sloganSecondary: "Salimos todas las semanas · Servicio compartido disponible",
@@ -13,9 +13,10 @@ export const siteConfig = {
   // Contacto
   whatsApp: "4421270514",
   whatsAppFull: "524421270514",
+  whatsAppDisplay: "442 127 0514",
   phone: "4421270514",
-  email: "admin@launionmudanzas.com",
-  domain: "launionmudanzas.com",
+  email: "launionmudanzas@gmail.com",
+  domain: "https://launionmudanzas.com",
 
   // Folios
   folioPrefix: "LUM",

@@ -130,7 +130,7 @@ export default function Navbar() {
                 className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-neon-green/10 border border-neon-green/40 text-neon-green font-semibold hover:bg-neon-green/20 transition-all"
               >
                 {WA_SVG}
-                442 127 0514 · WhatsApp
+                {siteConfig.whatsAppDisplay} · WhatsApp
               </a>
             </nav>
           </motion.div>
