@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
+import { siteConfig } from '@/lib/site-config';
 
 const sections = [
   {
@@ -93,12 +94,12 @@ export default function TerminosCondiciones() {
         <div className="mt-10 p-5 rounded-xl bg-neon-cyan/5 border border-neon-cyan/20 text-center">
           <p className="text-xs text-muted-foreground">
             ¿Tienes dudas sobre estos términos?{' '}
-            <a href="https://wa.me/4421270514" target="_blank" rel="noopener noreferrer" className="text-neon-green hover:underline font-semibold">
+            <a href={`https://wa.me/${siteConfig.whatsApp}`} target="_blank" rel="noopener noreferrer" className="text-neon-green hover:underline font-semibold">
               Contáctanos por WhatsApp
             </a>{' '}
             o escríbenos a{' '}
-            <a href="mailto:launionmudanzas@gmail.com" className="text-neon-cyan hover:underline font-semibold">
-              launionmudanzas@gmail.com
+            <a href={`mailto:${siteConfig.email}`} className="text-neon-cyan hover:underline font-semibold">
+              {siteConfig.email}
             </a>
           </p>
         </div>

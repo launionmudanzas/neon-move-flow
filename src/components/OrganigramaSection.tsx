@@ -19,7 +19,7 @@ const departments = [
     title: 'Ventas',
     color: 'cyan',
     desc: 'Cotizaciones, seguimiento de prospectos y cierre de servicios. Primer contacto con el cliente.',
-    tasks: ['Cotizaciones express', 'Seguimiento de leads', 'Cierre de servicios', 'WhatsApp directo 442 127 0514'],
+    tasks: ['Cotizaciones express', 'Seguimiento de leads', 'Cierre de servicios', 'WhatsApp directo'],
   },
   {
     id: 'clientes',

@@ -5,6 +5,7 @@
 
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
+import { siteConfig } from '@/lib/site-config';
 
 // Brand colours
 const NAVY   = [11, 31, 58]   as const;  // #0B1F3A
@@ -264,9 +265,9 @@ export function generateOrdenPDF(data: OrdenPDFData): jsPDF {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(...ORANGE);
-  doc.text('Términos completos: launionmudanzas.com/terminos-y-condiciones', 14, y);
+  doc.text(`Términos completos: ${siteConfig.domain}/terminos-y-condiciones`, 14, y);
   y += 4;
-  doc.text('Aviso de privacidad: launionmudanzas.com/aviso-de-privacidad', 14, y);
+  doc.text(`Aviso de privacidad: ${siteConfig.domain}/aviso-de-privacidad`, 14, y);
   y += 8;
 
   // ── 8. LEYENDA LEGAL ─────────────────────────────────────────────────────
@@ -323,7 +324,7 @@ export function generateOrdenPDF(data: OrdenPDFData): jsPDF {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(180, 210, 240);
   doc.text('Salimos todas las semanas · Servicio compartido disponible', W / 2, 291, { align: 'center' });
-  doc.text('WhatsApp: 4421270514  |  launionmudanzas.com', W / 2, 295, { align: 'center' });
+  doc.text(`WhatsApp: ${siteConfig.whatsApp}  |  ${siteConfig.domain}`, W / 2, 295, { align: 'center' });
 
   return doc;
 }
