@@ -115,6 +115,23 @@ export function buildWhatsAppLink(event: WAEvent, data: ServiceData, targetNumbe
   return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
 }
 
+/** Mensaje de confirmación de cotización recibida */
+export const buildCotizacionMessage = ({
+  nombre,
+  origen,
+  destino,
+  servicio,
+  volumen,
+}: {
+  nombre: string;
+  origen: string;
+  destino: string;
+  servicio: string;
+  volumen: string;
+}) => {
+  return `🚛 *${siteConfig.brandName}*\nHola ${nombre}, recibimos tu solicitud de cotización.\n\n📍 Ruta: ${origen} → ${destino}\n📦 Servicio: ${servicio}\n📊 Volumen estimado: ${volumen}\n\nEn breve un asesor te contactará para darte opciones.\n\n📲 WhatsApp: ${siteConfig.whatsAppDisplay}\n\n*${siteConfig.slogan}*`;
+};
+
 /** Opens WhatsApp in a new tab */
 export function openWhatsApp(event: WAEvent, data: ServiceData, targetNumber?: string): void {
   window.open(buildWhatsAppLink(event, data, targetNumber), '_blank');
