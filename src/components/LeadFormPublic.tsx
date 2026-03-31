@@ -1,13 +1,24 @@
+/**
+ * LeadFormPublic — Unified quotation flow with service selector + calendar
+ * Single entry point for all client-facing quotation requests.
+ */
 import { useState, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   MapPin, Phone, User, ArrowRight, CheckCircle2, Loader2,
-  Calendar, Home, MessageSquare, DollarSign, Package, AlertTriangle,
+  CalendarIcon, Home, MessageSquare, DollarSign, Package, ChevronRight,
 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { siteConfig } from '@/lib/site-config';
-import { TIPOS_SERVICIO, TIPOS_INMUEBLE, TIPOS_CARGA } from '@/lib/lead-form-constants';
+import { TIPOS_INMUEBLE, TIPOS_CARGA } from '@/lib/lead-form-constants';
 import { buildLeadWALink, isLeadFormValid } from '@/lib/lead-form-utils';
+import ServiceSelector, { SERVICES } from '@/components/ServiceSelector';
 
 const inputClass =
   'w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-neon-cyan/60 transition-all';
@@ -18,12 +29,15 @@ export default function LeadFormPublic() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
 
+  // Step: 'select' (service) → 'form' (details)
+  const [step, setStep] = useState<'select' | 'form'>('select');
+  const [selectedService, setSelectedService] = useState('');
+
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
-  const [fechaTentativa, setFechaTentativa] = useState('');
-  const [tipoServicio, setTipoServicio] = useState('');
+  const [fechaTentativa, setFechaTentativa] = useState<Date>();
   const [tipoInmueble, setTipoInmueble] = useState('');
   const [tipoCarga, setTipoCarga] = useState('');
   const [pisoElevador, setPisoElevador] = useState('');
@@ -40,11 +54,21 @@ export default function LeadFormPublic() {
 
   const isValid = isLeadFormValid({ nombre, telefono, origen, destino, aceptaPrivacidad });
 
+  const handleServiceSelect = (id: string) => {
+    setSelectedService(id);
+  };
+
+  const goToForm = () => {
+    if (selectedService) setStep('form');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setError('');
     setLoading(true);
+
+    const serviceLabel = SERVICES.find(s => s.id === selectedService)?.label || selectedService;
 
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('submit-public-lead', {
@@ -53,8 +77,8 @@ export default function LeadFormPublic() {
           telefono: telefono.trim(),
           origen: origen.trim(),
           destino: destino.trim(),
-          fecha_tentativa: fechaTentativa || null,
-          tipo_servicio: tipoServicio || null,
+          fecha_tentativa: fechaTentativa ? format(fechaTentativa, 'yyyy-MM-dd') : null,
+          tipo_servicio: serviceLabel,
           tipo_inmueble: tipoInmueble || null,
           tipo_carga: tipoCarga || null,
           piso_elevador: pisoElevador || null,
@@ -82,13 +106,13 @@ export default function LeadFormPublic() {
     nombre: nombre || 'Cliente',
     origen: origen || 'origen',
     destino: destino || 'destino',
-    tipoServicio: tipoServicio || undefined,
+    tipoServicio: SERVICES.find(s => s.id === selectedService)?.label || undefined,
   });
 
   const resetForm = () => {
-    setDone(false);
+    setDone(false); setStep('select'); setSelectedService('');
     setNombre(''); setTelefono(''); setOrigen(''); setDestino('');
-    setFechaTentativa(''); setTipoServicio(''); setTipoInmueble('');
+    setFechaTentativa(undefined); setTipoInmueble('');
     setTipoCarga(''); setPisoElevador(''); setPresupuesto('');
     setRequiereAsesor(false); setRequiereManiobras(false);
     setMensajeAdicional(''); setAceptaPrivacidad(false); setFolio('');
@@ -106,16 +130,17 @@ export default function LeadFormPublic() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10"
         >
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neon-orange/10 border border-neon-orange/30 text-neon-orange text-xs font-bold tracking-widest uppercase mb-4">
-            <AlertTriangle className="w-3 h-3" />
-            Salimos todas las semanas
-          </span>
           <h2 className="font-display text-3xl md:text-4xl font-black text-foreground mb-3">
-            Cotiza tu mudanza{' '}
-            <span className="text-neon-cyan text-glow-cyan">gratis</span>
+            {step === 'select' ? (
+              <>¿Qué servicio deseas <span className="text-neon-cyan text-glow-cyan">cotizar</span>?</>
+            ) : (
+              <>Cuéntanos tu <span className="text-neon-cyan text-glow-cyan">servicio</span></>
+            )}
           </h2>
           <p className="text-muted-foreground text-base max-w-lg mx-auto">
-            Llena el formulario y recibe tu folio. Te contactamos por WhatsApp al instante.
+            {step === 'select'
+              ? 'Selecciona una opción para mostrarte la cotización adecuada.'
+              : `${SERVICES.find(s => s.id === selectedService)?.label || 'Servicio'} · Llena los datos y te contactamos.`}
           </p>
         </motion.div>
 
@@ -125,145 +150,198 @@ export default function LeadFormPublic() {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="glass-card rounded-2xl border border-neon-cyan/20 p-6 md:p-8 shadow-glow-cyan"
         >
-          {done ? (
-            <SuccessView
-              nombre={nombre}
-              folio={folio}
-              waLink={waLink}
-              onReset={resetForm}
-            />
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Campos requeridos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}><User className="w-3 h-3" /> Nombre *</label>
-                  <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre completo" maxLength={100} required className={inputClass} />
+          <AnimatePresence mode="wait">
+            {done ? (
+              <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                <SuccessView nombre={nombre} folio={folio} waLink={waLink} onReset={resetForm} />
+              </motion.div>
+            ) : step === 'select' ? (
+              <motion.div key="select" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <ServiceSelector selected={selectedService} onSelect={handleServiceSelect} />
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={goToForm}
+                    disabled={!selectedService}
+                    className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-neon-cyan text-background font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Continuar
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-                <div>
-                  <label className={labelClass}><Phone className="w-3 h-3" /> Teléfono *</label>
-                  <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 12))} placeholder="10 dígitos" required className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}><MapPin className="w-3 h-3 text-neon-cyan" /> Ciudad de origen *</label>
-                  <input type="text" value={origen} onChange={e => setOrigen(e.target.value)} placeholder="Ej. CDMX" maxLength={80} required className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}><MapPin className="w-3 h-3 text-neon-green" /> Ciudad de destino *</label>
-                  <input type="text" value={destino} onChange={e => setDestino(e.target.value)} placeholder="Ej. Monterrey" maxLength={80} required className={inputClass} />
-                </div>
-              </div>
-
-              {/* Campos opcionales */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}><Calendar className="w-3 h-3" /> Fecha tentativa</label>
-                  <input type="date" value={fechaTentativa} onChange={e => setFechaTentativa(e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>🚛 Tipo de servicio</label>
-                  <select value={tipoServicio} onChange={e => setTipoServicio(e.target.value)} className={inputClass}>
-                    <option value="">Selecciona...</option>
-                    {TIPOS_SERVICIO.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}><Home className="w-3 h-3" /> Tipo de inmueble</label>
-                  <select value={tipoInmueble} onChange={e => setTipoInmueble(e.target.value)} className={inputClass}>
-                    <option value="">Selecciona...</option>
-                    {TIPOS_INMUEBLE.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}><Package className="w-3 h-3" /> Tipo de carga</label>
-                  <select value={tipoCarga} onChange={e => setTipoCarga(e.target.value)} className={inputClass}>
-                    <option value="">Selecciona...</option>
-                    {TIPOS_CARGA.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>🏢 Piso / elevador</label>
-                  <input type="text" value={pisoElevador} onChange={e => setPisoElevador(e.target.value)} placeholder="Ej. Piso 3 sin elevador" maxLength={60} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}><DollarSign className="w-3 h-3" /> Presupuesto estimado</label>
-                  <input type="number" value={presupuesto} onChange={e => setPresupuesto(e.target.value)} placeholder="Ej. 15000" min={0} max={500000} className={inputClass} />
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                  <input type="checkbox" checked={requiereAsesor} onChange={e => setRequiereAsesor(e.target.checked)} className="accent-neon-cyan w-4 h-4" />
-                  Necesito asesoría personalizada
-                </label>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                  <input type="checkbox" checked={requiereManiobras} onChange={e => setRequiereManiobras(e.target.checked)} className="accent-neon-cyan w-4 h-4" />
-                  Requiere maniobras especiales
-                </label>
-              </div>
-
-              {/* Mensaje adicional */}
-              <div>
-                <label className={labelClass}><MessageSquare className="w-3 h-3" /> Comentarios adicionales</label>
-                <textarea value={mensajeAdicional} onChange={e => setMensajeAdicional(e.target.value)} placeholder="¿Algo que debamos saber? (aduanas, ferry, grúas, objetos frágiles...)" maxLength={500} rows={2} className={inputClass + ' resize-none'} />
-              </div>
-
-              {/* Aviso de privacidad y consentimiento */}
-              <div className="border border-border/50 rounded-xl p-3 bg-surface/50">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={aceptaPrivacidad}
-                    onChange={e => setAceptaPrivacidad(e.target.checked)}
-                    className="accent-neon-cyan w-4 h-4 mt-0.5 shrink-0"
-                  />
-                  <span className="text-xs text-muted-foreground leading-relaxed">
-                    Acepto el{' '}
-                    <a href={siteConfig.privacyUrl} target="_blank" rel="noopener noreferrer" className="text-neon-cyan underline hover:text-neon-cyan/80">
-                      Aviso de Privacidad
-                    </a>{' '}
-                    y los{' '}
-                    <a href={siteConfig.termsUrl} target="_blank" rel="noopener noreferrer" className="text-neon-cyan underline hover:text-neon-cyan/80">
-                      Términos y Condiciones
-                    </a>{' '}
-                    de {siteConfig.brandName}. Autorizo el contacto vía WhatsApp y/o llamada telefónica para dar seguimiento a mi solicitud.
-                  </span>
-                </label>
-              </div>
-
-              {error && <p className="text-destructive text-sm font-medium">{error}</p>}
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              </motion.div>
+            ) : (
+              <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                {/* Back button */}
                 <button
-                  type="submit"
-                  disabled={!isValid || loading}
-                  className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-neon-cyan text-background font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  onClick={() => setStep('select')}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
                 >
-                  {loading ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
-                  ) : (
-                    <>👉 Cotizar ahora <ArrowRight className="w-4 h-4" /></>
-                  )}
+                  ← Cambiar servicio
                 </button>
 
-                <a
-                  href={`https://wa.me/${siteConfig.whatsApp}?text=${encodeURIComponent('Hola, quiero cotizar una mudanza')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-neon-green/40 text-neon-green font-bold text-sm hover:bg-neon-green/10 hover:border-neon-green hover:shadow-glow-green transition-all duration-300"
-                >
-                  <WhatsAppIcon className="w-4 h-4" />
-                  O escríbenos directo
-                </a>
-              </div>
+                {/* Selected service badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan text-xs font-bold mb-5">
+                  {SERVICES.find(s => s.id === selectedService)?.icon}
+                  {SERVICES.find(s => s.id === selectedService)?.label}
+                </div>
 
-              <p className="text-center text-xs text-muted-foreground pt-1">
-                Sin compromisos · Respuesta rápida por WhatsApp · {siteConfig.brandName}
-              </p>
-            </form>
-          )}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Required fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}><User className="w-3 h-3" /> Nombre *</label>
+                      <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre completo" maxLength={100} required className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}><Phone className="w-3 h-3" /> Teléfono *</label>
+                      <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 12))} placeholder="10 dígitos" required className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}><MapPin className="w-3 h-3 text-neon-cyan" /> Ciudad de origen *</label>
+                      <input type="text" value={origen} onChange={e => setOrigen(e.target.value)} placeholder="Ej. Ciudad de México" maxLength={80} required className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}><MapPin className="w-3 h-3 text-neon-green" /> Ciudad de destino *</label>
+                      <input type="text" value={destino} onChange={e => setDestino(e.target.value)} placeholder="Ej. Monterrey" maxLength={80} required className={inputClass} />
+                    </div>
+                  </div>
+
+                  {/* Date with calendar */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}><CalendarIcon className="w-3 h-3" /> Fecha tentativa</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full justify-start text-left font-normal rounded-xl h-12 bg-surface border-border',
+                              !fechaTentativa && 'text-muted-foreground'
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fechaTentativa ? format(fechaTentativa, 'PPP', { locale: es }) : 'Selecciona fecha'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={fechaTentativa}
+                            onSelect={setFechaTentativa}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className={cn('p-3 pointer-events-auto')}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className={labelClass}><Home className="w-3 h-3" /> Tipo de inmueble</label>
+                      <select value={tipoInmueble} onChange={e => setTipoInmueble(e.target.value)} className={inputClass}>
+                        <option value="">Selecciona...</option>
+                        {TIPOS_INMUEBLE.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Conditional fields based on service */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {!['vehiculos', 'paqueteria', 'almacenaje'].includes(selectedService) && (
+                      <div>
+                        <label className={labelClass}><Package className="w-3 h-3" /> Tipo de carga</label>
+                        <select value={tipoCarga} onChange={e => setTipoCarga(e.target.value)} className={inputClass}>
+                          <option value="">Selecciona...</option>
+                          {TIPOS_CARGA.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label className={labelClass}>🏢 Piso / elevador</label>
+                      <input type="text" value={pisoElevador} onChange={e => setPisoElevador(e.target.value)} placeholder="Ej. Piso 3 sin elevador" maxLength={60} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}><DollarSign className="w-3 h-3" /> Presupuesto estimado</label>
+                      <input type="number" value={presupuesto} onChange={e => setPresupuesto(e.target.value)} placeholder="Ej. 15000" min={0} max={500000} className={inputClass} />
+                    </div>
+                  </div>
+
+                  {/* Toggles */}
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                      <input type="checkbox" checked={requiereAsesor} onChange={e => setRequiereAsesor(e.target.checked)} className="accent-neon-cyan w-4 h-4" />
+                      Necesito asesoría personalizada
+                    </label>
+                    {!['paqueteria', 'almacenaje'].includes(selectedService) && (
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                        <input type="checkbox" checked={requiereManiobras} onChange={e => setRequiereManiobras(e.target.checked)} className="accent-neon-cyan w-4 h-4" />
+                        Requiere maniobras especiales
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Comments */}
+                  <div>
+                    <label className={labelClass}><MessageSquare className="w-3 h-3" /> Comentarios adicionales</label>
+                    <textarea value={mensajeAdicional} onChange={e => setMensajeAdicional(e.target.value)} placeholder="¿Algo que debamos saber? (aduanas, ferry, grúas, objetos frágiles...)" maxLength={500} rows={2} className={inputClass + ' resize-none'} />
+                  </div>
+
+                  {/* Privacy */}
+                  <div className="border border-border/50 rounded-xl p-3 bg-surface/50">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={aceptaPrivacidad}
+                        onChange={e => setAceptaPrivacidad(e.target.checked)}
+                        className="accent-neon-cyan w-4 h-4 mt-0.5 shrink-0"
+                      />
+                      <span className="text-xs text-muted-foreground leading-relaxed">
+                        Acepto el{' '}
+                        <a href={siteConfig.privacyUrl} target="_blank" rel="noopener noreferrer" className="text-neon-cyan underline hover:text-neon-cyan/80">
+                          Aviso de Privacidad
+                        </a>{' '}
+                        y los{' '}
+                        <a href={siteConfig.termsUrl} target="_blank" rel="noopener noreferrer" className="text-neon-cyan underline hover:text-neon-cyan/80">
+                          Términos y Condiciones
+                        </a>{' '}
+                        de {siteConfig.brandName}. Autorizo el contacto vía WhatsApp y/o llamada telefónica.
+                      </span>
+                    </label>
+                  </div>
+
+                  {error && <p className="text-destructive text-sm font-medium">{error}</p>}
+
+                  {/* CTA */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={!isValid || loading}
+                      className="flex-1 flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-neon-cyan text-background font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      {loading ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+                      ) : (
+                        <>👉 Solicitar cotización <ArrowRight className="w-4 h-4" /></>
+                      )}
+                    </button>
+
+                    <a
+                      href={`https://wa.me/${siteConfig.whatsApp}?text=${encodeURIComponent('Hola, quiero cotizar una mudanza')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl border border-neon-green/40 text-neon-green font-bold text-sm hover:bg-neon-green/10 hover:border-neon-green hover:shadow-glow-green transition-all duration-300"
+                    >
+                      <WhatsAppIcon className="w-4 h-4" />
+                      O escríbenos directo
+                    </a>
+                  </div>
+
+                  <p className="text-center text-xs text-muted-foreground pt-1">
+                    Sin compromisos · Respuesta rápida por WhatsApp · {siteConfig.brandName}
+                  </p>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </section>
@@ -287,11 +365,7 @@ function SuccessView({ nombre, folio, waLink, onReset }: {
   onReset: () => void;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center gap-4 py-8 text-center"
-    >
+    <div className="flex flex-col items-center gap-4 py-8 text-center">
       <div className="w-16 h-16 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
         <CheckCircle2 className="w-8 h-8 text-neon-green" />
       </div>
@@ -312,12 +386,9 @@ function SuccessView({ nombre, folio, waLink, onReset }: {
         <WhatsAppIcon className="w-5 h-5" />
         Continuar por WhatsApp
       </a>
-      <button
-        onClick={onReset}
-        className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
-      >
+      <button onClick={onReset} className="text-xs text-muted-foreground hover:text-foreground underline transition-colors">
         Enviar otra cotización
       </button>
-    </motion.div>
+    </div>
   );
 }
