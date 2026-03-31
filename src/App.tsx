@@ -16,6 +16,7 @@ import AdminServicios from "./pages/AdminServicios.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminIncidencias from "./pages/AdminIncidencias.tsx";
 import AdminSeguimientos from "./pages/AdminSeguimientos.tsx";
+import AdminCiudades from "./pages/AdminCiudades.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import PortalProveedor from "./pages/PortalProveedor.tsx";
 import TerminosCondiciones from "./pages/TerminosCondiciones.tsx";
