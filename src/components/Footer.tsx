@@ -91,8 +91,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-neon-cyan flex-shrink-0" />
-                <a href={`tel:${WHATSAPP_NUMBER}`} className="hover:text-neon-cyan transition-colors">
-                  {siteConfig.whatsAppDisplay}
+                <a href={`tel:${siteConfig.phone}`} className="hover:text-neon-cyan transition-colors">
+                  {siteConfig.phoneDisplay}
                 </a>
               </li>
               <li className="flex items-center gap-2">

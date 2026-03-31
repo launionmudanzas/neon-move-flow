@@ -53,7 +53,7 @@ export default function CierreSection() {
               Cotizar por WhatsApp
             </a>
             <a
-              href={`tel:${WHATSAPP_NUMBER}`}
+              href={`tel:${siteConfig.phone}`}
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-neon-cyan/40 text-neon-cyan font-bold text-lg hover:bg-neon-cyan/10 hover:border-neon-cyan hover:shadow-glow-cyan transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Phone className="w-5 h-5" />
