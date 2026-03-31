@@ -147,6 +147,17 @@ export const buildOrdenMessage = ({
   return `📄 *ORDEN DE SERVICIO*\n🚛 ${siteConfig.brandName}\n\nHola ${nombre},\nTu servicio ha sido confirmado.\n\n🔖 Folio: ${folio}\n🚚 Proveedor: ${proveedor}\n📍 Ruta: ${ruta}\n\nTu proveedor se pondrá en contacto contigo para coordinar detalles.\n\n📲 ${siteConfig.whatsAppDisplay}\n\nGracias por confiar en nosotros.`;
 };
 
+/** Mensaje de seguimiento de servicio */
+export const buildTrackingMessage = ({
+  folio,
+  estatus,
+}: {
+  folio: string;
+  estatus: string;
+}) => {
+  return `📦 *SEGUIMIENTO DE SERVICIO*\n🔖 Folio: ${folio}\n📍 Estatus: ${estatus}\n\nPara cualquier duda puedes escribirnos:\n📲 ${siteConfig.whatsAppDisplay}`;
+};
+
 /** Opens WhatsApp in a new tab */
 export function openWhatsApp(event: WAEvent, data: ServiceData, targetNumber?: string): void {
   window.open(buildWhatsAppLink(event, data, targetNumber), '_blank');
