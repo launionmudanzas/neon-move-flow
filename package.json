@@ -1,7 +1,8 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "la-union-mudanzas-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Plataforma logística digital de LA UNIÓN MUDANZAS — cotización, coordinación y ejecución de servicios de mudanza en México.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +12,9 @@
     "type-check": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run type-check && npm run test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
