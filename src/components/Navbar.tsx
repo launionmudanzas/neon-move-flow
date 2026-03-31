@@ -81,7 +81,7 @@ export default function Navbar() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-neon-green/10 border border-neon-green/40 text-neon-green text-sm font-semibold hover:bg-neon-green/20 hover:shadow-glow-green transition-all duration-200"
           >
             {WA_SVG}
-            442 127 0514
+            {siteConfig.whatsAppDisplay}
           </a>
         </div>
 
