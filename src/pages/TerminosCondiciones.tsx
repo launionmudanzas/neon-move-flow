@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
+import { siteConfig } from '@/lib/site-config';
 
 const sections = [
   {
