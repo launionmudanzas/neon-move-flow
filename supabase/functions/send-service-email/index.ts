@@ -10,9 +10,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const ADMIN_EMAIL = 'admin@launionmudanzas.com';
+const ADMIN_EMAIL = 'launionmudanzas@gmail.com';
 const BRAND_COLOR = '#00f5ff';
 const WA_NUMBER = '4421270514';
+const DOMAIN = 'https://launionmudanzas.com';
 
 type EmailType =
   | 'cotizacion'

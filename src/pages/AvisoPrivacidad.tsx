@@ -82,14 +82,14 @@ export default function AvisoPrivacidad() {
             <div className="mt-3 space-y-2">
               <p className="text-sm">
                 📧{' '}
-                <a href="mailto:launionmudanzas@gmail.com" className="text-neon-cyan hover:underline font-semibold">
-                  launionmudanzas@gmail.com
+                <a href={`mailto:${siteConfig.email}`} className="text-neon-cyan hover:underline font-semibold">
+                  {siteConfig.email}
                 </a>
               </p>
               <p className="text-sm">
                 📱{' '}
-                <a href="https://wa.me/4421270514" target="_blank" rel="noopener noreferrer" className="text-neon-green hover:underline font-semibold">
-                  WhatsApp: 442 127 0514
+                <a href={`https://wa.me/${siteConfig.whatsApp}`} target="_blank" rel="noopener noreferrer" className="text-neon-green hover:underline font-semibold">
+                  WhatsApp: {siteConfig.whatsAppDisplay}
                 </a>
               </p>
             </div>

@@ -5,6 +5,7 @@
 
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
+import { siteConfig } from '@/lib/site-config';
 
 // Brand colours
 const NAVY   = [11, 31, 58]   as const;  // #0B1F3A

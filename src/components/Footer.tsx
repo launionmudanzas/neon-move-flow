@@ -4,6 +4,7 @@ import logoOficial from '@/assets/logo-oficial.png';
 
 import { siteConfig } from '@/lib/site-config';
 const WHATSAPP_NUMBER = siteConfig.whatsApp;
+const { whatsAppDisplay } = siteConfig;
 
 export default function Footer() {
   return (
