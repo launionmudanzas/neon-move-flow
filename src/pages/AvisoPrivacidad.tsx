@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
+import { siteConfig } from '@/lib/site-config';
 
 export default function AvisoPrivacidad() {
   return (
