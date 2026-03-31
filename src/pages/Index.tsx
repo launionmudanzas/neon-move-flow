@@ -2,8 +2,6 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import LeadFormPublic from '@/components/LeadFormPublic';
 import BenefitsSection from '@/components/BenefitsSection';
-import CotizadorSection from '@/components/CotizadorSection';
-
 import ServiciosSection from '@/components/ServiciosSection';
 import ComoFuncionaSection from '@/components/ComoFuncionaSection';
 import CoberturaSection from '@/components/CoberturaSection';
@@ -15,7 +13,8 @@ import GaleriaSection from '@/components/GaleriaSection';
 import FAQSection from '@/components/FAQSection';
 import CierreSection from '@/components/CierreSection';
 import Footer from '@/components/Footer';
-import WhatsAppButton from '@/components/WhatsAppButton';
+import VisitaOcularSection from '@/components/VisitaOcularSection';
+import WhatsAppAttention from '@/components/WhatsAppAttention';
 import StickyMobileCTA from '@/components/StickyMobileCTA';
 import PixelScript from '@/components/PixelScript';
 
@@ -27,10 +26,9 @@ export default function Index() {
       <HeroSection />
       <LeadFormPublic />
       <BenefitsSection />
-      <CotizadorSection />
-      
       <ServiciosSection />
       <ComoFuncionaSection />
+      <VisitaOcularSection />
       <CoberturaSection />
       <SeguroSection />
       <DiferenciadoresSection />
@@ -40,7 +38,7 @@ export default function Index() {
       <FAQSection />
       <CierreSection />
       <Footer />
-      <WhatsAppButton />
+      <WhatsAppAttention />
       <StickyMobileCTA />
     </div>
   );
