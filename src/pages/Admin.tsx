@@ -329,6 +329,11 @@ export default function Admin() {
                 <Route className="w-3.5 h-3.5" />Rutas
               </Button>
             </Link>
+            <Link to="/admin/ciudades">
+              <Button variant="outline" size="sm" className="border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10 gap-1 text-xs h-8 px-2">
+                <MapPin className="w-3.5 h-3.5" />Ciudades
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="border-border text-muted-foreground hover:text-foreground gap-2 h-8 px-2 text-xs">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               Actualizar
