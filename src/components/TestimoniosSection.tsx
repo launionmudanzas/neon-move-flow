@@ -6,7 +6,7 @@ import { Star, AlertTriangle } from 'lucide-react';
 const testimonios = [
   {
     nombre: 'Gabriela Ramírez',
-    ciudad: 'CDMX → Guadalajara',
+    ciudad: 'Ciudad de México → Guadalajara',
     texto: 'Excelente servicio, rápido y seguro. Llegaron puntual, empacaron todo con cuidado y entregaron sin ningún daño.',
     estrellas: 5,
     tipo: 'Mudanza residencial',

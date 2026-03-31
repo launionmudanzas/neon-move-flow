@@ -74,7 +74,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-muted-foreground text-lg md:text-xl leading-relaxed mb-6 max-w-lg"
           >
-            Cotiza tu mudanza en menos de 1 minuto.{' '}
+            Cotiza tu mudanza de forma fácil y segura.{' '}
             <span className="text-foreground font-semibold">Atención real y cobertura nacional.</span>
           </motion.p>
 

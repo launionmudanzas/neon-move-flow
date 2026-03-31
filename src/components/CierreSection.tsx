@@ -70,7 +70,7 @@ export default function CierreSection() {
 
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-sm text-muted-foreground">
-            {['Sin costos ocultos', 'Respuesta en minutos', 'Cobertura nacional', 'Servicio garantizado'].map((t) => (
+            {['Sin costos ocultos', 'Atención personalizada', 'Cobertura nacional', 'Servicio garantizado'].map((t) => (
               <div key={t} className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-neon-cyan" />
                 {t}

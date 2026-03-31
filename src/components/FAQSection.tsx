@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: '¿Cómo cotizo mi mudanza?',
-    a: 'Puedes cotizar en menos de 60 segundos usando nuestro formulario express en esta misma página, o enviándonos un mensaje por WhatsApp. Un asesor te responde de inmediato.',
+    a: 'Puedes cotizar directamente desde nuestro formulario en esta página, o enviándonos un mensaje por WhatsApp. Un asesor te responde a la brevedad.',
   },
   {
     q: '¿Qué incluye el servicio?',

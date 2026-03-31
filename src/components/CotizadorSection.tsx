@@ -275,7 +275,7 @@ export default function CotizadorSection() {
           <h2 className="font-display text-4xl md:text-5xl font-black text-foreground mb-3">
             Calcula tu mudanza{' '}
             <span className="text-neon-cyan" style={{ textShadow: '0 0 24px hsl(180 100% 50% / 0.5)' }}>
-              en minutos
+              al instante
             </span>
           </h2>
           <p className="text-muted-foreground text-base max-w-md mx-auto">
