@@ -8,7 +8,7 @@ const benefits = [
     icon: Zap,
     color: 'neon-cyan',
     title: 'Respuesta Inmediata',
-    desc: 'Cotización en menos de 60 segundos. Sin esperas, sin burocracia. Tu historia comienza hoy.',
+    desc: 'Cotización ágil y sin burocracia. Sin esperas innecesarias. Tu historia comienza hoy.',
   },
   {
     icon: HeartHandshake,
