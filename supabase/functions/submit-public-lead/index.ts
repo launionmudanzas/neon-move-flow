@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-  if (tipoSolicitante && !permitidos.includes(tipoSolicitante)) {
+  if (!permitidos.includes(tipoSolicitante)) {
     return new Response(JSON.stringify({ error: 'Formulario exclusivo para clientes finales' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -154,7 +154,9 @@ Deno.serve(async (req) => {
       tipo_inmueble: tipoInmueble,
       tipo_carga: tipoCarga,
       piso_elevador: pisoElevador,
-      mensaje_adicional: `[SOLICITANTE:${tipoSolicitante || 'no_clasificado'}][FUENTE:${fuenteConsulta}] ${mensajeAdicional || ''}`.slice(0, 500),
+      mensaje_adicional: mensajeAdicional,
+      tipo_solicitante: tipoSolicitante,
+      fuente_consulta: fuenteConsulta,
       presupuesto_estimado: presupuestoEstimado,
       requiere_asesor: requiereAsesor,
       requiere_maniobras: requiereManiobras,
