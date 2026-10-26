@@ -108,11 +108,25 @@ Deno.serve(async (req) => {
   const tipoInmueble = sanitize(body.tipo_inmueble, 30) || null;
   const tipoCarga = sanitize(body.tipo_carga, 40) || null;
   const pisoElevador = sanitize(body.piso_elevador, 60) || null;
-  const mensajeAdicional = sanitize(body.mensaje_adicional, 500) || null;
+  const mensajeAdicional = sanitize(body.mensaje_adicional, 350) || null;
+  const tipoSolicitante = sanitize(body.tipo_solicitante, 30);
+  const fuenteConsulta = sanitize(body.fuente_consulta, 60).replace(/[^a-zA-Z0-9_-]/g, '') || 'sitio_web';
+  const permitidos = ['particular', 'empresa_directa', 'encargado_autorizado'];
   const presupuestoEstimado = toNumber(body.presupuesto_estimado);
   const requiereAsesor = toBool(body.requiere_asesor);
   const requiereManiobras = toBool(body.requiere_maniobras);
   const aceptaPrivacidad = toBool(body.acepta_privacidad);
+
+  if (!aceptaPrivacidad) {
+    return new Response(JSON.stringify({ error: 'Es necesario aceptar el aviso de privacidad' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  if (tipoSolicitante && !permitidos.includes(tipoSolicitante)) {
+    return new Response(JSON.stringify({ error: 'Formulario exclusivo para clientes finales' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   // Validate fecha_tentativa format if provided
   if (fechaTentativa && !/^\d{4}-\d{2}-\d{2}$/.test(fechaTentativa)) {
@@ -140,7 +154,7 @@ Deno.serve(async (req) => {
       tipo_inmueble: tipoInmueble,
       tipo_carga: tipoCarga,
       piso_elevador: pisoElevador,
-      mensaje_adicional: mensajeAdicional,
+      mensaje_adicional: `[SOLICITANTE:${tipoSolicitante || 'no_clasificado'}][FUENTE:${fuenteConsulta}] ${mensajeAdicional || ''}`.slice(0, 500),
       presupuesto_estimado: presupuestoEstimado,
       requiere_asesor: requiereAsesor,
       requiere_maniobras: requiereManiobras,
