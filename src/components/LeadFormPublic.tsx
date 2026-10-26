@@ -96,7 +96,11 @@ export default function LeadFormPublic() {
 
       if (fnErr) throw fnErr;
       if (data?.error) throw new Error(data.error);
-      setFolio(data.folio);
+      // No confirmar la solicitud si el servidor no devuelve un folio válido.
+      if (typeof data?.folio !== 'string' || !data.folio.trim()) {
+        throw new Error('La solicitud no devolvió un folio de confirmación.');
+      }
+      setFolio(data.folio.trim());
       setDone(true);
     } catch {
       setError('Ocurrió un error. Intenta de nuevo.');
