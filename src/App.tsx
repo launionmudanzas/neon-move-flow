@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
 import MiFleteLanding from "./pages/MiFleteLanding.tsx";
+import AdminMiFleteLeads from "./pages/AdminMiFleteLeads.tsx";
 import Auth from "./pages/Auth.tsx";
 import Cuenta from "./pages/Cuenta.tsx";
 import Admin from "./pages/Admin.tsx";
@@ -37,6 +38,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/mi-flete" element={<MiFleteLanding />} />
+            <Route path="/admin/mi-flete-leads" element={<AdminMiFleteLeads />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/cuenta" element={<Cuenta />} />
             <Route path="/reset-password" element={<ResetPassword />} />
