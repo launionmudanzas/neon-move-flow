@@ -993,6 +993,8 @@ export type Database = {
           tipo_carga: string | null
           tipo_inmueble: string | null
           tipo_servicio: string | null
+          tipo_solicitante: string | null
+          fuente_consulta: string
         }
         Insert: {
           acepta_privacidad?: boolean | null
@@ -1012,6 +1014,8 @@ export type Database = {
           tipo_carga?: string | null
           tipo_inmueble?: string | null
           tipo_servicio?: string | null
+          tipo_solicitante?: string | null
+          fuente_consulta?: string
         }
         Update: {
           acepta_privacidad?: boolean | null
@@ -1031,6 +1035,8 @@ export type Database = {
           tipo_carga?: string | null
           tipo_inmueble?: string | null
           tipo_servicio?: string | null
+          tipo_solicitante?: string | null
+          fuente_consulta?: string
         }
         Relationships: []
       }

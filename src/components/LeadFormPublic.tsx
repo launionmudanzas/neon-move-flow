@@ -34,6 +34,8 @@ export default function LeadFormPublic() {
   const [selectedService, setSelectedService] = useState('');
 
   const [nombre, setNombre] = useState('');
+  const [tipoSolicitante, setTipoSolicitante] = useState('');
+  const [fuenteConsulta] = useState(() => new URLSearchParams(window.location.search).get('utm_source')?.slice(0, 60) || 'sitio_web');
   const [telefono, setTelefono] = useState('');
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
@@ -52,7 +54,7 @@ export default function LeadFormPublic() {
   const [folio, setFolio] = useState('');
   const [error, setError] = useState('');
 
-  const isValid = isLeadFormValid({ nombre, telefono, origen, destino, aceptaPrivacidad });
+  const isValid = isLeadFormValid({ nombre, telefono, origen, destino, aceptaPrivacidad }) && !!tipoSolicitante && tipoSolicitante !== 'intermediario';
 
   const handleServiceSelect = (id: string) => {
     setSelectedService(id);
@@ -87,12 +89,18 @@ export default function LeadFormPublic() {
           requiere_maniobras: requiereManiobras,
           mensaje_adicional: mensajeAdicional.trim() || null,
           acepta_privacidad: aceptaPrivacidad,
+          tipo_solicitante: tipoSolicitante,
+          fuente_consulta: fuenteConsulta,
         },
       });
 
       if (fnErr) throw fnErr;
       if (data?.error) throw new Error(data.error);
-      setFolio(data.folio);
+      // No confirmar la solicitud si el servidor no devuelve un folio válido.
+      if (typeof data?.folio !== 'string' || !data.folio.trim()) {
+        throw new Error('La solicitud no devolvió un folio de confirmación.');
+      }
+      setFolio(data.folio.trim());
       setDone(true);
     } catch {
       setError('Ocurrió un error. Intenta de nuevo.');
@@ -111,7 +119,7 @@ export default function LeadFormPublic() {
 
   const resetForm = () => {
     setDone(false); setStep('select'); setSelectedService('');
-    setNombre(''); setTelefono(''); setOrigen(''); setDestino('');
+    setNombre(''); setTelefono(''); setOrigen(''); setDestino(''); setTipoSolicitante('');
     setFechaTentativa(undefined); setTipoInmueble('');
     setTipoCarga(''); setPisoElevador(''); setPresupuesto('');
     setRequiereAsesor(false); setRequiereManiobras(false);
@@ -186,6 +194,20 @@ export default function LeadFormPublic() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Clasificación de solicitantes: separar clientes finales de intermediarios */}
+                  <div className="rounded-xl border border-neon-cyan/25 bg-surface p-4">
+                    <label htmlFor="tipo-solicitante" className={labelClass}>¿Para quién contratas el servicio? *</label>
+                    <select id="tipo-solicitante" value={tipoSolicitante} onChange={e => setTipoSolicitante(e.target.value)} required className={inputClass}>
+                      <option value="">Selecciona una opción...</option>
+                      <option value="particular">Para mí o mi familia</option>
+                      <option value="empresa_directa">Para mi empresa / mercancía propia</option>
+                      <option value="encargado_autorizado">Por encargo del titular, con autorización</option>
+                      <option value="intermediario">Soy transportista, agencia o revendedor</option>
+                    </select>
+                    {tipoSolicitante === 'intermediario' && (
+                      <p className="mt-2 text-sm text-amber-400" role="status">Este formulario es para clientes que contratan el transporte. Próximamente habilitaremos un canal separado para empresas y proveedores.</p>
+                    )}
+                  </div>
                   {/* Required fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>

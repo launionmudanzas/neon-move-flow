@@ -1,0 +1,43 @@
+name: Mi Flete - verificacion focalizada
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/LeadFormPublic.tsx'
+      - 'src/lib/lead-form-utils.ts'
+      - 'src/pages/MiFleteLanding.tsx'
+      - 'src/pages/AdminMiFleteLeads.tsx'
+      - 'src/App.tsx'
+      - 'supabase/functions/submit-public-lead/index.ts'
+      - 'supabase/migrations/*mi_flete*'
+      - '.github/workflows/mi-flete-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # El package-lock existente no coincide con package.json. No actualizarlo a escondidas.
+      - name: Instalar dependencias del manifiesto
+        run: npm install --no-package-lock --legacy-peer-deps --no-audit --no-fund
+      - name: Comprobar tipos
+        run: npm run type-check
+      - name: Compilar sitio
+        run: npm run build
+
+  edge-function:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Comprobar sintaxis y lint del endpoint público
+        run: deno lint --rules-exclude=no-import-prefix,no-control-regex supabase/functions/submit-public-lead/index.ts
