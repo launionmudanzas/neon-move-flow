@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
+import MiFleteLanding from "./pages/MiFleteLanding.tsx";
 import Auth from "./pages/Auth.tsx";
 import Cuenta from "./pages/Cuenta.tsx";
 import Admin from "./pages/Admin.tsx";
@@ -35,6 +36,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/mi-flete" element={<MiFleteLanding />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/cuenta" element={<Cuenta />} />
             <Route path="/reset-password" element={<ResetPassword />} />
