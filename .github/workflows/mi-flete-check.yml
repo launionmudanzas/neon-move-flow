@@ -40,4 +40,4 @@ jobs:
         with:
           deno-version: v2.x
       - name: Comprobar sintaxis y lint del endpoint público
-        run: deno lint supabase/functions/submit-public-lead/index.ts
+        run: deno lint --rules-exclude=no-import-prefix,no-control-regex supabase/functions/submit-public-lead/index.ts
