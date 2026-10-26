@@ -44,7 +44,7 @@ export function isLeadFormValid(fields: {
 }): boolean {
   return (
     fields.nombre.trim().length > 0 &&
-    fields.telefono.trim().length >= 10 &&
+    /^\d{10,15}$/.test(fields.telefono.replace(/\D/g, '')) &&
     fields.origen.trim().length > 0 &&
     fields.destino.trim().length > 0 &&
     fields.aceptaPrivacidad
